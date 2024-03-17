@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "XCOM-Uncooker": {
+      "commandName": "Project",
+      "commandLineArgs": "\"F:\\Chris\\XCOM LW modding\\UPKUtils\\Enemy Within UPKs\""
+    }
+  }
+}

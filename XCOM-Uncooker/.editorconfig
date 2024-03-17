@@ -1,0 +1,9 @@
+﻿[*.cs]
+
+dotnet_diagnostic.CS8600.severity = none
+dotnet_diagnostic.CS8602.severity = none
+dotnet_diagnostic.CS8603.severity = none
+dotnet_diagnostic.CS8625.severity = none
+
+# CS8618: Non-nullable field 'field' must contain a non-null value when exiting constructor. Consider declaring the field as nullable.
+dotnet_diagnostic.CS8618.severity = none
