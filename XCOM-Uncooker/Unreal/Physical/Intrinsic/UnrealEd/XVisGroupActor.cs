@@ -39,22 +39,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.UnrealEd
             stream.Bytes(out ByteData, 6);
             stream.Int32(out IntValue2);
 
-#if DEBUG
-            for (int i = 1; i < ByteData.Length; i++)
-            {
-                if (ByteData[i] != 0)
-                {
-                    Debugger.Break();
-                }
-            }
-
-            if (IntValue1 != -1 || IntValue2 != -1)
-            {
-                Debugger.Break();
-            }
-#endif
-
-            // TODO: instances of VisGroupActor have the HasStack flag set, but they don't have stack frames and it's breaking UObject.Serialize
+            // TODO: every instance of VisGroupActor has the HasStack flag set, but some (all?) of them don't actually have stack frames, and it's breaking UObject.Serialize
             return;
 
             base.Serialize(stream);

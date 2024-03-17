@@ -20,7 +20,10 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            if (Tag.Value.EnumName.IsNone())
+            UByteProperty prop = BackingProperty as UByteProperty;
+            bool isEnumType = prop?.EnumIndex != 0 || (!Tag?.EnumName.IsNone() ?? false);
+
+            if (!isEnumType)
             {
                 // With no enum name set, this is an actual byte variable, and will be serialized as such
                 if (stream.IsRead)

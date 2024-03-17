@@ -53,6 +53,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "DominantSpotLightComponent",        (archive, tableEntry) => new UDominantSpotLightComponent(archive, tableEntry) },
             { "Level",                             (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
             { "VisGroupActor",                     (archive, tableEntry) => new XVisGroupActor(archive, tableEntry) },
+            { "XComWorldDataContainer",            (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) }, // no idea what's in here, praying it's somehow portable (probably not)
         };
 
         // TODO get rid of this set

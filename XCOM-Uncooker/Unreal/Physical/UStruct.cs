@@ -89,16 +89,9 @@ namespace XCOM_Uncooker.Unreal.Physical
                     return;
                 }
 
-                // If this struct somehow doesn't have any properties, log an error
+                // If this struct doesn't have any properties (maybe it's intrinsic, or a UFunction, etc), fall back on just tag data
                 if (linkedProperties.Count == 0)
                 {
-                    // But don't log for functions, which never seem to have properties
-                    if (this is not UFunction && ObjectName != "ParticleEmitterInstance") // ParticleEmitterInstance is legitimately an empty struct for some reason
-                    {
-                        Console.WriteLine($"ERROR: {this.GetType()} {FullObjectPath} appears not to have any properties. Deferring to base class implementation");
-                        Debugger.Break();
-                    }
-
                     base.SerializeTaggedProperties(props, stream);
                     return;
                 }

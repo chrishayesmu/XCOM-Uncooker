@@ -33,8 +33,9 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
                     "IntPoint" or "Vector2D" => 8,
                     "Rotator" or "Vector" => 12,
                     "Guid" or "LinearColor" or "Plane" or "Quat" or "Vector4" => 16,
+                    "FontCharacter" => 21,
                     "TwoVectors" => 24,
-                    "Box" or "FontCharacter" => 25,
+                    "Box" => 25,
                     "Matrix" => 64,
                     _ => throw new ArgumentException("Unexpected USerializedImmutableStructProperty tag struct name: " + structDef.ObjectName),
                 };
