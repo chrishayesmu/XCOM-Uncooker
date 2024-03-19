@@ -5,13 +5,19 @@ namespace XCOM_Uncooker
 {
     internal class Program
     {
-        static void Main(string[] args)
+        private static readonly Logger Log = new Logger("XCOM Uncooker");
+
+        static int Main(string[] args)
         {
+            Logger.StartBackgroundThread();
+
             if (args.Length == 0)
             {
-                Console.WriteLine("Expected one or more arguments which are file paths to XCOM game packages.");
-                return;
+                Log.Info("Expected one or more arguments which are file paths to XCOM game packages.");
+                return -2;
             }
+
+            Console.CursorVisible = false;
 
             var filePaths = new List<string>();
 
@@ -20,6 +26,7 @@ namespace XCOM_Uncooker
                 if (Directory.Exists(arg))
                 {
                     var dirFiles = Directory.GetFiles(arg, "*.upk", SearchOption.AllDirectories);
+                    Log.Verbose($"Treating argument '{arg}' as a directory, containing {dirFiles.Count()} UPK files.");
 
                     filePaths.AddRange(dirFiles);
                 }
@@ -29,86 +36,89 @@ namespace XCOM_Uncooker
                 }
                 else
                 {
-                    throw new ArgumentException($"Argument {arg} does not appear to be a path to a file or directory!");
+                    Log.Error($"Argument '{arg}' does not appear to be a path to a file or directory!");
+                    return -1;
                 }
             }
 
             // Omit the patch_ files, which are map patches added in LW
             filePaths = filePaths.Where(p => !Path.GetFileName(p).StartsWith("patch_")).ToList();
 
-            Console.WriteLine("Attempting to load game archives..");
-            var linker = new Linker(logVerbose: false);
+            Log.Info("Attempting to load game archives..");
+            var linker = new Linker();
             linker.LoadArchives(filePaths);
-            Console.WriteLine("Archive loading is complete.");
+            Log.Info("Archive loading is complete.");
 
-            Console.WriteLine("Attempting to recreate the uncooked archives..");
+            Log.Info("Attempting to recreate the uncooked archives..");
             linker.UncookArchives();
-            Console.WriteLine("Uncooking process is complete.");
+            Log.Info("Uncooking process is complete.");
+
+            return 0;
 
             /*
             foreach (string arg in args) 
             {
-                Console.WriteLine("Opening archive archive file " + arg);
+                Log.Info("Opening archive archive file " + arg);
                 var stream = File.Open(arg, FileMode.Open);
 
                 var archive = new FArchive(stream);
 
-                Console.WriteLine("Package signature verified..");
-                Console.WriteLine("Format version: " + archive.PackageFileSummary.FileVersion);
-                Console.WriteLine("Licensee version: " + archive.PackageFileSummary.LicenseeVersion);
-                Console.WriteLine("Header size: " + archive.PackageFileSummary.HeaderSize);
-                Console.WriteLine("Folder name: " + archive.PackageFileSummary.FolderName);
-                Console.WriteLine("PackageFlags: 0x" + archive.PackageFileSummary.PackageFlags.ToString("x"));
-                Console.WriteLine("Name count: " + archive.PackageFileSummary.NameCount);
-                Console.WriteLine("Name offset: " + archive.PackageFileSummary.NameOffset);
-                Console.WriteLine("Export count: " + archive.PackageFileSummary.ExportCount);
-                Console.WriteLine("Export offset: " + archive.PackageFileSummary.ExportOffset);
-                Console.WriteLine("Import count: " + archive.PackageFileSummary.ImportCount);
-                Console.WriteLine("Import offset: " + archive.PackageFileSummary.ImportOffset);
-                Console.WriteLine("DependsOffset: " + archive.PackageFileSummary.DependsOffset);
-                Console.WriteLine("ThumbnailTableOffset: " + archive.PackageFileSummary.ThumbnailTableOffset);
-                Console.WriteLine("PackageGuid: " + archive.PackageFileSummary.PackageGuid);
+                Log.Info("Package signature verified..");
+                Log.Info("Format version: " + archive.PackageFileSummary.FileVersion);
+                Log.Info("Licensee version: " + archive.PackageFileSummary.LicenseeVersion);
+                Log.Info("Header size: " + archive.PackageFileSummary.HeaderSize);
+                Log.Info("Folder name: " + archive.PackageFileSummary.FolderName);
+                Log.Info("PackageFlags: 0x" + archive.PackageFileSummary.PackageFlags.ToString("x"));
+                Log.Info("Name count: " + archive.PackageFileSummary.NameCount);
+                Log.Info("Name offset: " + archive.PackageFileSummary.NameOffset);
+                Log.Info("Export count: " + archive.PackageFileSummary.ExportCount);
+                Log.Info("Export offset: " + archive.PackageFileSummary.ExportOffset);
+                Log.Info("Import count: " + archive.PackageFileSummary.ImportCount);
+                Log.Info("Import offset: " + archive.PackageFileSummary.ImportOffset);
+                Log.Info("DependsOffset: " + archive.PackageFileSummary.DependsOffset);
+                Log.Info("ThumbnailTableOffset: " + archive.PackageFileSummary.ThumbnailTableOffset);
+                Log.Info("PackageGuid: " + archive.PackageFileSummary.PackageGuid);
 
-                Console.WriteLine("GenerationCount: " + archive.PackageFileSummary.Generations.Length);
+                Log.Info("GenerationCount: " + archive.PackageFileSummary.Generations.Length);
                 for (int i = 0; i < archive.PackageFileSummary.Generations.Length; i++)
                 {
-                    Console.WriteLine($"    Generations {i}: " + archive.PackageFileSummary.Generations[i]);
+                    Log.Info($"    Generations {i}: " + archive.PackageFileSummary.Generations[i]);
                 }
 
-                Console.WriteLine("EngineVersion: " + archive.PackageFileSummary.EngineVersion);
-                Console.WriteLine("CookerVersion: " + archive.PackageFileSummary.CookerVersion);
-                Console.WriteLine("CompressionFlags: 0x" + archive.PackageFileSummary.CompressionFlags.ToString("x"));
-                Console.WriteLine("NumCompressedChunks: " + archive.PackageFileSummary.NumCompressedChunks);
-                Console.WriteLine("PackageSource: " + archive.PackageFileSummary.PackageSource.ToString("x"));
+                Log.Info("EngineVersion: " + archive.PackageFileSummary.EngineVersion);
+                Log.Info("CookerVersion: " + archive.PackageFileSummary.CookerVersion);
+                Log.Info("CompressionFlags: 0x" + archive.PackageFileSummary.CompressionFlags.ToString("x"));
+                Log.Info("NumCompressedChunks: " + archive.PackageFileSummary.NumCompressedChunks);
+                Log.Info("PackageSource: " + archive.PackageFileSummary.PackageSource.ToString("x"));
 
-                Console.WriteLine("AdditionalPackagesToCookCount: " + archive.PackageFileSummary.AdditionalPackagesToCook.Length);
+                Log.Info("AdditionalPackagesToCookCount: " + archive.PackageFileSummary.AdditionalPackagesToCook.Length);
                 for (int i = 0; i < archive.PackageFileSummary.AdditionalPackagesToCook.Length; i++)
                 {
-                    Console.WriteLine($"    AdditionalPackagesToCook {i}: " + archive.PackageFileSummary.AdditionalPackagesToCook[i]);
+                    Log.Info($"    AdditionalPackagesToCook {i}: " + archive.PackageFileSummary.AdditionalPackagesToCook[i]);
                 }
 
-                Console.WriteLine("NameTable length: " + archive.NameTable.Length);
+                Log.Info("NameTable length: " + archive.NameTable.Length);
                 for (int i = 0; i < 20 && i < archive.NameTable.Length; i++)
                 {
-                    Console.WriteLine($"Name {i}: {archive.NameTable[i]}");
+                    Log.Info($"Name {i}: {archive.NameTable[i]}");
                 }
 
-                Console.WriteLine("ImportTable length: " + archive.ImportTable.Length);
+                Log.Info("ImportTable length: " + archive.ImportTable.Length);
                 for (int i = 0; i < 20 && i < archive.ImportTable.Length; i++)
                 {
-                    Console.WriteLine($"Import {i}: {archive.ImportTable[i]}");
+                    Log.Info($"Import {i}: {archive.ImportTable[i]}");
                 }
 
-                Console.WriteLine("ExportTable length: " + archive.ExportTable.Length);
+                Log.Info("ExportTable length: " + archive.ExportTable.Length);
                 for (int i = 0; i < 5 && i < archive.ExportTable.Length; i++)
                 {
-                    Console.WriteLine($"Export {i}: {archive.ExportTable[i]}");
+                    Log.Info($"Export {i}: {archive.ExportTable[i]}");
                 }
 
-                // Console.WriteLine("ThumbnailMetadataTable length: " + archive.ThumbnailMetadataTable.Length);
+                // Log.Info("ThumbnailMetadataTable length: " + archive.ThumbnailMetadataTable.Length);
                 // for (int i = 0; i < 5 && i < archive.ThumbnailMetadataTable.Length; i++)
                 // {
-                //     Console.WriteLine($"ThumbnailMetadata {i}: {archive.ThumbnailMetadataTable[i].ObjectFullName} @ {archive.ThumbnailMetadataTable[i].FileOffset}");
+                //     Log.Info($"ThumbnailMetadata {i}: {archive.ThumbnailMetadataTable[i].ObjectFullName} @ {archive.ThumbnailMetadataTable[i].FileOffset}");
                 // }
 
                 var classNames = new HashSet<string>();
@@ -127,7 +137,7 @@ namespace XCOM_Uncooker
 
                 foreach (var className in classNames) 
                 {
-                    // Console.WriteLine($"Referenced class: {className}");
+                    // Log.Info($"Referenced class: {className}");
                 }
             }
             */

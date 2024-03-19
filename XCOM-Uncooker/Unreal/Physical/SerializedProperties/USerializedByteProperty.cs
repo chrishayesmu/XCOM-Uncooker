@@ -10,6 +10,8 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 {
     public class USerializedByteProperty(FArchive archive, UProperty prop, FPropertyTag? tag) : USerializedProperty(archive, prop, tag)
     {
+        private static readonly Logger Log = new Logger(nameof(USerializedByteProperty));
+
         public override string TagType => "ByteProperty";
 
         #region Serialized data
@@ -34,7 +36,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
                 }
                 else
                 {
-                    Console.WriteLine($"{nameof(USerializedByteProperty)}: serialized writes not implemented yet");
+                    Log.Warning($"Serialized writes not implemented yet");
                 }
             }
             else

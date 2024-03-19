@@ -65,6 +65,8 @@ namespace XCOM_Uncooker.Unreal.Physical
     {
         const uint UNREAL_SIGNATURE = 0x9E2A83C1;
 
+        private static readonly Logger Log = new Logger(nameof(FArchive));
+
         #region Serialized data
 
         // -----------------------------------------------------
@@ -213,10 +215,14 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// <summary>
         /// Causes this archive to read and store all of the data outside of its header block.
         /// </summary>
-        public void SerializeBodyData()
+        public void SerializeBodyData(ProgressBar progressBar)
         {
-            SerializeDependsMap();
-            SerializeExportObjects();
+            lock (_stream)
+            {
+                SerializeDependsMap();
+                SerializeExportObjects(progressBar);
+            }
+
             ConnectInnerObjects();
 
             if (IsLoading)
@@ -626,9 +632,12 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             if (ExportedObjects[exportTableIndex] == null && IsLoading)
             {
-                long previousPosition = _stream.Position;
-                ExportedObjects[exportTableIndex] = LoadExport(exportTableIndex);
-                _stream.Position = previousPosition;
+                lock (_stream)
+                {
+                    long previousPosition = _stream.Position;
+                    ExportedObjects[exportTableIndex] = LoadExport(exportTableIndex);
+                    _stream.Position = previousPosition;
+                }
             }
 
             return ExportedObjects[exportTableIndex];
@@ -746,29 +755,41 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// <param name="index">The 0-based index of the export object.</param>
         private UObject LoadExport(int i)
         {
-            string exportClassName;
-
-            if (ExportTable[i].ClassIndex == 0)
+            lock (_stream)
             {
-                exportClassName = "Class";
-            }
-            else if (ExportTable[i].ClassIndex > 0)
-            {
-                var classObjName = GetExportTableEntry(ExportTable[i].ClassIndex).ObjectName;
-                exportClassName = NameToString(classObjName);
-            }
-            else
-            {
-                var classObjName = GetImportTableEntry(ExportTable[i].ClassIndex).ObjectName;
-                exportClassName = NameToString(classObjName);
-            }
+                string exportClassName;
 
-            var exportObj = UObject.NewObjectBasedOnClassName(exportClassName, this, ExportTable[i]);
+                if (ExportTable[i].ClassIndex == 0)
+                {
+                    exportClassName = "Class";
+                }
+                else if (ExportTable[i].ClassIndex > 0)
+                {
+                    var classObjName = GetExportTableEntry(ExportTable[i].ClassIndex).ObjectName;
+                    exportClassName = NameToString(classObjName);
+                }
+                else
+                {
+                    var classObjName = GetImportTableEntry(ExportTable[i].ClassIndex).ObjectName;
+                    exportClassName = NameToString(classObjName);
+                }
 
-            _stream.Seek(ExportTable[i].SerialOffset, SeekOrigin.Begin);
-            exportObj.Serialize(_stream);
+                var exportObj = UObject.NewObjectBasedOnClassName(exportClassName, this, ExportTable[i]);
 
-            return exportObj;
+                _stream.Seek(ExportTable[i].SerialOffset, SeekOrigin.Begin);
+                exportObj.Serialize(_stream);
+
+#if DEBUG
+                int expectedEndPosition = ExportTable[i].SerialOffset + ExportTable[i].SerialSize;
+
+                if (_stream.Position != expectedEndPosition)
+                {
+                    Log.Warning($"In archive {FileName}, object {exportObj.FullObjectPath} did not fully deserialize its data. Class is {ExportTable[i].ClassName}");
+                }
+#endif
+
+                return exportObj;
+            }
         }
 
         /// <summary>
@@ -792,12 +813,14 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// <summary>
         /// Deserializes all of the export objects which are contained in this archive.
         /// </summary>
-        private void SerializeExportObjects()
+        private void SerializeExportObjects(ProgressBar progressBar)
         {
             int numAlreadyLoaded = 0, numFailed = 0, numSucceeded = 0;
 
             for (int i = 0; i < ExportTable.Count; i++)
             {
+                progressBar.Update("", i, ExportTable.Count);
+
                 // This export may have been preloaded by another one - skip it if so
                 if (ExportedObjects[i] != null)
                 {
@@ -817,9 +840,11 @@ namespace XCOM_Uncooker.Unreal.Physical
                 }
             }
 
+            progressBar.Update("complete", ExportTable.Count, ExportTable.Count);
+
             if (numFailed > 0)
             {
-                Console.WriteLine($"Archive {FileName}: done reading export objects. {numSucceeded} succeeded and {numFailed} failed deserialization. {numAlreadyLoaded} were previously loaded.");
+                Log.Info($"Archive {FileName}: done reading export objects. {numSucceeded} succeeded and {numFailed} failed deserialization. {numAlreadyLoaded} were previously loaded.");
             }
 
             _stream.Close();

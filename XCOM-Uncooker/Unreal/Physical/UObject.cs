@@ -24,6 +24,8 @@ namespace XCOM_Uncooker.Unreal.Physical
     [DebuggerDisplay("{DebuggerDisplay}")]
     public class UObject
     {
+        private static readonly Logger Log = new Logger(nameof(UObject));
+
         private static readonly IDictionary<string, Func<FArchive, FObjectTableEntry, UObject>> ClassNameToUObjectFactory = new Dictionary<string, Func<FArchive, FObjectTableEntry, UObject>>()
         {
             { "Class",             (archive, tableEntry) => new UClass(archive, tableEntry) },
@@ -322,7 +324,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                     if (prop == null)
                     {
-                        Console.WriteLine($"ERROR: {FullObjectPath} property {tag.Name}: couldn't identify property class {tag.Type}. Skipping {tag.Size} bytes");
+                        Log.Error($"{FullObjectPath} property {tag.Name}: couldn't identify property class {tag.Type}. Skipping {tag.Size} bytes");
                         stream.SkipBytes(tag.Size);
                         continue;
                     }
@@ -335,7 +337,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
             else
             {
-                Console.WriteLine($"{nameof(SerializeTaggedProperties)}: write not implemented yet");
+                Log.Warning($"{nameof(SerializeTaggedProperties)}: write not implemented yet");
             }
         }
 

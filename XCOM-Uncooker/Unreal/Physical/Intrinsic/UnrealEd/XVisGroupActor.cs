@@ -25,7 +25,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.UnrealEd
         public int IntValue1; // unknown, so far always -1
 
         public byte[] ByteData; // unknown; 6 bytes long. First 4 bytes may be an int or enum value, not clear. 
-                                // So far all bytes are 0, except the first byte is nonzero and has been 0x54 and 0x69.
+                                // So far the last 4 bytes have been zero, while the first 2 take on various values.
 
         public int IntValue2; // unknown, so far always -1
 

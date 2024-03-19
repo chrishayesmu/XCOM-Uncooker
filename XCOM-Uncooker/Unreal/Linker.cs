@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,7 +12,9 @@ namespace XCOM_Uncooker.Unreal
 {
     public class Linker
     {
-        public static readonly List<string> FilesToSkip = ["Act1_IntroLevel.upk", "Act1_IntroLevel_Anim.upk", "Act1_IntroLevel_Anim_LOC_INT.upk", "Act1_IntroLevel_Script.upk", "Act1_IntroLevel_Script_LOC_INT.upk"];
+        private static readonly Logger Log = new Logger(nameof(Linker));
+
+        public static readonly List<string> FilesToSkip = []; // ["Act1_IntroLevel.upk", "Act1_IntroLevel_Anim.upk", "Act1_IntroLevel_Anim_LOC_INT.upk", "Act1_IntroLevel_Script.upk", "Act1_IntroLevel_Script_LOC_INT.upk"];
 
         public FArchive[] InputArchives;
         public FArchive[] OutputArchives;
@@ -20,82 +23,137 @@ namespace XCOM_Uncooker.Unreal
         public IDictionary<string, string> UncookedArchiveNameByObjectPath;
         public IDictionary<Guid, UPackage> InputPackagesByGuid;
 
-        private bool UseVerboseLogging;
-
-        public Linker(bool logVerbose)
-        {
-            UseVerboseLogging = logVerbose;
-        }
+        private ConcurrentQueue<ProgressBar> ParallelProgressBars = [];
 
         public void LoadArchives(List<string> filePaths)
         {
             var validPaths = filePaths.Where(path => Path.Exists(path) && !FilesToSkip.Contains(Path.GetFileName(path))).ToList();
 
-            int fileColumnSize = 3 + Math.Max(14, filePaths.Max(path => Path.GetFileNameWithoutExtension(path).Length));
-            string columnSpecs = "{0," + fileColumnSize + "} | {1,15} | {2,15} | {3,15} | {4,15}";
-
-            if (UseVerboseLogging)
-            {
-                Console.WriteLine(columnSpecs, "Archive file", "Name count", "Import count", "Export count", "DependsMap?");
-                Console.WriteLine("-------------------------------------------------------------------------------------------------------------");
-            }
-
             InputArchives = new FArchive[validPaths.Count];
 
-            int numSucceeded = 0, numFailed = 0;
+            int numArchivesCompleted = 0, numSucceeded = 0, numFailed = 0;
 
-            Console.WriteLine($"Attempting to read archive headers for {InputArchives.Length} archives..");
-            for (int i = 0; i < validPaths.Count; i++)
+            #region Deserialize archive headers
+
+            Log.Info($"Attempting to read archive headers for {InputArchives.Length} archives..");
+
+            ProgressBar headerProgressBar = new ProgressBar("Reading headers");
+            Log.DisplayProgressBar(headerProgressBar);
+
+            // Create the archives before the parallelization, makes the parallel bit simpler
+            for (int i = 0; i < validPaths.Count; i++) 
+            {
+                var stream = File.Open(validPaths[i], FileMode.Open);
+                InputArchives[i] = new FArchive(Path.GetFileNameWithoutExtension(validPaths[i]), this);
+                InputArchives[i].BeginSerialization(stream);
+            }
+
+            numArchivesCompleted = 0;
+
+            Parallel.ForEach(InputArchives, (archive) =>
             {
                 try
                 {
-                    var stream = File.Open(validPaths[i], FileMode.Open);
-                    InputArchives[i] = new FArchive(Path.GetFileNameWithoutExtension(validPaths[i]), this);
-                    InputArchives[i].BeginSerialization(stream);
-                    InputArchives[i].SerializeHeaderData();
-                    numSucceeded++;
+                    archive.SerializeHeaderData();
+                    Interlocked.Increment(ref numSucceeded);
+                    headerProgressBar.Update("", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Length);
 
-                    if (UseVerboseLogging)
-                    {
-                        Console.WriteLine(columnSpecs, InputArchives[i].FileName, InputArchives[i].NameTable.Count, InputArchives[i].ImportTable.Count, InputArchives[i].ExportTable.Count, InputArchives[i].HasDependsMap);
-                    }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ERROR: could not initialize archive at \"{validPaths[i]}\" - it will be skipped.");
-                    Console.WriteLine(ex.ToString());
-                    numFailed++;
+                    Log.Error($"Could not initialize archive \"{archive.FileName}\" - it will be skipped.");
+                    Log.Info(ex.ToString());
+                    Interlocked.Increment(ref numFailed);
                 }
-            }
+            });
 
-            Console.WriteLine($"Linker: Done parsing archive headers. {numSucceeded} succeeded and {numFailed} failed.");
-            Console.WriteLine("Beginning deserialization of exported classes for archives..");
-            
-            foreach (var archive in InputArchives)
+            headerProgressBar.Update("complete", InputArchives.Length, InputArchives.Length);
+            Log.RemoveProgressBar(headerProgressBar);
+            Log.Info($"Done parsing archive headers. {numSucceeded} succeeded and {numFailed} failed.");
+
+            #endregion
+
+            #region Deserialize exported classes
+
+            Log.Info("Beginning deserialization of exported classes for archives..");
+
+            ProgressBar classDeserializationProgressBar = new ProgressBar("Deserializing classes");
+            Log.DisplayProgressBar(classDeserializationProgressBar);
+
+            numArchivesCompleted = 0;
+
+            Parallel.ForEach(InputArchives, (archive) =>
             {
                 if (archive == null)
                 {
-                    continue;
+                    return;
                 }
 
                 archive.SerializeClassExports();
+
+                classDeserializationProgressBar.Update(archive.FileName, Interlocked.Increment(ref numArchivesCompleted), InputArchives.Length);
+            });
+
+            classDeserializationProgressBar.Update("complete", InputArchives.Length, InputArchives.Length);
+            Log.RemoveProgressBar(classDeserializationProgressBar);
+            Log.Info("Deserialization of exported classes is complete.");
+
+            #endregion
+
+            #region Deserialize export objects
+
+            Log.Info("Beginning deserialization of export objects for archives..");
+
+            ProgressBar exportDeserializationProgressBar = new ProgressBar("Deserializing main package data")
+            {
+                BackgroundColor = ConsoleColor.DarkBlue,
+                ForegroundColor = ConsoleColor.White
+            };
+            
+            Log.DisplayProgressBar(exportDeserializationProgressBar);
+            exportDeserializationProgressBar.Update("Packages processed", 0, InputArchives.Length);
+
+            numArchivesCompleted = 0;
+
+            Parallel.ForEach(InputArchives, (archive) =>
+            {
+                if (archive == null) 
+                { 
+                    return; 
+                }
+
+                var progressBar = GetOrCreateParallelProgressBar(archive.FileName);
+                archive.SerializeBodyData(progressBar);
+                archive.EndSerialization();
+
+                ParallelProgressBars.Enqueue(progressBar); // put the bar back in the pool for re-use
+                exportDeserializationProgressBar.Update("Packages processed", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Length);
+            });
+
+            exportDeserializationProgressBar.Update("Packages processed", InputArchives.Length, InputArchives.Length);
+
+            while (ParallelProgressBars.TryDequeue(out ProgressBar progressBar))
+            {
+                Log.RemoveProgressBar(progressBar);
             }
 
-            Console.WriteLine("Deserialization of exported classes is complete.");
-            Console.WriteLine("Beginning deserialization of export objects for archives..");
+            #endregion
 
-            foreach (var archive in InputArchives)
+            /*
+            for (int i = 0; i < InputArchives.Length; i++)
             {
-                if (archive == null)
+                if (InputArchives[i] == null)
                 {
                     continue;
                 }
 
-                archive.SerializeBodyData();
-                archive.EndSerialization();
-            }
+                exportDeserializationProgressBar.Update(InputArchives[i].FileName, i, InputArchives.Length);
+                InputArchives[i].SerializeBodyData(exportDeserializationSubProgressBar);
+                InputArchives[i].EndSerialization();
+            } */
 
-            Console.WriteLine("Deserialization of export objects is complete.");
+            Log.RemoveProgressBar(exportDeserializationProgressBar);
+            Log.Info("Deserialization of export objects is complete.");
         }
 
         /// <summary>
@@ -160,7 +218,7 @@ namespace XCOM_Uncooker.Unreal
                 }
 
                 // A top-level non-package object belongs to the implied package of its archive name; normally this
-                // should only happen for maps, and maybe weird situations in Core/Engine (I think?)
+                // should only happen for maps, classes, and maybe weird situations in Core/Engine (I think?)
                 return exportEntry.Archive.NormalizedName;
             }
 
@@ -239,7 +297,7 @@ namespace XCOM_Uncooker.Unreal
                 }
             }
 
-            Console.WriteLine($"Found {allPackages.Count} distinct top level packages.");
+            Log.Info($"Found {allPackages.Count} distinct top level packages.");
 
             // Initialize storage for each of these, arranged by package
             ObjectsByUncookedArchiveName = new Dictionary<string, IDictionary<string, UObject>>();
@@ -301,7 +359,7 @@ namespace XCOM_Uncooker.Unreal
             using (var writer = new StreamWriter("objects-by-archive.csv"))
             {
                 writer.WriteLine("Archive,Object path");
-                //Console.WriteLine("{0,35}{1,15}", "Archive", "Object count");
+                //Log.Info("{0,35}{1,15}", "Archive", "Object count");
                 foreach (var entry in ObjectsByUncookedArchiveName)
                 {
                     foreach (var subentry in entry.Value)
@@ -310,23 +368,23 @@ namespace XCOM_Uncooker.Unreal
                     }
                     // outputData += $"{entry.Key},{entry.Value.Count}\n";
                     total += entry.Value.Count;
-                    //Console.WriteLine("{0,35}{1,15}", entry.Key, entry.Value.Count);
+                    //Log.Info("{0,35}{1,15}", entry.Key, entry.Value.Count);
                 }
             }
 
             //File.WriteAllText("object-count-by-archive.csv", outputData);
 
-            Console.WriteLine($"Assigned {total} objects across {ObjectsByUncookedArchiveName.Count} packages.");
-            Console.WriteLine($"Skipped {skippedArchives} archives, {skippedObjects} export objects, and {repeatObjects} seemingly-repeated objects.");
+            Log.Info($"Assigned {total} objects across {ObjectsByUncookedArchiveName.Count} packages.");
+            Log.Info($"Skipped {skippedArchives} archives, {skippedObjects} export objects, and {repeatObjects} seemingly-repeated objects.");
 
             var unmatchedPackages = allPackages.Where(p => !PackageOrganizer.TryMatchPackageToFolders(p, out _));
-            Console.WriteLine($"There are {unmatchedPackages.Count()} packages which were not matched to a folder structure.");
+            Log.Info($"There are {unmatchedPackages.Count()} packages which were not matched to a folder structure.");
 
             File.WriteAllText("allPackages.txt", string.Join('\n', allPackages.Order()));
             File.WriteAllText("unmatchedPackages.txt", string.Join('\n', unmatchedPackages.Order()));
 
 
-            Console.WriteLine("Copying data into uncooked archives..");
+            Log.Info("Copying data into uncooked archives..");
 
             OutputArchives = new FArchive[ObjectsByUncookedArchiveName.Count];
             int i = 0, numObjects = 0;
@@ -344,13 +402,13 @@ namespace XCOM_Uncooker.Unreal
                 {
                     UObject obj = subentry.Value;
 
-                    //Console.WriteLine($"Archive {outArchive.FileName}: trying to add object {obj.FullObjectPath}");
+                    //Log.Info($"Archive {outArchive.FileName}: trying to add object {obj.FullObjectPath}");
                     outArchive.AddExportObject(obj);
                     numObjects++;
 
                     if (numObjects % 250 == 0)
                     {
-                        Console.WriteLine($"    {numObjects} export objects added to uncooked archives..");
+                        Log.Info($"    {numObjects} export objects added to uncooked archives..");
 
                         if (numObjects == 50000 || numObjects == 80000)
                         {
@@ -362,12 +420,26 @@ namespace XCOM_Uncooker.Unreal
 
             //UObject obj = GetCookedObjectByPath("CHH_FacialHair.Textures.FacialHairTile");
             //
-            //Console.WriteLine($"Archive {outArchive.FileName}: trying to add object {obj.FullObjectPath}");
+            //Log.Info($"Archive {outArchive.FileName}: trying to add object {obj.FullObjectPath}");
             //outArchive.AddExportObject(obj);
 
-            Console.WriteLine($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
+            Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
 
-            // Console.WriteLine($"After adding: archive has {outArchive.NameTable.Count} names, {outArchive.ExportTable.Count} exports, and {outArchive.ImportTable.Count} imports");
+            // Log.Info($"After adding: archive has {outArchive.NameTable.Count} names, {outArchive.ExportTable.Count} exports, and {outArchive.ImportTable.Count} imports");
+        }
+    
+        private ProgressBar GetOrCreateParallelProgressBar(string title)
+        {
+            if (ParallelProgressBars.TryDequeue(out ProgressBar progressBar))
+            {
+                progressBar.Title = title;
+                return progressBar;
+            }
+
+            progressBar = new ProgressBar(title);
+            Log.DisplayProgressBar(progressBar);
+
+            return progressBar;
         }
     }
 }

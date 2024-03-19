@@ -10,13 +10,15 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 {
     public class USerializedMapProperty(FArchive archive, UProperty prop, FPropertyTag? tag) : USerializedProperty(archive, prop, tag)
     {
+        private static readonly Logger Log = new Logger(nameof(USerializedMapProperty));
+
         public override string TagType => "MapProperty";
 
         public override void Serialize(IUnrealDataStream stream)
         {
             if (Tag.HasValue && Tag.Value.Size > 0)
             {
-                Console.WriteLine($"WARNING: asked to serialize {Tag.Value.Size} bytes in a {nameof(USerializedMapProperty)}, but we don't know how to serialize this");
+                Log.Warning($"Asked to serialize {Tag.Value.Size} bytes, but we don't know how to serialize this");
             }
         }
     }

@@ -13,6 +13,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 {
     public class UStruct(FArchive archive, FObjectTableEntry tableEntry) : UField(archive, tableEntry)
     {
+        private static readonly Logger Log = new Logger(nameof(UStruct));
+
         public UField FirstChild => (UField) Archive.GetObjectByIndex(Children);
 
         public UField SuperField => (UField) Archive.GetObjectByIndex(Super);
@@ -106,7 +108,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 #if DEBUG
                     if (currentProperty == null)
                     {
-                        Console.WriteLine($"ERROR: UStruct {FullObjectPath} failed to find a property named {tag.Name} to match tag of type {tag.Type}");
+                        Log.Error($"{FullObjectPath}: failed to find a property named {tag.Name} to match tag of type {tag.Type}");
                         Debugger.Break();
                         return;
                     }
@@ -119,7 +121,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                     // Make sure our property matches the type from the property tag
                     if (prop.TagType != tag.Type)
                     {
-                        Console.WriteLine($"ERROR: {this.GetType()} {FullObjectPath} found a property named {tag.Name}, but the tag type {tag.Type} didn't match the property's tag type {prop.TagType}. Property type is {currentProperty.GetType()}");
+                        Log.Error($"{FullObjectPath}: found a property named {tag.Name}, but the tag type {tag.Type} didn't match the property's tag type {prop.TagType}. Property type is {currentProperty.GetType()}");
                         return;
                     }
 #endif
@@ -184,34 +186,37 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         private void LinkProperties()
         {
-            // Don't try to link properties until we've had a chance to read the struct's data, or we 
-            // won't find anything. This should only apply when deserializing an archive.
-            if (arePropertiesLinked || (!hasDeserializedStructData && Archive.IsLoading))
+            lock (this)
             {
-                return;
-            }
-
-            arePropertiesLinked = true;
-           
-            // Go through the inheritance hierarchy from top to bottom
-            var inheritanceHierarchy = new Stack<UStruct>();
-            
-            UStruct structDef = this;
-            while (structDef != null)
-            {
-                inheritanceHierarchy.Push(structDef);
-                structDef = (UStruct) structDef.SuperField;
-            }
-
-            // Add property fields in order as we find them
-            while (inheritanceHierarchy.TryPop(out structDef))
-            {
-                UProperty prop = structDef.GetNextProperty(structDef.FirstChild);
-
-                while (prop != null)
+                // Don't try to link properties until we've had a chance to read the struct's data, or we 
+                // won't find anything. This should only apply when deserializing an archive.
+                if (arePropertiesLinked || (!hasDeserializedStructData && Archive.IsLoading))
                 {
-                    linkedProperties.Add(prop);
-                    prop = structDef.GetNextProperty(prop.NextField);
+                    return;
+                }
+
+                arePropertiesLinked = true;
+           
+                // Go through the inheritance hierarchy from top to bottom
+                var inheritanceHierarchy = new Stack<UStruct>();
+            
+                UStruct structDef = this;
+                while (structDef != null)
+                {
+                    inheritanceHierarchy.Push(structDef);
+                    structDef = (UStruct) structDef.SuperField;
+                }
+
+                // Add property fields in order as we find them
+                while (inheritanceHierarchy.TryPop(out structDef))
+                {
+                    UProperty prop = structDef.GetNextProperty(structDef.FirstChild);
+
+                    while (prop != null)
+                    {
+                        linkedProperties.Add(prop);
+                        prop = structDef.GetNextProperty(prop.NextField);
+                    }
                 }
             }
         }
