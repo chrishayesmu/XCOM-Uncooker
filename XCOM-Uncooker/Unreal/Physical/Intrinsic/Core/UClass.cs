@@ -110,8 +110,8 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Enum32(out ClassFlags);
             stream.Int32(out Within);
             stream.Name(out ConfigName);
-            stream.NameToIntMap(out ComponentNameToDefaultObjectMap);
-            stream.Int32ToInt32Map(out Interfaces);
+            stream.Map(out ComponentNameToDefaultObjectMap);
+            stream.Map(out Interfaces);
             stream.NameArray(out DontSortCategories);
             stream.NameArray(out HideCategories);
             stream.NameArray(out AutoExpandCategories);

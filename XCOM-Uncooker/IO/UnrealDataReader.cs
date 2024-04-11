@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using XCOM_Uncooker.Unreal;
 using XCOM_Uncooker.Unreal.Physical;
 using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
@@ -73,9 +75,37 @@ namespace XCOM_Uncooker.IO
             _stream.Seek(numBytes, SeekOrigin.Current);
         }
 
+        public void Array<T>(out T[] data, UObject owner = null) where T : IUnrealSerializable, new()
+        {
+            Int32(out int arraySize);
+
+#if DEBUG
+            if (arraySize > 100000)
+            {
+                throw new Exception("");
+            }
+#endif
+
+            data = new T[arraySize];
+
+            for (int i = 0; i < arraySize; i++)
+            {
+                data[i] = new T();
+                data[i].Owner = owner;
+                data[i].Serialize(this);
+            }
+        }
+
         public void Bool(out bool value)
         {
             UInt8(out byte byteValue);
+
+#if DEBUG
+            if (byteValue != 0 && byteValue != 1)
+            {
+                Debugger.Break();
+            }
+#endif
 
             value = byteValue > 0;
         }
@@ -84,7 +114,98 @@ namespace XCOM_Uncooker.IO
         {
             Int32(out int boolInt);
 
+#if DEBUG
+            if (boolInt != 0 && boolInt != 1)
+            {
+                // Debugger.Break();
+            }
+#endif
+
             value = boolInt > 0;
+        }
+
+        public void BulkArray<T>(out T[] data, int elementSize, UObject owner = null) where T : IUnrealSerializable, new()
+        {
+            Int32(out int actualElementSize);
+
+#if DEBUG
+            if (elementSize != actualElementSize)
+            {
+                throw new Exception($"Expected element size of {elementSize}, found {actualElementSize}");
+            }
+#endif
+
+            Array(out data, owner);
+        }
+
+        public void BulkArray(out byte[] data)
+        {
+            // Unlike the other bulk serialization functions, this one doesn't have an expected element size; it can
+            // be used to read any bulk-serialized data where we don't care about the data's type
+            // TODO: we need to know the element size for re-serializing the data later!
+
+            Int32(out int elementSize);
+
+            if (elementSize == 0)
+            {
+                data = [];
+                return;
+            }
+
+            Int32(out int numElements);
+            data = new byte[numElements * elementSize];
+            Read(data, 0, numElements * elementSize);
+        }
+
+        public void BulkArray(out int[] data)
+        {
+            Int32(out int elementSize);
+
+#if DEBUG
+            if (elementSize != 4)
+            {
+                throw new Exception($"Expected element size of 4, found {elementSize}");
+            }
+#endif
+
+            Int32Array(out data);
+        }
+
+        public void BulkArray(out short[] data)
+        {
+            Int32(out int elementSize);
+
+#if DEBUG
+            if (elementSize != 2)
+            {
+                throw new Exception($"Expected element size of 2, found {elementSize}");
+            }
+#endif
+
+            Int16Array(out data);
+        }
+
+        public void BulkTransactionalArray<T>(out TTransactionalArray<T> data, int elementSize) where T : IUnrealSerializable, new()
+        {
+            data = new TTransactionalArray<T>();
+
+            Int32(out int actualElementSize);
+
+#if DEBUG
+            if (elementSize != actualElementSize)
+            {
+                throw new Exception($"Expected element size of {elementSize}, found {actualElementSize}");
+            }
+#endif
+
+            data.Serialize(this);
+        }
+
+        public void ByteArray(out byte[] data)
+        {
+            Int32(out int length);
+            data = new byte[length];
+            Read(data, 0, length);
         }
 
         public void Bytes(out byte[] data, int count, int offset = 0)
@@ -94,7 +215,7 @@ namespace XCOM_Uncooker.IO
             Read(data, offset, count);
         }
 
-        public void Enum32<T>(out T value) where T: Enum
+        public void Enum32<T>(out T value) where T : Enum
         {
             UInt32(out uint enumAsUInt);
             value = (T) Enum.ToObject(typeof(T), enumAsUInt);
@@ -104,6 +225,33 @@ namespace XCOM_Uncooker.IO
         {
             UInt64(out ulong enumAsULong);
             value = (T) Enum.ToObject(typeof(T), enumAsULong);
+        }
+
+        public void Float32Array(out float[] data)
+        {
+            Int32(out int length);
+            data = new float[length];
+
+#if DEBUG
+            if (length > 100000)
+            {
+                throw new Exception("");
+            }
+#endif
+
+            for (int i = 0; i < length; i++)
+            {
+                Float32(out data[i]);
+            }
+        }
+
+        public void Float16(out Half value)
+        {
+            Span<byte> buffer = stackalloc byte[2];
+
+            _stream.Read(buffer);
+
+            value = MemoryMarshal.Read<Half>(buffer);
         }
 
         public void Float32(out float value)
@@ -135,6 +283,17 @@ namespace XCOM_Uncooker.IO
             for (int i = 0; i < length; i++)
             {
                 GenerationInfo(out data[i]);
+            }
+        }
+
+        public void GuidArray(out Guid[] data)
+        {
+            Int32(out int length);
+            data = new Guid[length];
+
+            for (int i = 0; i < length; i++)
+            {
+                Guid(out data[i]);
             }
         }
 
@@ -195,8 +354,38 @@ namespace XCOM_Uncooker.IO
 
             value = MemoryMarshal.Read<long>(buffer);
         }
+    
+        public void Map(out IDictionary<byte, int> map)
+        {
+            Int32(out int numEntries);
 
-        public void Int32ToInt32Map(out IDictionary<int, int> map)
+            map = new Dictionary<byte, int>(numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                UInt8(out byte key);
+                Int32(out int value);
+
+                map.Add(key, value);
+            }
+        }
+
+        public void Map(out IDictionary<int, bool> map)
+        {
+            Int32(out int numEntries);
+
+            map = new Dictionary<int, bool>(numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Int32(out int key);
+                BoolAsInt32(out bool value);
+
+                map.Add(key, value);
+            }
+        }
+
+        public void Map(out IDictionary<int, int> map)
         {
             Int32(out int numEntries);
 
@@ -208,6 +397,150 @@ namespace XCOM_Uncooker.IO
                 Int32(out int value);
 
                 map.Add(key, value);
+            }
+        }
+
+        public void Map(out IDictionary<int, int[]> map)
+        {
+            Int32(out int numEntries);
+
+            map = new Dictionary<int, int[]>(numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Int32(out int key);
+                Int32Array(out int[] value);
+
+                if (map.ContainsKey(key))
+                {
+                    // this should be very rare or else we would just be using lists instead
+                    map[key] = map[key].Concat(value).ToArray();
+                }
+                else
+                {
+                   map.Add(key, value);
+                }
+            }
+        }
+
+        public void Map(out IDictionary<long, int> map)
+        {
+            Int32(out int numEntries);
+
+            map = new Dictionary<long, int>(numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Int64(out long key);
+                Int32(out int value);
+
+                map.Add(key, value);
+            }
+        }
+
+        public void Map(out IDictionary<long, int[]> map)
+        {
+            Int32(out int numEntries);
+
+            map = new Dictionary<long, int[]>(numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Int64(out long key);
+                Int32Array(out int[] value);
+
+                map.Add(key, value);
+            }
+        }
+
+        public void Map(out IDictionary<FName, int> map)
+        {
+            Int32(out int numEntries);
+
+            map = new Dictionary<FName, int>(numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Name(out FName name);
+                Int32(out int value);
+
+                map.Add(name, value);
+            }
+        }
+
+        public void Map<T>(out IDictionary<int, T[]> map) where T : IUnrealSerializable, new()
+        {
+            map = new Dictionary<int, T[]>();
+
+            Int32(out int numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Int32(out int key);
+                Array(out T[] data);
+
+                map.Add(key, data);
+            }
+        }
+
+        public void Map<T>(out IDictionary<int, T> map) where T : IUnrealSerializable, new()
+        {
+            map = new Dictionary<int, T>();
+
+            Int32(out int numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Int32(out int key);
+
+                T value = new T();
+                value.Serialize(this);
+
+                map.Add(key, value);
+            }
+        }
+
+        public void MultiMap(out IDictionary<int, IList<int>> map)
+        {
+            map = new Dictionary<int, IList<int>>();
+
+            Int32(out int numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Int32(out int key);
+                Int32(out int value);
+
+                if (!map.TryGetValue(key, out IList<int> valueList))
+                {
+                    valueList = new List<int>();
+                    map.Add(key, valueList);
+                }
+
+                valueList.Add(value);
+            }
+        }
+
+        public void MultiMap<T>(out IDictionary<int, IList<T>> map) where T : IUnrealSerializable, new()
+        {
+            map = new Dictionary<int, IList<T>>();
+
+            Int32(out int numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                Int32(out int key);
+
+                if (!map.TryGetValue(key, out IList<T> valueList))
+                {
+                    valueList = new List<T>();
+                    map.Add(key, valueList);
+                }
+
+                T value = new T();
+                value.Serialize(this);
+
+                valueList.Add(value);
             }
         }
 
@@ -232,21 +565,12 @@ namespace XCOM_Uncooker.IO
             }
         }
 
-        public void NameToIntMap(out IDictionary<FName, int> map)
+        public void Object<T>(out T data, UObject owner = null) where T : IUnrealSerializable, new()
         {
-            Int32(out int numEntries);
-
-            map = new Dictionary<FName, int>(numEntries);
-
-            for (int i = 0; i < numEntries; i++)
-            {
-                Name(out FName name);
-                Int32(out int value);
-
-                map.Add(name, value);
-            }
+            data = new T();
+            data.Owner = owner;
+            data.Serialize(this);
         }
-
 
         public void PropertyTag(out FPropertyTag tag)
         {
@@ -355,6 +679,18 @@ namespace XCOM_Uncooker.IO
         public void UInt8(out byte value)
         {
             value = (byte) ReadByte();
+        }
+
+        public void UInt16Array(out ushort[] data)
+        {
+            Int32(out int length);
+
+            data = new ushort[length];
+
+            for (int i = 0; i < length; i++)
+            {
+                UInt16(out data[i]);
+            }
         }
 
         public void UInt16(out ushort value)

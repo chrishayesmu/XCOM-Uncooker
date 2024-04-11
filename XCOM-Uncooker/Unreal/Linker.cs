@@ -43,7 +43,7 @@ namespace XCOM_Uncooker.Unreal
             // Create the archives before the parallelization, makes the parallel bit simpler
             for (int i = 0; i < validPaths.Count; i++) 
             {
-                var stream = File.Open(validPaths[i], FileMode.Open);
+                var stream = File.Open(validPaths[i], FileMode.Open, FileAccess.Read);
                 InputArchives[i] = new FArchive(Path.GetFileNameWithoutExtension(validPaths[i]), this);
                 InputArchives[i].BeginSerialization(stream);
             }

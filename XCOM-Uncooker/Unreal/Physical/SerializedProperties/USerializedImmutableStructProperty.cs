@@ -19,7 +19,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         {
             get
             {
-                var structDef = (BackingProperty as UStructProperty).StructDefinition;
+                var structDef = (BackingProperty as UStructProperty)?.StructDefinition;
                 string structName = structDef?.ObjectName! ?? Tag?.StructName!;
 
                 if (structName == null)

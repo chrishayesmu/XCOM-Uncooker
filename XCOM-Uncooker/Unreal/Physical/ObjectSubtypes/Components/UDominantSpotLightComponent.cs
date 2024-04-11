@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 
-namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
+namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 {
-    public class UDominantDirectionalLightComponent(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
+    public class UDominantSpotLightComponent(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
     {
         public short[] DominantLightShadowMap;
 
@@ -25,7 +25,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
         {
             base.CloneFromOtherArchive(sourceObj);
 
-            UDominantDirectionalLightComponent other = (UDominantDirectionalLightComponent)sourceObj;
+            UDominantSpotLightComponent other = (UDominantSpotLightComponent)sourceObj;
 
             DominantLightShadowMap = other.DominantLightShadowMap;
         }

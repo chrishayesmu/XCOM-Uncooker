@@ -7,7 +7,7 @@ using XCOM_Uncooker.IO;
 
 namespace XCOM_Uncooker.Unreal.Physical
 {
-    public class FURL
+    public class FURL : IUnrealSerializable
     {
         #region Serialized data
 

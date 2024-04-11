@@ -8,7 +8,7 @@ using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
 {
-    public class UInterfaceProperty(FArchive archive, FObjectTableEntry tableEntry) : UObjectProperty(archive, tableEntry)
+    public class UInterfaceProperty(FArchive archive, FObjectTableEntry tableEntry) : UProperty(archive, tableEntry)
     {
         public override bool IsSimpleCopyable => false;
 
@@ -33,7 +33,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
         {
             base.CloneFromOtherArchive(sourceObj);
 
-            UInterfaceProperty other = (UInterfaceProperty)sourceObj;
+            UInterfaceProperty other = (UInterfaceProperty) sourceObj;
 
             InterfaceClass = Archive.MapIndexFromSourceArchive(other.InterfaceClass, other.Archive);
         }

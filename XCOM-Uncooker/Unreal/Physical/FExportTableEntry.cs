@@ -97,6 +97,15 @@ namespace XCOM_Uncooker.Unreal.Physical
         public UClass SuperClassObj => (UClass) Archive.GetObjectByIndex(SuperIndex);
 
         /// <summary>
+        /// The ending position in the archive when this object has been fully serialized. In other words, this is the
+        /// position such that the last byte of this object's data is immediately before this position, and the bytes 
+        /// beginning at <see cref="SerialEndPosition" /> belong to a different object.
+        /// </summary>
+        public int SerialEndPosition => SerialOffset + SerialSize;
+
+        public bool IsClassDefaultObject { get; private set; } = false;
+
+        /// <summary>
         /// The exported object associated with this entry. May be null if it hasn't been loaded into the archive yet.
         /// </summary>
         public UObject ExportObject;
@@ -120,6 +129,11 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Int32Array(out GenerationNetObjectCount);
             stream.Guid(out PackageGuid);
             stream.Enum32(out PackageFlags);
+
+            if (stream.IsRead)
+            {
+                IsClassDefaultObject = ObjectName.ToString().StartsWith("Default__");
+            }
         }
 
         public override string ToString()

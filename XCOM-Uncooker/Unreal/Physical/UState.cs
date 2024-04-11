@@ -32,7 +32,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Int32(out ProbeMask);
             stream.Int16(out LabelTableOffset);
             stream.Enum32(out StateFlags);
-            stream.NameToIntMap(out FuncMap);
+            stream.Map(out FuncMap);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

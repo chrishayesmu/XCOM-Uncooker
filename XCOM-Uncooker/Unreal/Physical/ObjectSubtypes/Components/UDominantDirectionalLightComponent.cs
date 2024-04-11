@@ -5,11 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 
-namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
+namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 {
-    public class UDominantSpotLightComponent(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
+    public class UDominantDirectionalLightComponent(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
     {
+        #region Serialized data
+
         public short[] DominantLightShadowMap;
+
+        #endregion
 
         public override void Serialize(IUnrealDataStream stream)
         {
@@ -25,7 +29,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
         {
             base.CloneFromOtherArchive(sourceObj);
 
-            UDominantSpotLightComponent other = (UDominantSpotLightComponent)sourceObj;
+            UDominantDirectionalLightComponent other = (UDominantDirectionalLightComponent)sourceObj;
 
             DominantLightShadowMap = other.DominantLightShadowMap;
         }

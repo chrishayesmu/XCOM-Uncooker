@@ -74,5 +74,36 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
                 _ => new USerializedStructProperty(archive, this, tag),
             };
         }
+
+        public static bool TryCreateSerializedStructProperty(FArchive archive, FPropertyTag tag, out USerializedProperty prop)
+        {
+            prop = null;
+
+            if (!tag.IsStructProperty) 
+            {
+                return false;
+            }
+
+            if (ImmutableStructs.Contains(tag.StructName))
+            {
+                prop = new USerializedImmutableStructProperty(archive, null, tag);
+                return true;
+            }
+
+#pragma warning disable CS8601 // Possible null reference assignment.
+            prop = (string) tag.StructName switch
+            {
+                "ActorReference" => new USerializedActorReferenceProperty(archive, null, tag),
+                "AimComponent" => new USerializedAimComponentProperty(archive, null, tag),
+                "AimOffsetProfile" => new USerializedAimOffsetProfileProperty(archive, null, tag),
+                "AimTransform" => new USerializedAimTransformProperty(archive, null, tag),
+                "InstancedStaticMeshInstanceData" => new USerializedInstancedStaticMeshInstanceDataProperty(archive, null, tag),
+                "NavReference" => new USerializedNavReferenceProperty(archive, null, tag),
+                _ => null
+            };
+#pragma warning restore CS8601 // Possible null reference assignment.
+
+            return prop != null;
+        }
     }
 }

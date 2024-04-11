@@ -601,7 +601,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 return value;
             }
 
-            return $"{value}_{name.Suffix}";
+            return $"{value}_{name.Suffix - 1}";
         }
 
         /// <summary>
@@ -774,7 +774,9 @@ namespace XCOM_Uncooker.Unreal.Physical
                     exportClassName = NameToString(classObjName);
                 }
 
-                var exportObj = UObject.NewObjectBasedOnClassName(exportClassName, this, ExportTable[i]);
+                // ClassDefaultObjects have the same class as an actual object of their type, but they don't have any of the custom serialized data, so they should
+                // just be treated as ordinary UObjects from our perspective
+                var exportObj = ExportTable[i].IsClassDefaultObject ? new UObject(this, ExportTable[i]) : UObject.NewObjectBasedOnClassName(exportClassName, this, ExportTable[i]);
 
                 _stream.Seek(ExportTable[i].SerialOffset, SeekOrigin.Begin);
                 exportObj.Serialize(_stream);
@@ -784,7 +786,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                 if (_stream.Position != expectedEndPosition)
                 {
-                    Log.Warning($"In archive {FileName}, object {exportObj.FullObjectPath} did not fully deserialize its data. Class is {ExportTable[i].ClassName}");
+                    long extraBytes = expectedEndPosition - _stream.Position;
+                    Log.Warning($"In archive {FileName}, object {exportObj.FullObjectPath} did not fully deserialize its data ({extraBytes} bytes remaining). Class is {ExportTable[i].ClassName}");
                 }
 #endif
 
@@ -835,8 +838,8 @@ namespace XCOM_Uncooker.Unreal.Physical
                 }
                 catch (Exception e)
                 {
-                    Debugger.Break();
                     numFailed++;
+                    break; // TODO remove
                 }
             }
 
@@ -910,6 +913,16 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             _stream.UInt32(out PackageFileSummary.PackageSource);
             _stream.StringArray(out PackageFileSummary.AdditionalPackagesToCook);
+
+#if DEBUG
+            if (IsLoading)
+            {
+                if (PackageFileSummary.FileVersion != 845 || PackageFileSummary.LicenseeVersion != 64)
+                {
+                    Log.Warning($"Expected archive {FileName} to be version 845/64, but it's actually {PackageFileSummary.FileVersion}/{PackageFileSummary.LicenseeVersion}");
+                }
+            }
+#endif
         }
 
         private void SerializeExportTable()

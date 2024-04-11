@@ -12,6 +12,8 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
     {
         public override string TagType => "BoolProperty";
 
+        public bool BoolValue => Tag != null ? Tag.Value.BoolVal : Value;
+
         #region Serialized data
 
         public bool Value;

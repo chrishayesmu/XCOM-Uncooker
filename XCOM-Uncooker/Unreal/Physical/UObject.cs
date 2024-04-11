@@ -7,22 +7,23 @@ using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties;
-using XCOM_Uncooker.Unreal.Physical.Intrinsic.UnrealEd;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom;
 using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.Unreal.Physical
 {
-    // TODO: types which need special handling for their extra data
-    // Texture2D
-    // SkeletalMesh
-    // AnimSet
-    // Sounds?
-    //   SoundNodeWave
-    // SwfMovie
-
     [DebuggerDisplay("{DebuggerDisplay}")]
-    public class UObject
+    public class UObject : IUnrealSerializable
     {
         private static readonly Logger Log = new Logger(nameof(UObject));
 
@@ -32,6 +33,8 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "Const",             (archive, tableEntry) => new UConst(archive, tableEntry) },
             { "Enum",              (archive, tableEntry) => new UEnum(archive, tableEntry) },
             { "Function",          (archive, tableEntry) => new UFunction(archive, tableEntry) },
+            { "MetaData",          (archive, tableEntry) => new UMetaData(archive, tableEntry) },
+            { "ObjectRedirector",  (archive, tableEntry) => new UObjectRedirector(archive, tableEntry) },
             { "Package",           (archive, tableEntry) => new UPackage(archive, tableEntry) },
             { "State",             (archive, tableEntry) => new UState(archive, tableEntry) },
             { "ScriptStruct",      (archive, tableEntry) => new UScriptStruct(archive, tableEntry) },
@@ -51,14 +54,64 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "StrProperty",       (archive, tableEntry) => new UStrProperty(archive, tableEntry) },
             { "StructProperty",    (archive, tableEntry) => new UStructProperty(archive, tableEntry) },
 
+            { "AnimSequence",                      (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "ApexGenericAsset",                  (archive, tableEntry) => new NvApexGenericAsset(archive, tableEntry) },
+            { "BrushComponent",                    (archive, tableEntry) => new UBrushComponent(archive, tableEntry) },
+            { "DecalComponent",                    (archive, tableEntry) => new UDecalComponent(archive, tableEntry) },
+            { "DecalMaterial" ,                    (archive, tableEntry) => new UMaterial(archive, tableEntry) },
             { "DominantDirectionalLightComponent", (archive, tableEntry) => new UDominantDirectionalLightComponent(archive, tableEntry) },
             { "DominantSpotLightComponent",        (archive, tableEntry) => new UDominantSpotLightComponent(archive, tableEntry) },
-            { "Level",                             (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "FaceFXAnimSet",                     (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "FaceFXAsset",                       (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "FluidSurfaceComponent",             (archive, tableEntry) => new UFluidSurfaceComponent(archive, tableEntry) },
+            { "Font",                              (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "FracturedStaticMesh"         ,      (archive, tableEntry) => new UFracturedStaticMesh(archive, tableEntry) },
+            { "FracturedStaticMeshComponent",      (archive, tableEntry) => new UStaticMeshComponent(archive, tableEntry) },
+            { "ImageBasedReflectionComponent",     (archive, tableEntry) => new UStaticMeshComponent(archive, tableEntry) },
+            { "InstancedStaticMeshComponent",      (archive, tableEntry) => new UInstancedStaticMeshComponent(archive, tableEntry) },
+            { "Level",                             (archive, tableEntry) => new ULevel(archive, tableEntry) },
+            { "LightMapTexture2D",                 (archive, tableEntry) => new ULightMapTexture2D(archive, tableEntry) },
+            { "Material",                          (archive, tableEntry) => new UMaterial(archive, tableEntry) },
+            { "MaterialInstance",                  (archive, tableEntry) => new UMaterialInstance(archive, tableEntry) },
+            { "MaterialInstanceConstant",          (archive, tableEntry) => new UMaterialInstance(archive, tableEntry) },
+            { "MaterialInstanceTimeVarying",       (archive, tableEntry) => new UMaterialInstance(archive, tableEntry) },
+            { "Model",                             (archive, tableEntry) => new UModel(archive, tableEntry) },
+            { "ModelComponent",                    (archive, tableEntry) => new UModelComponent(archive, tableEntry) },
+            { "Polys",                             (archive, tableEntry) => new UPolys(archive, tableEntry) },
+            { "PhysicsAssetInstance",              (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "PrefabInstance",                    (archive, tableEntry) => new APrefabInstance(archive, tableEntry) },
+            { "RB_BodySetup",                      (archive, tableEntry) => new URB_BodySetup(archive, tableEntry) },
+            { "SeqAct_Interp",                     (archive, tableEntry) => new USeqAct_Interp(archive, tableEntry) },
+            { "ShadowMap1D",                       (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "ShadowMapTexture2D",                (archive, tableEntry) => new UTexture2D(archive, tableEntry) },
+            { "SkeletalMesh",                      (archive, tableEntry) => new USkeletalMesh(archive, tableEntry) },
+            { "SoundClass",                        (archive, tableEntry) => new USoundClass(archive, tableEntry) },
+            { "SoundCue",                          (archive, tableEntry) => new USoundCue(archive, tableEntry) },
+            { "SoundNodeWave",                     (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "SpeedTreeComponent",                (archive, tableEntry) => new USpeedTreeComponent(archive, tableEntry) },
+            { "StaticMesh",                        (archive, tableEntry) => new UStaticMesh(archive, tableEntry) },
+            { "StaticMeshComponent",               (archive, tableEntry) => new UStaticMeshComponent(archive, tableEntry) },
+            { "SwfMovie",                          (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "Texture2D",                         (archive, tableEntry) => new UTexture2D(archive, tableEntry) },
+            { "TextureCube",                       (archive, tableEntry) => new UTexture(archive, tableEntry) },
+            { "TextureFlipBook",                   (archive, tableEntry) => new UTexture2D(archive, tableEntry) },
+            { "TextureMovie",                      (archive, tableEntry) => new UTextureMovie(archive, tableEntry) },
+            { "TextureRenderTarget2D",             (archive, tableEntry) => new UTexture(archive, tableEntry) },
             { "VisGroupActor",                     (archive, tableEntry) => new XVisGroupActor(archive, tableEntry) },
+            { "World",                             (archive, tableEntry) => new UWorld(archive, tableEntry) },
+
+            { "XComCharacterVoiceBank",            (archive, tableEntry) => new XComCharacterVoiceBank(archive, tableEntry) },
+            { "XComDebrisStaticMeshComponent",     (archive, tableEntry) => new UStaticMeshComponent(archive, tableEntry) },
+            { "XComDestructionInstData",           (archive, tableEntry) => new XComDestructionInstData(archive, tableEntry) },
+            { "XComFracDebrisComponent",           (archive, tableEntry) => new UInstancedStaticMeshComponent(archive, tableEntry) },
+            { "XComFracDecoComponent",             (archive, tableEntry) => new UInstancedStaticMeshComponent(archive, tableEntry) },
+            { "XComVisGroupData",                  (archive, tableEntry) => new XComVisGroupData(archive, tableEntry) },
+            { "XComWorldData",                     (archive, tableEntry) => new XComWorldData(archive, tableEntry) },
             { "XComWorldDataContainer",            (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) }, // no idea what's in here, praying it's somehow portable (probably not)
         };
 
-        // TODO get rid of this set
+        // The proper way to check if a class is a UComponent is to traverse its class hierarchy, but since we're dealing with a fixed set of classes for XCOM,
+        // it's faster to just hardcode the components in a set instead
         private static readonly ISet<string> KnownComponentSubtypes = new HashSet<string> ()
         {
             "DistributionFloatConstant",  "DistributionFloatConstantCurve",  "DistributionFloatParameterBase",  "DistributionFloatParticleParameter",  "DistributionFloatSoundParameter", "DistributionFloatUniform",  "DistributionFloatUniformCurve",
@@ -135,7 +188,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public virtual void Serialize(IUnrealDataStream stream)
         {
-            if (ExportTableEntry.ObjectFlags.HasFlag(ObjectFlag.HasStack))
+            // For some reason, every XVisGroupActor claims to have a stack and is lying
+            if (ExportTableEntry.ObjectFlags.HasFlag(ObjectFlag.HasStack) && this is not XVisGroupActor)
             {
                 StateFrame.Serialize(stream);
             }
@@ -173,6 +227,24 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 // TODO: copy prop data
             }
+        }
+
+        /// <summary>
+        /// Gets a serialized property associated with this object by its name, if possible. The property may be
+        /// missing if it wasn't serialized (e.g. because it didn't differ from its default value), or if the name
+        /// is just plain wrong.
+        /// </summary>
+        public USerializedProperty GetSerializedProperty(string propName)
+        {
+            foreach (var prop in SerializedProperties)
+            {
+                if (prop.Tag?.Name == propName)
+                {
+                    return prop;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -347,6 +419,11 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// </summary>
         protected virtual USerializedProperty ChooseSerializedPropertyBasedOnTag(FPropertyTag tag)
         {
+            if (tag.IsStructProperty && UStructProperty.TryCreateSerializedStructProperty(Archive, tag, out USerializedProperty prop))
+            {
+                return prop;
+            }
+
             return (string) tag.Type switch
             {
                 "ArrayProperty" => new USerializedArrayProperty(Archive, null, tag),

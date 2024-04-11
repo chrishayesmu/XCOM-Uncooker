@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
-namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.UnrealEd
+namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 {
     /// <summary>
     /// <c>VisGroupActor</c> appears to be some kind of XCOM-added intrinsic class in UnrealEd. While the same class
@@ -18,29 +18,38 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.UnrealEd
     {
         #region Serialized data
 
-        public int Index1; // unknown, so far it always points at the UnrealEd.VisGroupActor class import
+        [Index(typeof(UClass))]
+        public int ClassIndex1; // always points to class'UnrealEd.VisGroupActor'
 
-        public int Index2; // unknown, so far always matches Index1
+        [Index(typeof(UClass))]
+        public int ClassIndex2; // always points to class'UnrealEd.VisGroupActor'
 
-        public int IntValue1; // unknown, so far always -1
+        public int UnknownValue1; // so far, always -1
+        public int UnknownValue2; // varies, low values (less than 200 so far), unclear meaning
 
-        public byte[] ByteData; // unknown; 6 bytes long. First 4 bytes may be an int or enum value, not clear. 
-                                // So far the last 4 bytes have been zero, while the first 2 take on various values.
+        public byte UnknownByte1; // so far, always 0
+        public byte UnknownByte2; // so far, always 0
 
-        public int IntValue2; // unknown, so far always -1
+        public int UnknownValue3; // so far, always -1
 
         #endregion
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Index1);
-            stream.Int32(out Index2);
-            stream.Int32(out IntValue1);
-            stream.Bytes(out ByteData, 6);
-            stream.Int32(out IntValue2);
+            stream.Int32(out ClassIndex1);
+            stream.Int32(out ClassIndex2);
+            stream.Int32(out UnknownValue1);
+            stream.Int32(out UnknownValue2);
+            stream.UInt8(out UnknownByte1);
+            stream.UInt8(out UnknownByte2);
+            stream.Int32(out UnknownValue3);
 
-            // TODO: every instance of VisGroupActor has the HasStack flag set, but some (all?) of them don't actually have stack frames, and it's breaking UObject.Serialize
-            return;
+#if DEBUG
+            if (ClassIndex1 != ClassIndex2 || UnknownValue1 != -1 || UnknownByte1 != 0 || UnknownByte2 != 0 || UnknownValue3 != -1)
+            {
+                Debugger.Break();
+            }
+#endif
 
             base.Serialize(stream);
         }

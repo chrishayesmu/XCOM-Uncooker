@@ -44,7 +44,7 @@ namespace XCOM_Uncooker
 
     public class Logger(string name)
     {
-        public static LogLevel MinLevel = LogLevel.Verbose;
+        public static LogLevel MinLevel = LogLevel.Info;
 
         private static ConcurrentQueue<string> pendingMessages = new ConcurrentQueue<string>();
         private static List<ProgressBar> progressBars = [];
@@ -61,17 +61,22 @@ namespace XCOM_Uncooker
                 {
                     Thread.Sleep(50);
 
+                    int numMessagesWritten = 0;
                     while (pendingMessages.TryDequeue(out string message))
                     {
                         Console.WriteLine(message);
+                        numMessagesWritten++;
                     }
 
                     // TODO: if a log comes in while there's any progress bars, we need to reset to the position of the topmost one,
                     // clear all output after that, and then add our log + redo the progress bars from that point
+                    int cursorTop = Console.CursorTop;
                     for (int i = 0; i < progressBars.Count; i++)
                     {
+                        progressBars[i].BufferRow = cursorTop + i;
                         PrintProgressBar(progressBars[i]);
                     }
+                    Console.CursorTop = cursorTop;
                 }
             });
 
