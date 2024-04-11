@@ -19,8 +19,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out NodePosX);
-            stream.Int32(out NodePosY);
+            stream.Int32(ref NodePosX);
+            stream.Int32(ref NodePosY);
         }
     }
 
@@ -36,7 +36,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
         {
             base.Serialize(stream);
 
-            stream.Map(out EditorData);
+            stream.Map(ref EditorData);
         }
     }
 }

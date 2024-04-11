@@ -23,9 +23,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
      
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32Array(out Actors);
-            stream.Int32Array(out ChildGroups);
-            stream.Int32(out PackedBools);
+            stream.Int32Array(ref Actors);
+            stream.Int32Array(ref ChildGroups);
+            stream.Int32(ref PackedBools);
         }
     }
 
@@ -49,8 +49,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         {
             base.Serialize(stream);
 
-            stream.Map(out ActorToActorGroups);
-            stream.Array(out VisGroupEntries);
+            stream.Map(ref ActorToActorGroups);
+            stream.Array(ref VisGroupEntries);
         }
     }
 }

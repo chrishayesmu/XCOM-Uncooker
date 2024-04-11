@@ -71,7 +71,7 @@ namespace XCOM_Uncooker.Unreal
             new( "Weapon_",         WeaponsFolder),
         ];
 
-        public static bool TryMatchPackageToFolders(string packageName, out string folderPath)
+        public static bool TryMatchPackageToFolders(string packageName, ref string folderPath)
         {
             folderPath = "";
 

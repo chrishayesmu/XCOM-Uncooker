@@ -25,8 +25,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor
         {
             base.Serialize(stream);
 
-            stream.Map(out ArchetypeToInstanceMap);
-            stream.Map(out PI_ObjectMap);
+            stream.Map(ref ArchetypeToInstanceMap);
+            stream.Map(ref PI_ObjectMap);
         }
     }
 }

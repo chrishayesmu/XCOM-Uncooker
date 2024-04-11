@@ -37,16 +37,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Center);
-            stream.Object(out ConvexHull);
-            stream.Object(out Bounds);
-            stream.Int32Array(out Neighbours);
-            stream.BoolAsInt32(out bCanBeDestroyed);
-            stream.BoolAsInt32(out bRootFragment);
-            stream.BoolAsInt32(out bNeverSpawnPhysicsChunk);
-            stream.Object(out AverageExteriorNormal);
-            stream.Float32Array(out NeighbourDims);
-            stream.Int32(out UnknownValue);
+            stream.Object(ref Center);
+            stream.Object(ref ConvexHull);
+            stream.Object(ref Bounds);
+            stream.Int32Array(ref Neighbours);
+            stream.BoolAsInt32(ref bCanBeDestroyed);
+            stream.BoolAsInt32(ref bRootFragment);
+            stream.BoolAsInt32(ref bNeverSpawnPhysicsChunk);
+            stream.Object(ref AverageExteriorNormal);
+            stream.Float32Array(ref NeighbourDims);
+            stream.Int32(ref UnknownValue);
         }
     }
 
@@ -72,13 +72,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Array(out VertexData);
-            stream.Array(out PermutedVertexData);
-            stream.Int32Array(out FaceTriData);
-            stream.Array(out EdgeDirections);
-            stream.Array(out FaceNormalDirections);
-            stream.Array(out FacePlaneData);
-            stream.Object(out ElemBox);
+            stream.Array(ref VertexData);
+            stream.Array(ref PermutedVertexData);
+            stream.Int32Array(ref FaceTriData);
+            stream.Array(ref EdgeDirections);
+            stream.Array(ref FaceNormalDirections);
+            stream.Array(ref FacePlaneData);
+            stream.Object(ref ElemBox);
         }
     }
 
@@ -113,16 +113,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.Int32(out SourceStaticMesh);
-            stream.Array(out Fragments);
-            stream.Int32(out CoreFragmentIndex);
-            stream.Int32(out InteriorElementIndex);
-            stream.Object(out CoreMeshScale3D);
-            stream.Object(out CoreMeshOffset);
-            stream.Object(out CoreMeshRotation);
-            stream.Object(out PlaneBias);
-            stream.Int16(out NonCriticalBuildVersion);
-            stream.Int16(out LicenseeNonCriticalBuildVersion);
+            stream.Int32(ref SourceStaticMesh);
+            stream.Array(ref Fragments);
+            stream.Int32(ref CoreFragmentIndex);
+            stream.Int32(ref InteriorElementIndex);
+            stream.Object(ref CoreMeshScale3D);
+            stream.Object(ref CoreMeshOffset);
+            stream.Object(ref CoreMeshRotation);
+            stream.Object(ref PlaneBias);
+            stream.Int16(ref NonCriticalBuildVersion);
+            stream.Int16(ref LicenseeNonCriticalBuildVersion);
         }
     }
 }

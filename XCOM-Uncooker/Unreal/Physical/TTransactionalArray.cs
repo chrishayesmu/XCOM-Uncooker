@@ -20,8 +20,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Owner);
-            stream.Array(out Data);
+            stream.Int32(ref Owner);
+            stream.Array(ref Data);
         }
     }
 }

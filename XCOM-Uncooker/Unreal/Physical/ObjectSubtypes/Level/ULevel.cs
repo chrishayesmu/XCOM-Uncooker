@@ -24,8 +24,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Scale3D);
-            stream.Int32(out CachedDataIndex);
+            stream.Object(ref Scale3D);
+            stream.Int32(ref CachedDataIndex);
         }
     }
 
@@ -42,8 +42,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Scale3D);
-            stream.Int32(out CachedDataIndex);
+            stream.Object(ref Scale3D);
+            stream.Int32(ref CachedDataIndex);
         }
     }
 
@@ -60,8 +60,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out ActorRefItem);
-            stream.UInt8(out SlotIdx);
+            stream.Int32(ref ActorRefItem);
+            stream.UInt8(ref SlotIdx);
         }
     }
 
@@ -85,11 +85,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out BoundingSphere);
-            stream.Float32(out TexelFactor);
-            stream.Int32(out Texture);
-            stream.BoolAsInt32(out bAttached);
-            stream.Float32(out OriginalRadius);
+            stream.Object(ref BoundingSphere);
+            stream.Float32(ref TexelFactor);
+            stream.Int32(ref Texture);
+            stream.BoolAsInt32(ref bAttached);
+            stream.Float32(ref OriginalRadius);
         }
     }
 
@@ -106,8 +106,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Guid(out Guid);
-            stream.Int32(out RefId);
+            stream.Guid(ref Guid);
+            stream.Int32(ref RefId);
         }
     }
 
@@ -127,13 +127,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BoolAsInt32(out bInitialized);
+            stream.BoolAsInt32(ref bInitialized);
 
             if (bInitialized)
             {
-                stream.Object(out Bounds);
-                stream.Float32(out SampleSpacing);
-                stream.Array(out Samples);
+                stream.Object(ref Bounds);
+                stream.Float32(ref SampleSpacing);
+                stream.Array(ref Samples);
             }
         }
     }
@@ -152,9 +152,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out CellDataSize);
-            stream.Array(out Cells);
-            stream.Array(out CellDataChunks);
+            stream.Int32(ref CellDataSize);
+            stream.Array(ref Cells);
+            stream.Array(ref CellDataChunks);
         }
     }
 
@@ -172,9 +172,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Min);
-            stream.Int16(out ChunkIndex);
-            stream.Int16(out DataOffset);
+            stream.Object(ref Min);
+            stream.Int16(ref ChunkIndex);
+            stream.Int16(ref DataOffset);
         }
     }
 
@@ -192,9 +192,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BoolAsInt32(out bCompressed);
-            stream.Int32(out UncompressedSize);
-            stream.ByteArray(out Data);
+            stream.BoolAsInt32(ref bCompressed);
+            stream.Int32(ref UncompressedSize);
+            stream.ByteArray(ref Data);
         }
     }
 
@@ -218,12 +218,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out PrecomputedVisibilityCellBucketOriginXY);
-            stream.Float32(out PrecomputedVisibilityCellSizeXY);
-            stream.Float32(out PrecomputedVisibilityCellSizeZ);
-            stream.Int32(out PrecomputedVisibilityCellBucketSizeXY);
-            stream.Int32(out PrecomputedVisibilityNumCellBuckets);
-            stream.Array(out PrecomputedVisibilityCellBuckets);
+            stream.Object(ref PrecomputedVisibilityCellBucketOriginXY);
+            stream.Float32(ref PrecomputedVisibilityCellSizeXY);
+            stream.Float32(ref PrecomputedVisibilityCellSizeZ);
+            stream.Int32(ref PrecomputedVisibilityCellBucketSizeXY);
+            stream.Int32(ref PrecomputedVisibilityNumCellBuckets);
+            stream.Array(ref PrecomputedVisibilityCellBuckets);
         }
     }
 
@@ -247,12 +247,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Float32(out VolumeMaxDistance);
-            stream.Object(out VolumeBox);
-            stream.Int32(out VolumeSizeX);
-            stream.Int32(out VolumeSizeY);
-            stream.Int32(out VolumeSizeZ);
-            stream.Array(out Data);
+            stream.Float32(ref VolumeMaxDistance);
+            stream.Object(ref VolumeBox);
+            stream.Int32(ref VolumeSizeX);
+            stream.Int32(ref VolumeSizeY);
+            stream.Int32(ref VolumeSizeZ);
+            stream.Array(ref Data);
         }
     }
 
@@ -269,8 +269,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out BoundingSphere);
-            stream.Float32(out TexelFactor);
+            stream.Object(ref BoundingSphere);
+            stream.Float32(ref TexelFactor);
         }
     }
 
@@ -303,16 +303,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Position);
-            stream.Float32(out Radius);
-            stream.UInt8(out IndirectDirectionTheta);
-            stream.UInt8(out IndirectDirectionPhi);
-            stream.UInt8(out EnvironmentDirectionTheta);
-            stream.UInt8(out EnvironmentDirectionPhi);
-            stream.Object(out IndirectRadiance);
-            stream.Object(out EnvironmentRadiance);
-            stream.Object(out AmbientRadiance);
-            stream.UInt8(out bShadowedFromDominantLights);
+            stream.Object(ref Position);
+            stream.Float32(ref Radius);
+            stream.UInt8(ref IndirectDirectionTheta);
+            stream.UInt8(ref IndirectDirectionPhi);
+            stream.UInt8(ref EnvironmentDirectionTheta);
+            stream.UInt8(ref EnvironmentDirectionPhi);
+            stream.Object(ref IndirectRadiance);
+            stream.Object(ref EnvironmentRadiance);
+            stream.Object(ref AmbientRadiance);
+            stream.UInt8(ref bShadowedFromDominantLights);
         }
     }
 
@@ -399,35 +399,35 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
         {
             base.Serialize(stream);
 
-            stream.Int32(out Model);
-            stream.Int32Array(out ModelComponents);
-            stream.Int32Array(out GameSequences);
-            stream.Map(out TextureToInstancesMap);
-            stream.Map(out DynamicTextureInstances);
-            stream.ByteArray(out ApexData);
-            stream.BulkArray(out CachedPhysBSPData);
-            stream.MultiMap(out CachedPhysSMDataMap);
-            stream.Array(out CachedPhysSMDataStore);
-            stream.MultiMap(out CachedPhysPerTriSMDataMap);
-            stream.Array(out CachedPhysPerTriSMDataStore);
-            stream.Int32(out CachedPhysBSPDataVersion);
-            stream.Int32(out CachedPhysSMDataVersion);
-            stream.Map(out ForceStreamTextures);
-            stream.Object(out CachedPhysConvexBSPData);
-            stream.Int32(out CachedPhysConvexBSPVersion);
-            stream.Int32(out NavListStart);
-            stream.Int32(out NavListEnd);
-            stream.Int32(out CoverListStart);
-            stream.Int32(out CoverListEnd);
-            stream.Int32(out PylonListStart);
-            stream.Int32(out PylonListEnd);
-            stream.Array(out CrossLevelCoverGuidRefs);
-            stream.Int32Array(out CoverLinkRefs);
-            stream.Array(out CoverIndexPairs);
-            stream.Int32Array(out CrossLevelActors);
-            stream.Object(out PrecomputedLightVolume);
-            stream.Object(out PrecomputedVisibilityHandler);
-            stream.Object(out PrecomputedVolumeDistanceField);
+            stream.Int32(ref Model);
+            stream.Int32Array(ref ModelComponents);
+            stream.Int32Array(ref GameSequences);
+            stream.Map(ref TextureToInstancesMap);
+            stream.Map(ref DynamicTextureInstances);
+            stream.ByteArray(ref ApexData);
+            stream.BulkArray(ref CachedPhysBSPData);
+            stream.MultiMap(ref CachedPhysSMDataMap);
+            stream.Array(ref CachedPhysSMDataStore);
+            stream.MultiMap(ref CachedPhysPerTriSMDataMap);
+            stream.Array(ref CachedPhysPerTriSMDataStore);
+            stream.Int32(ref CachedPhysBSPDataVersion);
+            stream.Int32(ref CachedPhysSMDataVersion);
+            stream.Map(ref ForceStreamTextures);
+            stream.Object(ref CachedPhysConvexBSPData);
+            stream.Int32(ref CachedPhysConvexBSPVersion);
+            stream.Int32(ref NavListStart);
+            stream.Int32(ref NavListEnd);
+            stream.Int32(ref CoverListStart);
+            stream.Int32(ref CoverListEnd);
+            stream.Int32(ref PylonListStart);
+            stream.Int32(ref PylonListEnd);
+            stream.Array(ref CrossLevelCoverGuidRefs);
+            stream.Int32Array(ref CoverLinkRefs);
+            stream.Array(ref CoverIndexPairs);
+            stream.Int32Array(ref CrossLevelActors);
+            stream.Object(ref PrecomputedLightVolume);
+            stream.Object(ref PrecomputedVisibilityHandler);
+            stream.Object(ref PrecomputedVolumeDistanceField);
         }
     }
 }

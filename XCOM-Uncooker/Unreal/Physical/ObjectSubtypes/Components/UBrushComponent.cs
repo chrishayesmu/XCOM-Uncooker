@@ -20,7 +20,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
         {
             base.Serialize(stream);
 
-            stream.Object(out CachedPhysBrushData);
+            stream.Object(ref CachedPhysBrushData);
         }
     }
 }

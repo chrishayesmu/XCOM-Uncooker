@@ -25,7 +25,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
             // There's some data at the end that we don't understand; just store it opaquely for now
             long extraBytes = ExportTableEntry.SerialOffset + ExportTableEntry.SerialSize - stream.Position;
-            stream.Bytes(out UnknownData, (int)extraBytes);
+            stream.Bytes(ref UnknownData, (int)extraBytes);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

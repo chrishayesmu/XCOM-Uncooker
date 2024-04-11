@@ -34,13 +34,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.GuidArray(out LightGuids);
-            stream.Int32(out Owner);
+            stream.GuidArray(ref LightGuids);
+            stream.Int32(ref Owner);
             DirectionalSamples.Serialize(stream);
 
             for (int i = 0; i < 3; i++)
             {
-                stream.Object(out ScaleVectors[i]);
+                stream.Object(ref ScaleVectors[i]);
             }
 
             SimpleSamples.Serialize(stream);
@@ -66,16 +66,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.GuidArray(out LightGuids);
+            stream.GuidArray(ref LightGuids);
 
             for (int i = 0; i < 3; i++)
             {
-                stream.Int32(out Textures[i]);
-                stream.Object(out ScaleVectors[i]);
+                stream.Int32(ref Textures[i]);
+                stream.Object(ref ScaleVectors[i]);
             }
 
-            stream.Object(out CoordinateScale);
-            stream.Object(out CoordinateBias);
+            stream.Object(ref CoordinateScale);
+            stream.Object(ref CoordinateBias);
         }
     }
 
@@ -91,7 +91,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Enum32(out Type);
+            stream.Enum32(ref Type);
 
             if (stream.IsRead)
             {

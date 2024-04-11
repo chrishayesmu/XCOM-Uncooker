@@ -29,7 +29,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             else
             {
                 // If there's not a tag (e.g. we're inside an array), we need to serialize the value ourselves
-                stream.Bool(out Value);
+                stream.Bool(ref Value);
             }
         }
 

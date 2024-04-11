@@ -29,10 +29,10 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             base.Serialize(stream);
 
-            stream.Int32(out ProbeMask);
-            stream.Int16(out LabelTableOffset);
-            stream.Enum32(out StateFlags);
-            stream.Map(out FuncMap);
+            stream.Int32(ref ProbeMask);
+            stream.Int16(ref LabelTableOffset);
+            stream.Enum32(ref StateFlags);
+            stream.Map(ref FuncMap);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

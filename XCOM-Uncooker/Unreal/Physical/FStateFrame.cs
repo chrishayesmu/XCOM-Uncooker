@@ -36,15 +36,15 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Node);
-            stream.Int32(out StateNode);
-            stream.Int32(out ProbeMask);
-            stream.Int16(out LatentAction);
-            stream.PushedStateArray(out StateStack);
+            stream.Int32(ref Node);
+            stream.Int32(ref StateNode);
+            stream.Int32(ref ProbeMask);
+            stream.Int16(ref LatentAction);
+            stream.PushedStateArray(ref StateStack);
 
             if (Node != 0)
             {
-                stream.Int32(out Offset);
+                stream.Int32(ref Offset);
             }
         }
 

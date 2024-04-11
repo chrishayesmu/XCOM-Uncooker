@@ -19,7 +19,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
         {
             if (!IsClassDefaultObject())
             {
-                stream.Int16Array(out DominantLightShadowMap);
+                stream.Int16Array(ref DominantLightShadowMap);
             }
 
             base.Serialize(stream);

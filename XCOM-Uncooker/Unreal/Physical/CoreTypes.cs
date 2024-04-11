@@ -22,9 +22,9 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Min);
-            stream.Object(out Max);
-            stream.Bool(out IsValid);
+            stream.Object(ref Min);
+            stream.Object(ref Max);
+            stream.Bool(ref IsValid);
         }
     }
 
@@ -35,10 +35,10 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.UInt8(out R);
-            stream.UInt8(out G);
-            stream.UInt8(out B);
-            stream.UInt8(out A);
+            stream.UInt8(ref R);
+            stream.UInt8(ref G);
+            stream.UInt8(ref B);
+            stream.UInt8(ref A);
         }
     }
 
@@ -78,10 +78,10 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.UInt8(out X);
-            stream.UInt8(out Y);
-            stream.UInt8(out Z);
-            stream.UInt8(out W);
+            stream.UInt8(ref X);
+            stream.UInt8(ref Y);
+            stream.UInt8(ref Z);
+            stream.UInt8(ref W);
         }
     }
 
@@ -92,10 +92,10 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Float32(out X);
-            stream.Float32(out Y);
-            stream.Float32(out Z);
-            stream.Float32(out W);
+            stream.Float32(ref X);
+            stream.Float32(ref Y);
+            stream.Float32(ref Z);
+            stream.Float32(ref W);
         }
     }
 
@@ -106,10 +106,10 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Float32(out X);
-            stream.Float32(out Y);
-            stream.Float32(out Z);
-            stream.Float32(out W);
+            stream.Float32(ref X);
+            stream.Float32(ref Y);
+            stream.Float32(ref Z);
+            stream.Float32(ref W);
         }
     }
 
@@ -120,9 +120,9 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Pitch);
-            stream.Int32(out Yaw);
-            stream.Int32(out Roll);
+            stream.Int32(ref Pitch);
+            stream.Int32(ref Yaw);
+            stream.Int32(ref Roll);
         }
     }
 
@@ -134,8 +134,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Center);
-            stream.Float32(out W);
+            stream.Object(ref Center);
+            stream.Float32(ref W);
         }
     }
 
@@ -146,9 +146,9 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Float32(out X);
-            stream.Float32(out Y);
-            stream.Float32(out Z);
+            stream.Float32(ref X);
+            stream.Float32(ref Y);
+            stream.Float32(ref Z);
         }
     }
 
@@ -159,8 +159,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Float32(out X);
-            stream.Float32(out Y);
+            stream.Float32(ref X);
+            stream.Float32(ref Y);
         }
     }
 
@@ -171,8 +171,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Float16(out X);
-            stream.Float16(out Y);
+            stream.Float16(ref X);
+            stream.Float16(ref Y);
         }
     }
 }

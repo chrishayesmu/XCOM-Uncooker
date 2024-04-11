@@ -10,7 +10,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 {
     /// <summary>
     /// Represents an opaque container of data from an immutable struct. Since immutable structs use binary serialization,
-    /// and they're represented the same way in both cooked and uncooked packages, we don't actually have to care about their
+    /// and they're represented the same way in both cooked and uncooked packages, we don't actually have to care abref their
     /// content. The only thing we need to know is how many bytes they are.
     /// </summary>
     public class USerializedImmutableStructProperty(FArchive archive, UProperty prop, FPropertyTag? tag) : USerializedProperty(archive, prop, tag)
@@ -53,7 +53,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             // flags to let us know if we're reading/writing binary data. But since we're only targeting one game, and it
             // has pretty limited usage of immutable structs, we just hardcode everything to make it a lot easier.
 
-            stream.Bytes(out Data, SizeInBytes);
+            stream.Bytes(ref Data, SizeInBytes);
         }
 
         public override void CloneFromOtherArchive(USerializedProperty sourceProp)

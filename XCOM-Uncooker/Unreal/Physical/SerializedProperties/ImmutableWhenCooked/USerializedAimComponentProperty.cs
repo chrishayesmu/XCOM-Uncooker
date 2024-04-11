@@ -36,7 +36,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            stream.Name(out BoneName);
+            stream.Name(ref BoneName);
 
             if (stream.IsRead)
             {

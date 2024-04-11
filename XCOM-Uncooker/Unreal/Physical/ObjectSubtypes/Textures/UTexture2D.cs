@@ -23,8 +23,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
         public void Serialize(IUnrealDataStream stream)
         {
             Data.Serialize(stream);
-            stream.Int32(out SizeX);
-            stream.Int32(out SizeY);
+            stream.Int32(ref SizeX);
+            stream.Int32(ref SizeY);
         }
     }
 
@@ -46,9 +46,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
         { 
             base.Serialize(stream);
 
-            stream.Array(out Mips);
-            stream.Guid(out TextureFileCacheGuid);
-            stream.Array(out CachedPVRTCMips);
+            stream.Array(ref Mips);
+            stream.Guid(ref TextureFileCacheGuid);
+            stream.Array(ref CachedPVRTCMips);
 
 #if DEBUG
             int bytesRemaining = (int) (ExportTableEntry.SerialOffset + ExportTableEntry.SerialSize - stream.Position);
@@ -61,7 +61,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
 #endif
       
             // Not sure what these 8 bytes are, but they seem to be in every texture
-            stream.Bytes(out UnknownData, 8);
+            stream.Bytes(ref UnknownData, 8);
         }
     }
 }

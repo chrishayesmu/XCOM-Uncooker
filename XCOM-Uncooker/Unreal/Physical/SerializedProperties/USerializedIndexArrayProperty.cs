@@ -27,7 +27,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out NumElements);
+            stream.Int32(ref NumElements);
 
             if (stream.IsRead)
             {
@@ -36,7 +36,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 
             for (int i = 0; i < NumElements; i++)
             {
-                stream.Int32(out Data[i]);
+                stream.Int32(ref Data[i]);
             }
         }
 

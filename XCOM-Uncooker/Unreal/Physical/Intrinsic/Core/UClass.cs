@@ -107,20 +107,20 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             base.Serialize(stream);
 
-            stream.Enum32(out ClassFlags);
-            stream.Int32(out Within);
-            stream.Name(out ConfigName);
-            stream.Map(out ComponentNameToDefaultObjectMap);
-            stream.Map(out Interfaces);
-            stream.NameArray(out DontSortCategories);
-            stream.NameArray(out HideCategories);
-            stream.NameArray(out AutoExpandCategories);
-            stream.NameArray(out AutoCollapseCategories);
-            stream.BoolAsInt32(out ForceScriptOrder);
-            stream.NameArray(out ClassGroups);
-            stream.String(out NativeClassName);
-            stream.Name(out DllBindName);
-            stream.Int32(out ClassDefaultObject);
+            stream.Enum32(ref ClassFlags);
+            stream.Int32(ref Within);
+            stream.Name(ref ConfigName);
+            stream.Map(ref ComponentNameToDefaultObjectMap);
+            stream.Map(ref Interfaces);
+            stream.NameArray(ref DontSortCategories);
+            stream.NameArray(ref HideCategories);
+            stream.NameArray(ref AutoExpandCategories);
+            stream.NameArray(ref AutoCollapseCategories);
+            stream.BoolAsInt32(ref ForceScriptOrder);
+            stream.NameArray(ref ClassGroups);
+            stream.String(ref NativeClassName);
+            stream.Name(ref DllBindName);
+            stream.Int32(ref ClassDefaultObject);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

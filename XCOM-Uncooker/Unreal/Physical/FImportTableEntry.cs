@@ -31,10 +31,10 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            stream.Name(out ClassPackage);
-            stream.Name(out _className);
-            stream.Int32(out OuterIndex);
-            stream.Name(out ObjectName);
+            stream.Name(ref ClassPackage);
+            stream.Name(ref _className);
+            stream.Int32(ref OuterIndex);
+            stream.Name(ref ObjectName);
         }
 
         private string DebuggerDisplay

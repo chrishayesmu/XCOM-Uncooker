@@ -24,7 +24,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         {
             UProperty innerProp = (BackingProperty as UArrayProperty).Inner;
             
-            stream.Int32(out NumElements);
+            stream.Int32(ref NumElements);
 
             if (stream.IsRead)
             {

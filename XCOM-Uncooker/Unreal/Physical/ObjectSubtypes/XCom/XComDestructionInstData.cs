@@ -20,8 +20,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out ColumnIdx); 
-            stream.Int32(out MeshComponent);
+            stream.Int32(ref ColumnIdx); 
+            stream.Int32(ref MeshComponent);
         }
     }
 
@@ -47,9 +47,9 @@ public class XComDestructionInstData(FArchive archive, FObjectTableEntry tableEn
         {
             base.Serialize(stream);
 
-            stream.MultiMap(out DecoFracToDecoComponents);
-            stream.MultiMap(out DecoFracToDebrisComponents);
-            stream.MultiMap(out DecoFracToDebrisStaticMeshInfos);
+            stream.MultiMap(ref DecoFracToDecoComponents);
+            stream.MultiMap(ref DecoFracToDebrisComponents);
+            stream.MultiMap(ref DecoFracToDebrisStaticMeshInfos);
         }
     }
 }

@@ -104,7 +104,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         #region Serialized data
 
         /// <summary>
-        /// The property's tag, which is largely metadata about the property and how to interpret it.
+        /// The property's tag, which is largely metadata abref the property and how to interpret it.
         /// Not all serialized properties have tags; in particular, immutable structs and items serialized
         /// inside of arrays won't have tags.
         /// </summary>

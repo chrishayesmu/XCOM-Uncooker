@@ -23,8 +23,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out ObjectIndex);
-            stream.Name(out FunctionName);
+            stream.Int32(ref ObjectIndex);
+            stream.Name(ref FunctionName);
         }
 
         public void CloneFromOtherArchive(FScriptDelegate other)

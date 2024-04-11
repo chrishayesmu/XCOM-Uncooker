@@ -49,16 +49,16 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             base.Serialize(stream);
 
-            stream.Int16(out NativeIndex);
-            stream.UInt8(out OperatorPrecedence);
-            stream.Enum32(out FunctionFlags);
+            stream.Int16(ref NativeIndex);
+            stream.UInt8(ref OperatorPrecedence);
+            stream.Enum32(ref FunctionFlags);
 
             if (FunctionFlags.HasFlag(FunctionFlag.Net))
             {
-                stream.Int16(out RepOffset);
+                stream.Int16(ref RepOffset);
             }
 
-            stream.Name(out FriendlyName);
+            stream.Name(ref FriendlyName);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

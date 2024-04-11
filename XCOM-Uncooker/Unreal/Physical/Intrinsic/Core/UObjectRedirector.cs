@@ -20,7 +20,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core
         {
             base.Serialize(stream);
 
-            stream.Int32(out DestinationObject);
+            stream.Int32(ref DestinationObject);
         }
     }
 }

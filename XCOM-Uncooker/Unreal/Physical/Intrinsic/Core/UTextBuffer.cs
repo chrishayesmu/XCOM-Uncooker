@@ -21,9 +21,9 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             base.Serialize(stream);
 
-            stream.Int32(out Pos);
-            stream.Int32(out Top);
-            stream.String(out Text);
+            stream.Int32(ref Pos);
+            stream.Int32(ref Top);
+            stream.String(ref Text);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

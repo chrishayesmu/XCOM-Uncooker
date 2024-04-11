@@ -15,7 +15,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             base.Serialize(stream);
 
-            stream.NameArray(out Names);
+            stream.NameArray(ref Names);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

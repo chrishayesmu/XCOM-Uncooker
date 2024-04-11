@@ -19,7 +19,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
         {
             base.Serialize(stream);
 
-            stream.BulkArray(out PerInstanceSMData);
+            stream.BulkArray(ref PerInstanceSMData);
         }
     }
 }

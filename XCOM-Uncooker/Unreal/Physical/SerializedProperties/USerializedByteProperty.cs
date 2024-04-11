@@ -31,7 +31,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
                 if (stream.IsRead)
                 {
                     byte[] bytes = new byte[1];
-                    stream.Bytes(out bytes, 1);
+                    stream.Bytes(ref bytes, 1);
                     Value = bytes[0];
                 }
                 else
@@ -41,7 +41,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             }
             else
             {
-                stream.UInt64(out Value);
+                stream.UInt64(ref Value);
             }
         }
 

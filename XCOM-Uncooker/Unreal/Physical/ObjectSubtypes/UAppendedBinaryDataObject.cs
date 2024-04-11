@@ -36,7 +36,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
             base.Serialize(stream);
 
             int dataSizeBytes = stream.IsWrite ? Data.Length : (ExportTableEntry.SerialOffset + ExportTableEntry.SerialSize) - (int) stream.Position;
-            stream.Bytes(out Data, dataSizeBytes);
+            stream.Bytes(ref Data, dataSizeBytes);
         }
     }
 }

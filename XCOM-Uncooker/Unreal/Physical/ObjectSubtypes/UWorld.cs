@@ -20,9 +20,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out CamPosition);
-            stream.Object(out CamRotation);
-            stream.Float32(out CamOrthoZoom);
+            stream.Object(ref CamPosition);
+            stream.Object(ref CamRotation);
+            stream.Float32(ref CamOrthoZoom);
         }
     }
 
@@ -50,16 +50,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
         {
             base.Serialize(stream);
 
-            stream.Int32(out PersistentLevel);
-            stream.Int32(out PersistentFaceFXAnimSet);
+            stream.Int32(ref PersistentLevel);
+            stream.Int32(ref PersistentFaceFXAnimSet);
 
-            stream.Object(out EditorViews[0]);
-            stream.Object(out EditorViews[1]);
-            stream.Object(out EditorViews[2]);
-            stream.Object(out EditorViews[3]);
+            stream.Object(ref EditorViews[0]);
+            stream.Object(ref EditorViews[1]);
+            stream.Object(ref EditorViews[2]);
+            stream.Object(ref EditorViews[3]);
 
-            stream.Int32(out SaveGameSummary);
-            stream.Int32Array(out ExtraReferencedObjects);
+            stream.Int32(ref SaveGameSummary);
+            stream.Int32Array(ref ExtraReferencedObjects);
         }
     }
 }

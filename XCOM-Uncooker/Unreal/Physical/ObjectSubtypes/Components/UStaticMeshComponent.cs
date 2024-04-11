@@ -23,12 +23,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.UInt32(out Stride);
-            stream.UInt32(out NumVertices);
+            stream.UInt32(ref Stride);
+            stream.UInt32(ref NumVertices);
 
             if (NumVertices > 0)
             {
-                stream.BulkArray(out VertexData);
+                stream.BulkArray(ref VertexData);
             }
         }
     }
@@ -57,17 +57,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32Array(out ShadowMaps);
-            stream.Int32Array(out ShadowVertexBuffers);
-            stream.Object(out LightMap);
-            stream.Bool(out bLoadVertexColorData);
+            stream.Int32Array(ref ShadowMaps);
+            stream.Int32Array(ref ShadowVertexBuffers);
+            stream.Object(ref LightMap);
+            stream.Bool(ref bLoadVertexColorData);
 
             if (bLoadVertexColorData)
             {
-                stream.Object(out OverrideVertexColors);
+                stream.Object(ref OverrideVertexColors);
             }
 
-            stream.Array(out VertexColorPositions);
+            stream.Array(ref VertexColorPositions);
         }
     }
 
@@ -88,11 +88,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
         {
             base.Serialize(stream);
 
-            stream.Array(out LODData);
-            stream.Object(out SwapMeshData[0]);
-            stream.Object(out SwapMeshData[1]);
-            stream.Int32(out SwapStaticMeshes[0]);
-            stream.Int32(out SwapStaticMeshes[1]);
+            stream.Array(ref LODData);
+            stream.Object(ref SwapMeshData[0]);
+            stream.Object(ref SwapMeshData[1]);
+            stream.Int32(ref SwapStaticMeshes[0]);
+            stream.Int32(ref SwapStaticMeshes[1]);
         }
     }
 }

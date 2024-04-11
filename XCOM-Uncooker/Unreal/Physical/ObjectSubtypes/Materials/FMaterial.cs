@@ -37,10 +37,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out TexCoordIndex);
-            stream.Int32(out TextureIndex);
-            stream.Float32(out UScale);
-            stream.Float32(out VScale);
+            stream.Int32(ref TexCoordIndex);
+            stream.Int32(ref TextureIndex);
+            stream.Float32(ref UScale);
+            stream.Float32(ref VScale);
         }
     }
 
@@ -79,20 +79,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.StringArray(out CompileErrors);
-            stream.Map(out TextureDependencyLengthMap);
-            stream.Int32(out MaxTextureDependencyLength);
-            stream.Guid(out Id);
-            stream.UInt32(out NumUserTexCoords);
-            stream.Int32Array(out UniformExpressionTextures);
-            stream.BoolAsInt32(out bUsesSceneColor);
-            stream.BoolAsInt32(out bUsesSceneDepth);
-            stream.BoolAsInt32(out bUsesDynamicParameter);
-            stream.BoolAsInt32(out bUsesLightmapUVs);
-            stream.BoolAsInt32(out bUsesMaterialVertexPositionOffset);
-            stream.Enum32(out UsingTransforms);
-            stream.Array(out TextureLookups);
-            stream.Enum32(out DroppedFallbackComponents);
+            stream.StringArray(ref CompileErrors);
+            stream.Map(ref TextureDependencyLengthMap);
+            stream.Int32(ref MaxTextureDependencyLength);
+            stream.Guid(ref Id);
+            stream.UInt32(ref NumUserTexCoords);
+            stream.Int32Array(ref UniformExpressionTextures);
+            stream.BoolAsInt32(ref bUsesSceneColor);
+            stream.BoolAsInt32(ref bUsesSceneDepth);
+            stream.BoolAsInt32(ref bUsesDynamicParameter);
+            stream.BoolAsInt32(ref bUsesLightmapUVs);
+            stream.BoolAsInt32(ref bUsesMaterialVertexPositionOffset);
+            stream.Enum32(ref UsingTransforms);
+            stream.Array(ref TextureLookups);
+            stream.Enum32(ref DroppedFallbackComponents);
         }
     }
 }

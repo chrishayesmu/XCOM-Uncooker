@@ -31,12 +31,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             for (int i = 0; i < 3; i++)
             {
-                stream.Float32(out Min[i]);
+                stream.Float32(ref Min[i]);
             }
 
             for (int i = 0; i < 3; i++)
             {
-                stream.Float32(out Max[i]);
+                stream.Float32(ref Max[i]);
             }
         }
     }
@@ -59,9 +59,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out RootBound);
-            stream.BulkArray(out Nodes);
-            stream.BulkArray(out Triangles);
+            stream.Object(ref RootBound);
+            stream.BulkArray(ref Nodes);
+            stream.BulkArray(ref Triangles);
         }
     }
 
@@ -76,8 +76,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Orientation);
-            stream.Object(out Position);
+            stream.Object(ref Orientation);
+            stream.Object(ref Position);
         }
     }
 
@@ -96,12 +96,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Name(out Name);
-            stream.UInt32(out Flags);
-            stream.Object(out BonePos);
-            stream.Int32(out NumChildren);
-            stream.Int32(out ParentIndex);
-            stream.Object(out BoneColor);
+            stream.Name(ref Name);
+            stream.UInt32(ref Flags);
+            stream.Object(ref BonePos);
+            stream.Int32(ref NumChildren);
+            stream.Int32(ref ParentIndex);
+            stream.Object(ref BoneColor);
         }
     }
 
@@ -119,9 +119,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
      
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BoolAsInt32(out NeedsCPUAccess);
-            stream.UInt8(out DataTypeSize);
-            stream.BulkArray(out IndexBuffer);
+            stream.BoolAsInt32(ref NeedsCPUAccess);
+            stream.UInt8(ref DataTypeSize);
+            stream.BulkArray(ref IndexBuffer);
         }
     }
 
@@ -137,8 +137,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out KDOPTree);
-            stream.Array(out CollisionVerts);
+            stream.Object(ref KDOPTree);
+            stream.Array(ref CollisionVerts);
         }
     }
 
@@ -164,18 +164,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Position);
-            stream.Object(out TangentX);
-            stream.Object(out TangentY);
-            stream.Object(out TangentZ);
+            stream.Object(ref Position);
+            stream.Object(ref TangentX);
+            stream.Object(ref TangentY);
+            stream.Object(ref TangentZ);
 
             for (int i = 0; i < 4; i++)
             {
-                stream.Object(out UVs[i]);
+                stream.Object(ref UVs[i]);
             }
 
-            stream.Object(out Color);
-            stream.UInt8(out Bone);
+            stream.Object(ref Color);
+            stream.UInt8(ref Bone);
         }
     }
 
@@ -202,18 +202,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Position);
-            stream.Object(out TangentX);
-            stream.Object(out TangentY);
-            stream.Object(out TangentZ);
+            stream.Object(ref Position);
+            stream.Object(ref TangentX);
+            stream.Object(ref TangentY);
+            stream.Object(ref TangentZ);
 
             for (int i = 0; i < 4; i++)
             {
-                stream.Object(out UVs[i]);
+                stream.Object(ref UVs[i]);
             }
 
-            stream.Bytes(out InfluenceBones, 4);
-            stream.Bytes(out InfluenceWeights, 4);
+            stream.Bytes(ref InfluenceBones, 4);
+            stream.Bytes(ref InfluenceWeights, 4);
         }
     }
 
@@ -239,13 +239,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.UInt32(out BaseVertexIndex);
-            stream.Array(out RigidVertices);
-            stream.Array(out SoftVertices);
-            stream.Int16Array(out BoneMap);
-            stream.Int32(out NumRigidVertices);
-            stream.Int32(out NumSoftVertices);
-            stream.Int32(out MaxBoneInfluences);
+            stream.UInt32(ref BaseVertexIndex);
+            stream.Array(ref RigidVertices);
+            stream.Array(ref SoftVertices);
+            stream.Int16Array(ref BoneMap);
+            stream.Int32(ref NumRigidVertices);
+            stream.Int32(ref NumSoftVertices);
+            stream.Int32(ref MaxBoneInfluences);
         }
     }
 
@@ -263,11 +263,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int16(out MaterialIndex);
-            stream.Int16(out ChunkIndex);
-            stream.Int32(out BaseIndex);
-            stream.Int32(out NumTriangles);
-            stream.UInt8(out TriangleSorting);
+            stream.Int16(ref MaterialIndex);
+            stream.Int16(ref ChunkIndex);
+            stream.Int32(ref BaseIndex);
+            stream.Int32(ref NumTriangles);
+            stream.UInt8(ref TriangleSorting);
         }
     }
 
@@ -283,13 +283,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BoolAsInt32(out bHaveSourceData);
+            stream.BoolAsInt32(ref bHaveSourceData);
 
             if (bHaveSourceData)
             {
                 Debugger.Break();
 
-                stream.Object(out LODModel);
+                stream.Object(ref LODModel);
             }
         }
     }
@@ -316,12 +316,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.UInt32(out NumTexCoords);
-            stream.BoolAsInt32(out bUseFullPrecisionUVs);
-            stream.BoolAsInt32(out bUsePackedPosition);
-            stream.Object(out MeshExtension);
-            stream.Object(out MeshOrigin);
-            stream.BulkArray(out VertexData);
+            stream.UInt32(ref NumTexCoords);
+            stream.BoolAsInt32(ref bUseFullPrecisionUVs);
+            stream.BoolAsInt32(ref bUsePackedPosition);
+            stream.Object(ref MeshExtension);
+            stream.Object(ref MeshOrigin);
+            stream.BulkArray(ref VertexData);
         }
 
         private void CreateVertexDataBuffer()
@@ -354,7 +354,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
     }
 
     // The real version of this struct is more complicated and has more layers; this version
-    // is just pared down to what we care about for XCOM EW
+    // is just pared down to what we care abref for XCOM EW
     public struct FSkeletalMeshVertexColorBuffer : IUnrealSerializable
     {
         #region Serialized data
@@ -365,7 +365,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BulkArray(out Data, 4);
+            stream.BulkArray(ref Data, 4);
         }
     }
 
@@ -390,12 +390,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Array(out Influences);
-            stream.Map(out VertexInfluenceMapping);
-            stream.Array(out Sections);
-            stream.Array(out Chunks);
-            stream.ByteArray(out RequiredBones);
-            stream.UInt8(out Usage);
+            stream.Array(ref Influences);
+            stream.Map(ref VertexInfluenceMapping);
+            stream.Array(ref Sections);
+            stream.Array(ref Chunks);
+            stream.ByteArray(ref RequiredBones);
+            stream.UInt8(ref Usage);
         }
     }
 
@@ -441,16 +441,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Array(out Sections);
-            stream.Object(out MultiSizeIndexContainer);
-            stream.Int16Array(out ActiveBoneIndices);
-            stream.Array(out Chunks);
-            stream.UInt32(out Size);
-            stream.UInt32(out NumVertices);
-            stream.ByteArray(out RequiredBones);
-            stream.Object(out RawPointIndices);
-            stream.UInt32(out NumTexCoords);
-            stream.Object(out VertexBufferGPUSkin);
+            stream.Array(ref Sections);
+            stream.Object(ref MultiSizeIndexContainer);
+            stream.Int16Array(ref ActiveBoneIndices);
+            stream.Array(ref Chunks);
+            stream.UInt32(ref Size);
+            stream.UInt32(ref NumVertices);
+            stream.ByteArray(ref RequiredBones);
+            stream.Object(ref RawPointIndices);
+            stream.UInt32(ref NumTexCoords);
+            stream.Object(ref VertexBufferGPUSkin);
 
             var mesh = (USkeletalMesh) Owner;
 
@@ -467,11 +467,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             // ColorVertexBuffer is only serialized when the owning SkeletalMesh's bHasVertexColors is true
             if (bHasVertexColors)
             {
-                stream.Object(out ColorVertexBuffer);
+                stream.Object(ref ColorVertexBuffer);
             }
 
-            stream.Array(out VertexInfluences);
-            stream.Object(out AdjacencyMultiSizeIndexContainer);
+            stream.Array(ref VertexInfluences);
+            stream.Object(ref AdjacencyMultiSizeIndexContainer);
         }
     }
 
@@ -486,8 +486,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
      
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.UInt32(out Weights);
-            stream.UInt32(out Bones);
+            stream.UInt32(ref Weights);
+            stream.UInt32(ref Bones);
         }
     }
 
@@ -531,20 +531,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.Object(out Bounds);
-            stream.Int32Array(out Materials);
-            stream.Object(out Origin);
-            stream.Object(out RotOrigin);
-            stream.Array(out RefSkeleton);
-            stream.Int32(out SkeletalDepth);
-            stream.Array(out LODModels, owner: this);
-            stream.Map(out NameIndexMap);
-            stream.Array(out PerPolyBoneKDOPs);
-            stream.StringArray(out BoneBreakNames);
-            stream.ByteArray(out BoneBreakOptions);
-            stream.Int32Array(out ClothingAssets);
-            stream.Float32Array(out CachedStreamingTextureFactors);
-            stream.Object(out SkelSourceData);
+            stream.Object(ref Bounds);
+            stream.Int32Array(ref Materials);
+            stream.Object(ref Origin);
+            stream.Object(ref RotOrigin);
+            stream.Array(ref RefSkeleton);
+            stream.Int32(ref SkeletalDepth);
+            stream.Array(ref LODModels, owner: this);
+            stream.Map(ref NameIndexMap);
+            stream.Array(ref PerPolyBoneKDOPs);
+            stream.StringArray(ref BoneBreakNames);
+            stream.ByteArray(ref BoneBreakOptions);
+            stream.Int32Array(ref ClothingAssets);
+            stream.Float32Array(ref CachedStreamingTextureFactors);
+            stream.Object(ref SkelSourceData);
         }
     }
 }

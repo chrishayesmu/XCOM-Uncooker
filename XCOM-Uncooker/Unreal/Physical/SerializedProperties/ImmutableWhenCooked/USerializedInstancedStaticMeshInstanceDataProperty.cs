@@ -26,7 +26,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
         {
             if (stream.IsRead)
             {
-                stream.Bytes(out BinaryData, 80);
+                stream.Bytes(ref BinaryData, 80);
             }
             else
             {
@@ -39,20 +39,20 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                     StructName = Archive.GetOrCreateName("Matrix")
                 };
 
-                stream.PropertyTag(out tag);
-                stream.Bytes(out BinaryData, tag.Size);
+                stream.PropertyTag(ref tag);
+                stream.Bytes(ref BinaryData, tag.Size);
 
                 tag.Name = Archive.GetOrCreateName("LightmapUVBias");
                 tag.StructName = Archive.GetOrCreateName("Vector2D");
                 tag.Size = 8;
 
-                stream.PropertyTag(out tag);
-                stream.Bytes(out BinaryData, tag.Size, 64);
+                stream.PropertyTag(ref tag);
+                stream.Bytes(ref BinaryData, tag.Size, 64);
 
                 tag.Name = Archive.GetOrCreateName("ShadowmapUVBias");
 
-                stream.PropertyTag(out tag);
-                stream.Bytes(out BinaryData, tag.Size, 64 + 8);
+                stream.PropertyTag(ref tag);
+                stream.Bytes(ref BinaryData, tag.Size, 64 + 8);
             }
         }
 

@@ -20,7 +20,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Index);
+            stream.Int32(ref Index);
         }
     }
 
@@ -39,8 +39,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
         {
             base.Serialize(stream);
 
-            stream.Object(out Actors);
-            stream.Object(out Url);
+            stream.Object(ref Actors);
+            stream.Object(ref Url);
         }
     }
 }

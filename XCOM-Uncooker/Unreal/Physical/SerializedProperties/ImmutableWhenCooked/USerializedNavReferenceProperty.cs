@@ -23,8 +23,8 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Nav);
-            stream.Guid(out Guid);
+            stream.Int32(ref Nav);
+            stream.Guid(ref Guid);
         }
 
         public override void CloneFromOtherArchive(USerializedProperty sourceProp)

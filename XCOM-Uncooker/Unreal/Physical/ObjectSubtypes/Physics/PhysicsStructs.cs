@@ -24,9 +24,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Origin);
-            stream.Object(out BoxExtent);
-            stream.Float32(out SphereRadius);
+            stream.Object(ref Origin);
+            stream.Object(ref BoxExtent);
+            stream.Float32(ref SphereRadius);
         }
     }
 
@@ -41,7 +41,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Bytes(out Data, 64);
+            stream.Bytes(ref Data, 64);
         }
     }
 
@@ -79,18 +79,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Material);
-            stream.UInt32(out PolyFlags);
-            stream.Int32(out pBase);
-            stream.Int32(out vNormal);
-            stream.Int32(out vTextureU);
-            stream.Int32(out vTextureV);
-            stream.Int32(out iBrushPoly);
-            stream.Int32(out Actor);
-            stream.Object(out Plane);
-            stream.Float32(out ShadowMapScale);
-            stream.UInt32(out LightingChannels);
-            stream.Int32(out iLightmassIndex);
+            stream.Int32(ref Material);
+            stream.UInt32(ref PolyFlags);
+            stream.Int32(ref pBase);
+            stream.Int32(ref vNormal);
+            stream.Int32(ref vTextureU);
+            stream.Int32(ref vTextureV);
+            stream.Int32(ref iBrushPoly);
+            stream.Int32(ref Actor);
+            stream.Object(ref Plane);
+            stream.Float32(ref ShadowMapScale);
+            stream.UInt32(ref LightingChannels);
+            stream.Int32(ref iLightmassIndex);
         }
     }
 
@@ -104,7 +104,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BulkArray(out Data);
+            stream.BulkArray(ref Data);
         }
     }
 
@@ -118,7 +118,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Array(out CachedConvexElements);
+            stream.Array(ref CachedConvexElements);
         }
     }
 
@@ -132,7 +132,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BulkArray(out CachedPerTriData);
+            stream.BulkArray(ref CachedPerTriData);
         }
     }
 
@@ -163,15 +163,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BoolAsInt32(out bUseTwoSidedLighting);
-            stream.BoolAsInt32(out bShadowIndirectOnly);
-            stream.Float32(out FullyOccludedSamplesFraction);
-            stream.BoolAsInt32(out bUseEmissiveForStaticLighting);
-            stream.Float32(out EmissiveLightFalloffExponent);
-            stream.Float32(out EmissiveLightExplicitInfluenceRadius);
-            stream.Float32(out EmissiveBoost);
-            stream.Float32(out DiffuseBoost);
-            stream.Float32(out SpecularBoost);
+            stream.BoolAsInt32(ref bUseTwoSidedLighting);
+            stream.BoolAsInt32(ref bShadowIndirectOnly);
+            stream.Float32(ref FullyOccludedSamplesFraction);
+            stream.BoolAsInt32(ref bUseEmissiveForStaticLighting);
+            stream.Float32(ref EmissiveLightFalloffExponent);
+            stream.Float32(ref EmissiveLightExplicitInfluenceRadius);
+            stream.Float32(ref EmissiveBoost);
+            stream.Float32(ref DiffuseBoost);
+            stream.Float32(ref SpecularBoost);
         }
     }
 
@@ -194,11 +194,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Position);
-            stream.Object(out TangentX);
-            stream.Object(out TangentZ);
-            stream.Object(out TexCoord);
-            stream.Object(out ShadowTexCoord);
+            stream.Object(ref Position);
+            stream.Object(ref TangentX);
+            stream.Object(ref TangentZ);
+            stream.Object(ref TexCoord);
+            stream.Object(ref ShadowTexCoord);
         }
     }
 
@@ -212,7 +212,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
      
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BulkArray(out Vertices, 36);
+            stream.BulkArray(ref Vertices, 36);
         }
     }
 
@@ -233,10 +233,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out pVertex);
-            stream.Int32(out iSide);
-            stream.Object(out ShadowTexCoord);
-            stream.Object(out BackfaceShadowTexCoord);
+            stream.Int32(ref pVertex);
+            stream.Int32(ref iSide);
+            stream.Object(ref ShadowTexCoord);
+            stream.Object(ref BackfaceShadowTexCoord);
         }
     }
 }

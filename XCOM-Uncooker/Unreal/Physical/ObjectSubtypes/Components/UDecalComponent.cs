@@ -23,10 +23,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Position);
-            stream.Object(out TangentX);
-            stream.Object(out TangentZ);
-            stream.Object(out LightMapCoordinate);
+            stream.Object(ref Position);
+            stream.Object(ref TangentX);
+            stream.Object(ref TangentZ);
+            stream.Object(ref LightMapCoordinate);
         }
     }
 
@@ -57,14 +57,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Component);
-            stream.BulkArray(out Vertices, 28);
-            stream.BulkArray(out Indices);
-            stream.UInt32(out NumTriangles);
-            stream.Int32(out LightMap1D);
-            stream.Int32(out ShadowMap1D);
-            stream.Int32(out Data);
-            stream.Int32(out InstanceIndex);
+            stream.Int32(ref Component);
+            stream.BulkArray(ref Vertices, 28);
+            stream.BulkArray(ref Indices);
+            stream.UInt32(ref NumTriangles);
+            stream.Int32(ref LightMap1D);
+            stream.Int32(ref ShadowMap1D);
+            stream.Int32(ref Data);
+            stream.Int32(ref InstanceIndex);
         }
     }
 
@@ -80,7 +80,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
         {
             base.Serialize(stream);
 
-            stream.Array(out StaticReceivers);
+            stream.Array(ref StaticReceivers);
         }
     }
 }

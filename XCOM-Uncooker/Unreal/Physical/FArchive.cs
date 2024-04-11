@@ -167,7 +167,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             _stream.Archive = this;
 
-            // When we're about to save a brand new archive, we need to set some values that normally the editor would set
+            // When we're abref to save a brand new archive, we need to set some values that normally the editor would set
             if (IsSaving)
             {
                 PackageFileSummary = new FPackageFileSummary
@@ -548,7 +548,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         }
 
         /// <summary>
-        /// Gets the export table entry for an object, without requiring the exported object to be present.
+        /// Gets the export table entry for an object, withref requiring the exported object to be present.
         /// Useful when creating an archive in-memory; sometimes we need to reference an export before the
         /// actual object is available.
         /// </summary>
@@ -627,7 +627,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             if (exportTableIndex >= ExportedObjects.Count)
             {
-                throw new ArgumentException($"{nameof(GetObjectByIndex)}: requested index {index} out of bounds. Only {ExportedObjects.Count} export objects exist in archive {FileName}.");
+                throw new ArgumentException($"{nameof(GetObjectByIndex)}: requested index {index} ref of bounds. Only {ExportedObjects.Count} export objects exist in archive {FileName}.");
             }
 
             if (ExportedObjects[exportTableIndex] == null && IsLoading)
@@ -809,7 +809,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             for (int i = 0; i < DependsMap.Length; i++)
             {
-                _stream.Int32Array(out DependsMap[i]);
+                _stream.Int32Array(ref DependsMap[i]);
             }
         }
 
@@ -859,30 +859,30 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// </summary>
         private void SerializeFileSummary()
         {
-            _stream.UInt32(out PackageFileSummary.Signature);
+            _stream.UInt32(ref PackageFileSummary.Signature);
 
             if (IsLoading && PackageFileSummary.Signature != UNREAL_SIGNATURE)
             {
                 throw new Exception("Package is expected to start with the Unreal package signature, 0x9E2A83C1");
             }
 
-            _stream.UInt16(out PackageFileSummary.FileVersion);
-            _stream.UInt16(out PackageFileSummary.LicenseeVersion);
-            _stream.Int32(out PackageFileSummary.HeaderSize);
-            _stream.String(out PackageFileSummary.FolderName);
-            _stream.Enum32(out PackageFileSummary.PackageFlags);
-            _stream.Int32(out PackageFileSummary.NameCount);
-            _stream.Int32(out PackageFileSummary.NameOffset);
-            _stream.Int32(out PackageFileSummary.ExportCount);
-            _stream.Int32(out PackageFileSummary.ExportOffset);
-            _stream.Int32(out PackageFileSummary.ImportCount);
-            _stream.Int32(out PackageFileSummary.ImportOffset);
-            _stream.Int32(out PackageFileSummary.DependsOffset);
+            _stream.UInt16(ref PackageFileSummary.FileVersion);
+            _stream.UInt16(ref PackageFileSummary.LicenseeVersion);
+            _stream.Int32(ref PackageFileSummary.HeaderSize);
+            _stream.String(ref PackageFileSummary.FolderName);
+            _stream.Enum32(ref PackageFileSummary.PackageFlags);
+            _stream.Int32(ref PackageFileSummary.NameCount);
+            _stream.Int32(ref PackageFileSummary.NameOffset);
+            _stream.Int32(ref PackageFileSummary.ExportCount);
+            _stream.Int32(ref PackageFileSummary.ExportOffset);
+            _stream.Int32(ref PackageFileSummary.ImportCount);
+            _stream.Int32(ref PackageFileSummary.ImportOffset);
+            _stream.Int32(ref PackageFileSummary.DependsOffset);
 
             // The thumbnail table offset is just here for posterity; XCOM EW is cooked for console,
             // and the thumbnail table is gone. For some reason, the thumbnail table offset is still
             // set, even though it should be set to 0 in a cooked build. 
-            _stream.Int32(out PackageFileSummary.ThumbnailTableOffset);
+            _stream.Int32(ref PackageFileSummary.ThumbnailTableOffset);
 
             // 12 bytes of unknown data to get past
             if (IsLoading)
@@ -892,17 +892,17 @@ namespace XCOM_Uncooker.Unreal.Physical
             else
             {
                 int unknownBytes = 0;
-                _stream.Int32(out unknownBytes);
-                _stream.Int32(out unknownBytes);
-                _stream.Int32(out unknownBytes);
+                _stream.Int32(ref unknownBytes);
+                _stream.Int32(ref unknownBytes);
+                _stream.Int32(ref unknownBytes);
             }
 
-            _stream.Guid(out PackageFileSummary.PackageGuid);
-            _stream.GenerationInfoArray(out PackageFileSummary.Generations);
-            _stream.Int32(out PackageFileSummary.EngineVersion);
-            _stream.Int32(out PackageFileSummary.CookerVersion);
-            _stream.Enum32(out PackageFileSummary.CompressionFlags);
-            _stream.Int32(out PackageFileSummary.NumCompressedChunks);
+            _stream.Guid(ref PackageFileSummary.PackageGuid);
+            _stream.GenerationInfoArray(ref PackageFileSummary.Generations);
+            _stream.Int32(ref PackageFileSummary.EngineVersion);
+            _stream.Int32(ref PackageFileSummary.CookerVersion);
+            _stream.Enum32(ref PackageFileSummary.CompressionFlags);
+            _stream.Int32(ref PackageFileSummary.NumCompressedChunks);
 
             // We aren't going to do decompression, so just bail
             if (PackageFileSummary.NumCompressedChunks != 0)
@@ -911,8 +911,8 @@ namespace XCOM_Uncooker.Unreal.Physical
                 return;
             }
 
-            _stream.UInt32(out PackageFileSummary.PackageSource);
-            _stream.StringArray(out PackageFileSummary.AdditionalPackagesToCook);
+            _stream.UInt32(ref PackageFileSummary.PackageSource);
+            _stream.StringArray(ref PackageFileSummary.AdditionalPackagesToCook);
 
 #if DEBUG
             if (IsLoading)
@@ -994,10 +994,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 // Weird use of a local variable to make this work for both reading and writing
                 string name = NameTable[i];
-                _stream.String(out name);
+                _stream.String(ref name);
                 NameTable[i] = name;
 
-                // Every name has a 64-bit object flag field, but we don't care about them
+                // Every name has a 64-bit object flag field, but we don't care abref them
                 _stream.SkipBytes(8);
             }
         }
@@ -1017,12 +1017,12 @@ namespace XCOM_Uncooker.Unreal.Physical
 #if false
             _stream.Seek(PackageFileSummary.ThumbnailTableOffset, SeekOrigin.Begin);
 
-            _stream.Int32(out int thumbnailCount);
+            _stream.Int32(ref int thumbnailCount);
             ThumbnailMetadataTable = new FThumbnailMetadata[thumbnailCount];
 
             for (int i = 0; i < thumbnailCount; i++)
             {
-                _stream.ThumbnailMetadata(out ThumbnailMetadataTable[i]);
+                _stream.ThumbnailMetadata(ref ThumbnailMetadataTable[i]);
             }
 #endif
         }

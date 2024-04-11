@@ -34,12 +34,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out LightMap);
-            stream.Int32(out Component);
-            stream.Int32(out Material);
-            stream.Int16Array(out Nodes);
-            stream.Int32Array(out ShadowMaps);
-            stream.GuidArray(out IrrelevantLights);
+            stream.Object(ref LightMap);
+            stream.Int32(ref Component);
+            stream.Int32(ref Material);
+            stream.Int16Array(ref Nodes);
+            stream.Int32Array(ref ShadowMaps);
+            stream.GuidArray(ref IrrelevantLights);
         }
     }
 
@@ -64,11 +64,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
         {
             base.Serialize(stream);
 
-            stream.Int32(out Model);
-            stream.Int32(out ZoneIndex);
-            stream.Array(out Elements);
-            stream.Int16(out ComponentIndex);
-            stream.Int16Array(out Nodes);
+            stream.Int32(ref Model);
+            stream.Int32(ref ZoneIndex);
+            stream.Array(ref Elements);
+            stream.Int16(ref ComponentIndex);
+            stream.Int16Array(ref Nodes);
         }
     }
 }

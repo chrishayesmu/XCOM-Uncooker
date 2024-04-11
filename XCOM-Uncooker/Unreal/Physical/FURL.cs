@@ -23,13 +23,13 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.String(out Protocol);
-            stream.String(out Host);
-            stream.String(out Map);
-            stream.String(out Portal);
-            stream.StringArray(out Op);
-            stream.Int32(out Port);
-            stream.Int32(out Valid);
+            stream.String(ref Protocol);
+            stream.String(ref Host);
+            stream.String(ref Map);
+            stream.String(ref Portal);
+            stream.StringArray(ref Op);
+            stream.Int32(ref Port);
+            stream.Int32(ref Valid);
         }
     }
 }

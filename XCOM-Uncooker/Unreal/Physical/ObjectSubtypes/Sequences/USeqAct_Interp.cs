@@ -19,8 +19,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Location);
-            stream.Object(out Rotation);
+            stream.Object(ref Location);
+            stream.Object(ref Rotation);
         }
     }
 
@@ -37,7 +37,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences
         {
             base.Serialize(stream);
 
-            stream.Map(out SavedActorTransforms);
+            stream.Map(ref SavedActorTransforms);
         }
     }
 }

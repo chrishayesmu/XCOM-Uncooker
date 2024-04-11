@@ -111,7 +111,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
         #endregion
 
         /// <summary>
-        /// Whether the data contained in instances of this property can simply be copied without any processing.
+        /// Whether the data contained in instances of this property can simply be copied withref any processing.
         /// Property types which reference objects or names, or which require transformation due to being immutablewhencooked,
         /// are not simple-copyable.
         /// </summary>
@@ -121,14 +121,14 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
         {
             base.Serialize(stream);
 
-            stream.Int32(out ArrayDim);
-            stream.Enum64(out PropertyFlags);
-            stream.Name(out CategoryName);
-            stream.Int32(out ArraySizeEnum);
+            stream.Int32(ref ArrayDim);
+            stream.Enum64(ref PropertyFlags);
+            stream.Name(ref CategoryName);
+            stream.Int32(ref ArraySizeEnum);
 
             if (PropertyFlags.HasFlag(PropertyFlag.Net))
             {
-                stream.Int16(out ReplicationOffset);
+                stream.Int16(ref ReplicationOffset);
             }
         }
 
@@ -149,7 +149,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
         {
             // Properties never have their own properties, they just immediately terminate
             FName NAME_None = Archive.GetOrCreateName("None");
-            stream.Name(out NAME_None);
+            stream.Name(ref NAME_None);
         }
 
         /// <summary>

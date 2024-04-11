@@ -19,7 +19,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
         {
             base.Serialize(stream);
 
-            stream.BoolAsInt32(out bAssetValid);
+            stream.BoolAsInt32(ref bAssetValid);
 
             // TODO: there could be more data here if bAssetValid == true, but that may never apply in XCOM EW
         }

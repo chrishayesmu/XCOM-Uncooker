@@ -33,7 +33,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
         {
             if (stream.IsRead)
             {
-                stream.Bytes(out UnknownHeader, 16);
+                stream.Bytes(ref UnknownHeader, 16);
 
 #if DEBUG
                 for (int i = 0; i < UnknownHeader.Length; i++)
@@ -47,11 +47,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
                 }
 #endif
 
-                stream.Int32(out NumBodySections);
+                stream.Int32(ref NumBodySections);
                 int bodySize = 16 * NumBodySections;
-                stream.Bytes(out UnknownBody, bodySize);
+                stream.Bytes(ref UnknownBody, bodySize);
 
-                stream.Int32(out UnknownSuffix);
+                stream.Int32(ref UnknownSuffix);
             }
             else
             {

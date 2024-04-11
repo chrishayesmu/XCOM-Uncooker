@@ -38,21 +38,21 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out Base);
-            stream.Object(out Normal);
-            stream.Object(out TextureU);
-            stream.Object(out TextureV);
-            stream.Array(out Vertices);
-            stream.UInt32(out PolyFlags);
-            stream.Int32(out Actor);
-            stream.Name(out ItemName);
-            stream.Int32(out Material);
-            stream.Int32(out iLink);
-            stream.Int32(out iBrushPoly);
-            stream.Float32(out ShadowMapScale);
-            stream.UInt32(out LightingChannels);
-            stream.Object(out LightmassSettings);
-            stream.Name(out RulesetVariation);
+            stream.Object(ref Base);
+            stream.Object(ref Normal);
+            stream.Object(ref TextureU);
+            stream.Object(ref TextureV);
+            stream.Array(ref Vertices);
+            stream.UInt32(ref PolyFlags);
+            stream.Int32(ref Actor);
+            stream.Name(ref ItemName);
+            stream.Int32(ref Material);
+            stream.Int32(ref iLink);
+            stream.Int32(ref iBrushPoly);
+            stream.Float32(ref ShadowMapScale);
+            stream.UInt32(ref LightingChannels);
+            stream.Object(ref LightmassSettings);
+            stream.Name(ref RulesetVariation);
         }
 
     }
@@ -73,12 +73,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.Int32(out DbNum);
-            stream.Int32(out DbMax);
+            stream.Int32(ref DbNum);
+            stream.Int32(ref DbMax);
 
             // Elements is a transactional array, but for some reason its serialization is handled differently
             // from others, so we have to do some custom logic for this class in particular
-            stream.Int32(out Elements.Owner);
+            stream.Int32(ref Elements.Owner);
 
             if (stream.IsRead)
             {
@@ -87,7 +87,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             for (int i = 0; i < DbNum; i++)
             {
-                stream.Object(out Elements.Data[i]);
+                stream.Object(ref Elements.Data[i]);
             }
         }
     }

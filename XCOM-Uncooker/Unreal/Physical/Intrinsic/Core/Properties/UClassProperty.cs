@@ -36,7 +36,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
         {
             base.Serialize(stream);
 
-            stream.Int32(out ClassBound);
+            stream.Int32(ref ClassBound);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

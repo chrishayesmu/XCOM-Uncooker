@@ -30,11 +30,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public virtual void Serialize(IUnrealDataStream stream)
         {
-            stream.Object(out TangentX);
-            stream.Object(out TangentZ);
+            stream.Object(ref TangentX);
+            stream.Object(ref TangentZ);
 
-            stream.Bytes(out InfluenceBones, 4);
-            stream.Bytes(out InfluenceWeights, 4);
+            stream.Bytes(ref InfluenceBones, 4);
+            stream.Bytes(ref InfluenceWeights, 4);
         }
     }
 
@@ -52,11 +52,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.Object(out Position);
+            stream.Object(ref Position);
 
             for (int i = 0; i < NumTexCoords; i++)
             {
-                stream.Object(out UVs[i]);
+                stream.Object(ref UVs[i]);
             }
         }
     }
@@ -75,11 +75,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.Object(out Position);
+            stream.Object(ref Position);
 
             for (int i = 0; i < NumTexCoords; i++)
             {
-                stream.Object(out UVs[i]);
+                stream.Object(ref UVs[i]);
             }
         }
     }
@@ -98,11 +98,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.UInt32(out Position);
+            stream.UInt32(ref Position);
 
             for (int i = 0; i < NumTexCoords; i++)
             {
-                stream.Object(out UVs[i]);
+                stream.Object(ref UVs[i]);
             }
         }
     }
@@ -121,11 +121,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.UInt32(out Position);
+            stream.UInt32(ref Position);
 
             for (int i = 0; i < NumTexCoords; i++)
             {
-                stream.Object(out UVs[i]);
+                stream.Object(ref UVs[i]);
             }
         }
     }

@@ -377,7 +377,8 @@ namespace XCOM_Uncooker.Unreal
             Log.Info($"Assigned {total} objects across {ObjectsByUncookedArchiveName.Count} packages.");
             Log.Info($"Skipped {skippedArchives} archives, {skippedObjects} export objects, and {repeatObjects} seemingly-repeated objects.");
 
-            var unmatchedPackages = allPackages.Where(p => !PackageOrganizer.TryMatchPackageToFolders(p, out _));
+            string folderPath = "";
+            var unmatchedPackages = allPackages.Where(p => !PackageOrganizer.TryMatchPackageToFolders(p, ref folderPath));
             Log.Info($"There are {unmatchedPackages.Count()} packages which were not matched to a folder structure.");
 
             File.WriteAllText("allPackages.txt", string.Join('\n', allPackages.Order()));

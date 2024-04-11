@@ -40,10 +40,11 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
         {
             if (stream.IsRead)
             {
-                stream.Name(out ProfileName);
-                stream.Bytes(out BinaryData, 16);
+                stream.Name(ref ProfileName);
+                stream.Bytes(ref BinaryData, 16);
 
-                stream.Int32(out int numAimComponents);
+                int numAimComponents = 0;
+                stream.Int32(ref numAimComponents);
 
                 AimComponents = new USerializedAimComponentProperty[numAimComponents];
 
@@ -54,15 +55,15 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                     AimComponents[i].Serialize(stream);
                 }
 
-                stream.Name(out AnimName_LU);
-                stream.Name(out AnimName_LC);
-                stream.Name(out AnimName_LD);
-                stream.Name(out AnimName_CU);
-                stream.Name(out AnimName_CC);
-                stream.Name(out AnimName_CD);
-                stream.Name(out AnimName_RU);
-                stream.Name(out AnimName_RC);
-                stream.Name(out AnimName_RD);
+                stream.Name(ref AnimName_LU);
+                stream.Name(ref AnimName_LC);
+                stream.Name(ref AnimName_LD);
+                stream.Name(ref AnimName_CU);
+                stream.Name(ref AnimName_CC);
+                stream.Name(ref AnimName_CD);
+                stream.Name(ref AnimName_RU);
+                stream.Name(ref AnimName_RC);
+                stream.Name(ref AnimName_RD);
             }
             else
             {
@@ -76,20 +77,20 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                     Size = 8
                 };
 
-                stream.PropertyTag(out tag);
-                stream.Name(out ProfileName);
+                stream.PropertyTag(ref tag);
+                stream.Name(ref ProfileName);
 
                 tag.Name = Archive.GetOrCreateName("HorizontalRange");
                 tag.Type = NAME_StructProperty;
                 tag.StructName = Archive.GetOrCreateName("Vector2D");
 
-                stream.PropertyTag(out tag);
-                stream.Bytes(out BinaryData, tag.Size);
+                stream.PropertyTag(ref tag);
+                stream.Bytes(ref BinaryData, tag.Size);
 
                 tag.Name = Archive.GetOrCreateName("VerticalRange");
 
-                stream.PropertyTag(out tag);
-                stream.Bytes(out BinaryData, tag.Size, 8);
+                stream.PropertyTag(ref tag);
+                stream.Bytes(ref BinaryData, tag.Size, 8);
 
                 // AimComponents sizing:
                 //     4 bytes: array size
@@ -100,8 +101,8 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                 tag.Size = 4 + AimComponents.Length * USerializedAimComponentProperty.TaggedPropertiesSize;
 
                 int numAimComponents = AimComponents.Length;
-                stream.PropertyTag(out tag);
-                stream.Int32(out numAimComponents);
+                stream.PropertyTag(ref tag);
+                stream.Int32(ref numAimComponents);
 
                 for (int i = 0; i < numAimComponents; i++)
                 {
@@ -109,15 +110,15 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                     AimComponents[i].Serialize(stream);
                 }
 
-                stream.Name(out AnimName_LU);
-                stream.Name(out AnimName_LC);
-                stream.Name(out AnimName_LD);
-                stream.Name(out AnimName_CU);
-                stream.Name(out AnimName_CC);
-                stream.Name(out AnimName_CD);
-                stream.Name(out AnimName_RU);
-                stream.Name(out AnimName_RC);
-                stream.Name(out AnimName_RD);
+                stream.Name(ref AnimName_LU);
+                stream.Name(ref AnimName_LC);
+                stream.Name(ref AnimName_LD);
+                stream.Name(ref AnimName_CU);
+                stream.Name(ref AnimName_CC);
+                stream.Name(ref AnimName_CD);
+                stream.Name(ref AnimName_RU);
+                stream.Name(ref AnimName_RC);
+                stream.Name(ref AnimName_RD);
             }
         }
 

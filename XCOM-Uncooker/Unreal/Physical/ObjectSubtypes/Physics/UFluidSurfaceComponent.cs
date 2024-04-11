@@ -21,7 +21,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
         {
             base.Serialize(stream);
 
-            stream.Object(out LightMap);
+            stream.Object(ref LightMap);
         }
     }
 }

@@ -55,7 +55,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             base.Serialize(stream);
 
-            stream.Enum32(out StructFlags);
+            stream.Enum32(ref StructFlags);
 
             SerializeScriptProperties(StructDefaultProperties, stream);
         }

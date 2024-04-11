@@ -28,10 +28,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out ZoneActor);
-            stream.UInt64(out Connectivity);
-            stream.UInt64(out Visibility);
-            stream.Float32(out LastRenderTime);
+            stream.Int32(ref ZoneActor);
+            stream.UInt64(ref Connectivity);
+            stream.UInt64(ref Visibility);
+            stream.Float32(ref LastRenderTime);
         }
     }
 
@@ -82,24 +82,24 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.Object(out Bounds);
-            stream.BulkArray(out Vectors, 12);
-            stream.BulkArray(out Points, 12);
-            stream.BulkArray(out Nodes, 64);
-            stream.Object(out Surfs);
-            stream.BulkArray(out Verts, 24);
-            stream.Int32(out NumSharedSides);
-            stream.Array(out Zones);
-            stream.Int32(out Polys);
-            stream.BulkArray(out LeafHulls);
-            stream.BulkArray(out Leaves);
-            stream.BoolAsInt32(out RootOutside);
-            stream.BoolAsInt32(out Linked);
-            stream.BulkArray(out PortalNodes);
-            stream.UInt32(out NumUniqueVertices);
-            stream.Object(out VertexBuffer);
-            stream.Guid(out LightingGuid);
-            stream.Array(out LightmassSettings);
+            stream.Object(ref Bounds);
+            stream.BulkArray(ref Vectors, 12);
+            stream.BulkArray(ref Points, 12);
+            stream.BulkArray(ref Nodes, 64);
+            stream.Object(ref Surfs);
+            stream.BulkArray(ref Verts, 24);
+            stream.Int32(ref NumSharedSides);
+            stream.Array(ref Zones);
+            stream.Int32(ref Polys);
+            stream.BulkArray(ref LeafHulls);
+            stream.BulkArray(ref Leaves);
+            stream.BoolAsInt32(ref RootOutside);
+            stream.BoolAsInt32(ref Linked);
+            stream.BulkArray(ref PortalNodes);
+            stream.UInt32(ref NumUniqueVertices);
+            stream.Object(ref VertexBuffer);
+            stream.Guid(ref LightingGuid);
+            stream.Array(ref LightmassSettings);
         }
     }
 }

@@ -75,9 +75,10 @@ namespace XCOM_Uncooker.IO
             _stream.Seek(numBytes, SeekOrigin.Current);
         }
 
-        public void Array<T>(out T[] data, UObject owner = null) where T : IUnrealSerializable, new()
+        public void Array<T>(ref T[] data, UObject owner = null) where T : IUnrealSerializable, new()
         {
-            Int32(out int arraySize);
+            int arraySize = 0;
+            Int32(ref arraySize);
 
 #if DEBUG
             if (arraySize > 100000)
@@ -96,9 +97,10 @@ namespace XCOM_Uncooker.IO
             }
         }
 
-        public void Bool(out bool value)
+        public void Bool(ref bool value)
         {
-            UInt8(out byte byteValue);
+            byte byteValue = 0;
+            UInt8(ref byteValue);
 
 #if DEBUG
             if (byteValue != 0 && byteValue != 1)
@@ -110,23 +112,25 @@ namespace XCOM_Uncooker.IO
             value = byteValue > 0;
         }
 
-        public void BoolAsInt32(out bool value)
+        public void BoolAsInt32(ref bool value)
         {
-            Int32(out int boolInt);
+            int boolInt = 0;
+            Int32(ref boolInt);
 
 #if DEBUG
             if (boolInt != 0 && boolInt != 1)
             {
-                // Debugger.Break();
+                //Debugger.Break();
             }
 #endif
 
             value = boolInt > 0;
         }
 
-        public void BulkArray<T>(out T[] data, int elementSize, UObject owner = null) where T : IUnrealSerializable, new()
+        public void BulkArray<T>(ref T[] data, int elementSize, UObject owner = null) where T : IUnrealSerializable, new()
         {
-            Int32(out int actualElementSize);
+            int actualElementSize = 0;
+            Int32(ref actualElementSize);
 
 #if DEBUG
             if (elementSize != actualElementSize)
@@ -135,16 +139,16 @@ namespace XCOM_Uncooker.IO
             }
 #endif
 
-            Array(out data, owner);
+            Array(ref data, owner);
         }
 
-        public void BulkArray(out byte[] data)
+        public void BulkArray(ref byte[] data)
         {
             // Unlike the other bulk serialization functions, this one doesn't have an expected element size; it can
-            // be used to read any bulk-serialized data where we don't care about the data's type
+            // be used to read any bulk-serialized data where we don't care abref the data's type
             // TODO: we need to know the element size for re-serializing the data later!
-
-            Int32(out int elementSize);
+            int elementSize = 0;
+            Int32(ref elementSize);
 
             if (elementSize == 0)
             {
@@ -152,14 +156,16 @@ namespace XCOM_Uncooker.IO
                 return;
             }
 
-            Int32(out int numElements);
+            int numElements = 0;
+            Int32(ref numElements);
             data = new byte[numElements * elementSize];
             Read(data, 0, numElements * elementSize);
         }
 
-        public void BulkArray(out int[] data)
+        public void BulkArray(ref int[] data)
         {
-            Int32(out int elementSize);
+            int elementSize = 0;
+            Int32(ref elementSize);
 
 #if DEBUG
             if (elementSize != 4)
@@ -168,12 +174,13 @@ namespace XCOM_Uncooker.IO
             }
 #endif
 
-            Int32Array(out data);
+            Int32Array(ref data);
         }
 
-        public void BulkArray(out short[] data)
+        public void BulkArray(ref short[] data)
         {
-            Int32(out int elementSize);
+            int elementSize = 0;
+            Int32(ref elementSize);
 
 #if DEBUG
             if (elementSize != 2)
@@ -182,14 +189,15 @@ namespace XCOM_Uncooker.IO
             }
 #endif
 
-            Int16Array(out data);
+            Int16Array(ref data);
         }
 
-        public void BulkTransactionalArray<T>(out TTransactionalArray<T> data, int elementSize) where T : IUnrealSerializable, new()
+        public void BulkTransactionalArray<T>(ref TTransactionalArray<T> data, int elementSize) where T : IUnrealSerializable, new()
         {
             data = new TTransactionalArray<T>();
 
-            Int32(out int actualElementSize);
+            int actualElementSize = 0;
+            Int32(ref actualElementSize);
 
 #if DEBUG
             if (elementSize != actualElementSize)
@@ -201,51 +209,55 @@ namespace XCOM_Uncooker.IO
             data.Serialize(this);
         }
 
-        public void ByteArray(out byte[] data)
+        public void ByteArray(ref byte[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
             data = new byte[length];
             Read(data, 0, length);
         }
 
-        public void Bytes(out byte[] data, int count, int offset = 0)
+        public void Bytes(ref byte[] data, int count, int offset = 0)
         {
             data = new byte[count];
 
             Read(data, offset, count);
         }
 
-        public void Enum32<T>(out T value) where T : Enum
+        public void Enum32<T>(ref T value) where T : Enum
         {
-            UInt32(out uint enumAsUInt);
+            uint enumAsUInt = 0;
+            UInt32(ref enumAsUInt);
             value = (T) Enum.ToObject(typeof(T), enumAsUInt);
         }
 
-        public void Enum64<T>(out T value) where T : Enum
+        public void Enum64<T>(ref T value) where T : Enum
         {
-            UInt64(out ulong enumAsULong);
+            ulong enumAsULong = 0;
+            UInt64(ref enumAsULong);
             value = (T) Enum.ToObject(typeof(T), enumAsULong);
         }
 
-        public void Float32Array(out float[] data)
+        public void Float32Array(ref float[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
             data = new float[length];
 
 #if DEBUG
             if (length > 100000)
             {
-                throw new Exception("");
+                throw new Exception($"Array length too long, almost certainly a data read error: {length}");
             }
 #endif
 
             for (int i = 0; i < length; i++)
             {
-                Float32(out data[i]);
+                Float32(ref data[i]);
             }
         }
 
-        public void Float16(out Half value)
+        public void Float16(ref Half value)
         {
             Span<byte> buffer = stackalloc byte[2];
 
@@ -254,7 +266,7 @@ namespace XCOM_Uncooker.IO
             value = MemoryMarshal.Read<Half>(buffer);
         }
 
-        public void Float32(out float value)
+        public void Float32(ref float value)
         {
             Span<byte> buffer = stackalloc byte[4];
 
@@ -263,7 +275,7 @@ namespace XCOM_Uncooker.IO
             value = MemoryMarshal.Read<float>(buffer);
         }
 
-        public void GenerationInfo(out FGenerationInfo info)
+        public void GenerationInfo(ref FGenerationInfo info)
         {
             info = default;
             Span<byte> buffer = stackalloc byte[12];
@@ -275,29 +287,31 @@ namespace XCOM_Uncooker.IO
             info.NetObjectCount = MemoryMarshal.Read<int>(buffer.Slice(8, 4));
         }
 
-        public void GenerationInfoArray(out FGenerationInfo[] data)
+        public void GenerationInfoArray(ref FGenerationInfo[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
             data = new FGenerationInfo[length];
 
             for (int i = 0; i < length; i++)
             {
-                GenerationInfo(out data[i]);
+                GenerationInfo(ref data[i]);
             }
         }
 
-        public void GuidArray(out Guid[] data)
+        public void GuidArray(ref Guid[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
             data = new Guid[length];
 
             for (int i = 0; i < length; i++)
             {
-                Guid(out data[i]);
+                Guid(ref data[i]);
             }
         }
 
-        public void Guid(out Guid guid)
+        public void Guid(ref Guid guid)
         {
             Span<byte> buffer = stackalloc byte[16];
 
@@ -306,29 +320,31 @@ namespace XCOM_Uncooker.IO
             guid = new Guid(buffer);
         }
 
-        public void Int16Array(out short[] data)
+        public void Int16Array(ref short[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
             data = new short[length];
 
             for (int i = 0; i < length; i++)
             {
-                Int16(out data[i]);
+                Int16(ref data[i]);
             }
         }
 
-        public void Int32Array(out int[] data)
+        public void Int32Array(ref int[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
             data = new int[length];
 
             for (int i = 0; i < length; i++)
             {
-                Int32(out data[i]);
+                Int32(ref data[i]);
             }
         }
 
-        public void Int16(out short value)
+        public void Int16(ref short value)
         {
             Span<byte> buffer = stackalloc byte[2];
 
@@ -337,7 +353,7 @@ namespace XCOM_Uncooker.IO
             value = MemoryMarshal.Read<short>(buffer);
         }
 
-        public void Int32(out int value)
+        public void Int32(ref int value)
         {
             Span<byte> buffer = stackalloc byte[4];
 
@@ -346,7 +362,7 @@ namespace XCOM_Uncooker.IO
             value = MemoryMarshal.Read<int>(buffer);
         }
 
-        public void Int64(out long value)
+        public void Int64(ref long value)
         {
             Span<byte> buffer = stackalloc byte[8];
 
@@ -355,61 +371,72 @@ namespace XCOM_Uncooker.IO
             value = MemoryMarshal.Read<long>(buffer);
         }
     
-        public void Map(out IDictionary<byte, int> map)
+        public void Map(ref IDictionary<byte, int> map)
         {
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             map = new Dictionary<byte, int>(numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                UInt8(out byte key);
-                Int32(out int value);
+                byte key = 0;
+                int value = 0;
+                UInt8(ref key);
+                Int32(ref value);
 
                 map.Add(key, value);
             }
         }
 
-        public void Map(out IDictionary<int, bool> map)
+        public void Map(ref IDictionary<int, bool> map)
         {
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             map = new Dictionary<int, bool>(numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int32(out int key);
-                BoolAsInt32(out bool value);
+                int key = 0;
+                bool value = false;
+                Int32(ref key);
+                BoolAsInt32(ref value);
 
                 map.Add(key, value);
             }
         }
 
-        public void Map(out IDictionary<int, int> map)
+        public void Map(ref IDictionary<int, int> map)
         {
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             map = new Dictionary<int, int>(numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int32(out int key);
-                Int32(out int value);
+                int key = 0, value = 0;
+                Int32(ref key);
+                Int32(ref value);
 
                 map.Add(key, value);
             }
         }
 
-        public void Map(out IDictionary<int, int[]> map)
+        public void Map(ref IDictionary<int, int[]> map)
         {
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             map = new Dictionary<int, int[]>(numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int32(out int key);
-                Int32Array(out int[] value);
+                int key = 0;
+                int[] value = [];
+                Int32(ref key);
+                Int32Array(ref value);
 
                 if (map.ContainsKey(key))
                 {
@@ -423,75 +450,89 @@ namespace XCOM_Uncooker.IO
             }
         }
 
-        public void Map(out IDictionary<long, int> map)
+        public void Map(ref IDictionary<long, int> map)
         {
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             map = new Dictionary<long, int>(numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int64(out long key);
-                Int32(out int value);
+                long key = 0;
+                int value = 0;
+                Int64(ref key);
+                Int32(ref value);
 
                 map.Add(key, value);
             }
         }
 
-        public void Map(out IDictionary<long, int[]> map)
+        public void Map(ref IDictionary<long, int[]> map)
         {
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             map = new Dictionary<long, int[]>(numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int64(out long key);
-                Int32Array(out int[] value);
+                long key = 0;
+                int[] value = [];
+                Int64(ref key);
+                Int32Array(ref value);
 
                 map.Add(key, value);
             }
         }
 
-        public void Map(out IDictionary<FName, int> map)
+        public void Map(ref IDictionary<FName, int> map)
         {
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             map = new Dictionary<FName, int>(numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Name(out FName name);
-                Int32(out int value);
+                FName name = default;
+                int value = 0;
+                Name(ref name);
+                Int32(ref value);
 
                 map.Add(name, value);
             }
         }
 
-        public void Map<T>(out IDictionary<int, T[]> map) where T : IUnrealSerializable, new()
+        public void Map<T>(ref IDictionary<int, T[]> map) where T : IUnrealSerializable, new()
         {
             map = new Dictionary<int, T[]>();
 
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int32(out int key);
-                Array(out T[] data);
+                int key = 0;
+                T[] data = [];
+                Int32(ref key);
+                Array(ref data);
 
                 map.Add(key, data);
             }
         }
 
-        public void Map<T>(out IDictionary<int, T> map) where T : IUnrealSerializable, new()
+        public void Map<T>(ref IDictionary<int, T> map) where T : IUnrealSerializable, new()
         {
             map = new Dictionary<int, T>();
 
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int32(out int key);
+                int key = 0;
+                Int32(ref key);
 
                 T value = new T();
                 value.Serialize(this);
@@ -500,16 +541,18 @@ namespace XCOM_Uncooker.IO
             }
         }
 
-        public void MultiMap(out IDictionary<int, IList<int>> map)
+        public void MultiMap(ref IDictionary<int, IList<int>> map)
         {
             map = new Dictionary<int, IList<int>>();
 
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int32(out int key);
-                Int32(out int value);
+                int key = 0, value = 0;
+                Int32(ref key);
+                Int32(ref value);
 
                 if (!map.TryGetValue(key, out IList<int> valueList))
                 {
@@ -521,15 +564,17 @@ namespace XCOM_Uncooker.IO
             }
         }
 
-        public void MultiMap<T>(out IDictionary<int, IList<T>> map) where T : IUnrealSerializable, new()
+        public void MultiMap<T>(ref IDictionary<int, IList<T>> map) where T : IUnrealSerializable, new()
         {
             map = new Dictionary<int, IList<T>>();
 
-            Int32(out int numEntries);
+            int numEntries = 0;
+            Int32(ref numEntries);
 
             for (int i = 0; i < numEntries; i++)
             {
-                Int32(out int key);
+                int key = 0;
+                Int32(ref key);
 
                 if (!map.TryGetValue(key, out IList<T> valueList))
                 {
@@ -544,88 +589,92 @@ namespace XCOM_Uncooker.IO
             }
         }
 
-        public void Name(out FName name)
+        public void Name(ref FName name)
         {
             name = new FName();
 
-            Int32(out name.Index);
-            Int32(out name.Suffix);
+            Int32(ref name.Index);
+            Int32(ref name.Suffix);
             name.Archive = this.Archive!;
         }
 
-        public void NameArray(out FName[] data)
+        public void NameArray(ref FName[] data)
         {
-            Int32(out int size);
+            int size = 0;
+            Int32(ref size);
 
             data = new FName[size];
 
             for (int i = 0; i < size; i++)
             {
-                Name(out data[i]);
+                Name(ref data[i]);
             }
         }
 
-        public void Object<T>(out T data, UObject owner = null) where T : IUnrealSerializable, new()
+        public void Object<T>(ref T data, UObject owner = null) where T : IUnrealSerializable, new()
         {
             data = new T();
             data.Owner = owner;
             data.Serialize(this);
         }
 
-        public void PropertyTag(out FPropertyTag tag)
+        public void PropertyTag(ref FPropertyTag tag)
         {
             tag = new FPropertyTag();
 
-            Name(out tag.Name);
+            Name(ref tag.Name);
 
             if (tag.Name.IsNone())
             {
                 return;
             }
 
-            Name(out tag.Type);
-            Int32(out tag.Size);
-            Int32(out tag.ArrayIndex);
+            Name(ref tag.Type);
+            Int32(ref tag.Size);
+            Int32(ref tag.ArrayIndex);
 
             if (tag.Type == "BoolProperty")
             {
-                UInt8(out byte byteVal);
+                byte byteVal = 0;
+                UInt8(ref byteVal);
                 tag.BoolVal = byteVal > 0;
             }
             else if (tag.Type == "ByteProperty")
             {
-                Name(out tag.EnumName);
+                Name(ref tag.EnumName);
             }
             else if (tag.Type == "StructProperty")
             {
-                Name(out tag.StructName);
+                Name(ref tag.StructName);
             }
         }
 
-        public void PushedState(out FPushedState state)
+        public void PushedState(ref FPushedState state)
         {
             state = default;
 
-            Int32(out state.State);
-            Int32(out state.Node);
-            Int32(out state.Offset);
+            Int32(ref state.State);
+            Int32(ref state.Node);
+            Int32(ref state.Offset);
         }
 
-        public void PushedStateArray(out FPushedState[] data)
+        public void PushedStateArray(ref FPushedState[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
 
             data = new FPushedState[length];
 
             for (int i = 0; i < length; i++)
             {
-                PushedState(out data[i]);
+                PushedState(ref data[i]);
             }
         }
 
-        public void String(out string value)
+        public void String(ref string value)
         {
-            Int32(out int numChars);
+            int numChars = 0;
+            Int32(ref numChars);
 
             if (numChars == 0)
             {
@@ -655,45 +704,47 @@ namespace XCOM_Uncooker.IO
             value = Encoding.ASCII.GetString(buffer.Slice(0, numBytes - charSize));
         }
 
-        public void StringArray(out string[] data)
+        public void StringArray(ref string[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
 
             data = new string[length];
 
             for (int i = 0; i < length; i++)
             {
-                String(out data[i]);
+                String(ref data[i]);
             }
         }
 
-        public void ThumbnailMetadata(out FThumbnailMetadata metadata)
+        public void ThumbnailMetadata(ref FThumbnailMetadata metadata)
         {
             metadata = default;
 
-            String(out metadata.ClassName);
-            String(out metadata.ObjectPathWithoutPackageName);
-            Int32(out metadata.FileOffset);
+            String(ref metadata.ClassName);
+            String(ref metadata.ObjectPathWithoutPackageName);
+            Int32(ref metadata.FileOffset);
         }
 
-        public void UInt8(out byte value)
+        public void UInt8(ref byte value)
         {
             value = (byte) ReadByte();
         }
 
-        public void UInt16Array(out ushort[] data)
+        public void UInt16Array(ref ushort[] data)
         {
-            Int32(out int length);
+            int length = 0;
+            Int32(ref length);
 
             data = new ushort[length];
 
             for (int i = 0; i < length; i++)
             {
-                UInt16(out data[i]);
+                UInt16(ref data[i]);
             }
         }
 
-        public void UInt16(out ushort value)
+        public void UInt16(ref ushort value)
         {
             Span<byte> buffer = stackalloc byte[2];
 
@@ -702,7 +753,7 @@ namespace XCOM_Uncooker.IO
             value = MemoryMarshal.Read<ushort>(buffer);
         }
 
-        public void UInt32(out uint value)
+        public void UInt32(ref uint value)
         {
             Span<byte> buffer = stackalloc byte[4];
 
@@ -711,7 +762,7 @@ namespace XCOM_Uncooker.IO
             value = MemoryMarshal.Read<uint>(buffer);
         }
 
-        public void UInt64(out ulong value)
+        public void UInt64(ref ulong value)
         {
             Span<byte> buffer = stackalloc byte[8];
 

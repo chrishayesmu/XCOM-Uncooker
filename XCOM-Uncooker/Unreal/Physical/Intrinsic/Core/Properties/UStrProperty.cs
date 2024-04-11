@@ -9,7 +9,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
 {
     /// <summary>
     /// Represents a UE3 dynamic string. The property has no additional metadata, since
-    /// anything there is to know about it will be determined at runtime.
+    /// anything there is to know abref it will be determined at runtime.
     /// </summary>
     public class UStrProperty(FArchive archive, FObjectTableEntry tableEntry) : UProperty(archive, tableEntry)
     {

@@ -36,13 +36,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out ClassIndex1);
-            stream.Int32(out ClassIndex2);
-            stream.Int32(out UnknownValue1);
-            stream.Int32(out UnknownValue2);
-            stream.UInt8(out UnknownByte1);
-            stream.UInt8(out UnknownByte2);
-            stream.Int32(out UnknownValue3);
+            stream.Int32(ref ClassIndex1);
+            stream.Int32(ref ClassIndex2);
+            stream.Int32(ref UnknownValue1);
+            stream.Int32(ref UnknownValue2);
+            stream.UInt8(ref UnknownByte1);
+            stream.UInt8(ref UnknownByte2);
+            stream.Int32(ref UnknownValue3);
 
 #if DEBUG
             if (ClassIndex1 != ClassIndex2 || UnknownValue1 != -1 || UnknownByte1 != 0 || UnknownByte2 != 0 || UnknownValue3 != -1)

@@ -24,11 +24,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
         {
             base.Serialize(stream);
 
-            stream.Object(out BranchLightMap);
-            stream.Object(out FrondLightMap);
-            stream.Object(out LeafCardLightMap);
-            stream.Object(out BillboardLightMap);
-            stream.Object(out LeafMeshLightMap);
+            stream.Object(ref BranchLightMap);
+            stream.Object(ref FrondLightMap);
+            stream.Object(ref LeafCardLightMap);
+            stream.Object(ref BillboardLightMap);
+            stream.Object(ref LeafMeshLightMap);
         }
     }
 }

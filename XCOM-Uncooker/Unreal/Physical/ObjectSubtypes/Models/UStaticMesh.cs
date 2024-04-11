@@ -23,8 +23,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out BaseIndex);
-            stream.Int32(out NumPrimitives);
+            stream.Int32(ref BaseIndex);
+            stream.Int32(ref NumPrimitives);
         }
     }
 
@@ -42,9 +42,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.UInt32(out Stride);
-            stream.UInt32(out NumVertices);
-            stream.BulkArray(out VertexData);
+            stream.UInt32(ref Stride);
+            stream.UInt32(ref NumVertices);
+            stream.BulkArray(ref VertexData);
         }
     }
 
@@ -81,17 +81,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out Material);
-            stream.BoolAsInt32(out EnableCollision);
-            stream.BoolAsInt32(out OldEnableCollision);
-            stream.BoolAsInt32(out bEnableShadowCasting);
-            stream.UInt32(out FirstIndex);
-            stream.UInt32(out NumTriangles);
-            stream.UInt32(out MinVertexIndex);
-            stream.UInt32(out MaxVertexIndex);
-            stream.Int32(out MaterialIndex);
-            stream.Array(out Fragments);
-            stream.Bool(out LoadPlatformData);
+            stream.Int32(ref Material);
+            stream.BoolAsInt32(ref EnableCollision);
+            stream.BoolAsInt32(ref OldEnableCollision);
+            stream.BoolAsInt32(ref bEnableShadowCasting);
+            stream.UInt32(ref FirstIndex);
+            stream.UInt32(ref NumTriangles);
+            stream.UInt32(ref MinVertexIndex);
+            stream.UInt32(ref MaxVertexIndex);
+            stream.Int32(ref MaterialIndex);
+            stream.Array(ref Fragments);
+            stream.Bool(ref LoadPlatformData);
 
 #if DEBUG
             if (LoadPlatformData)
@@ -160,14 +160,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         public void Serialize(IUnrealDataStream stream)
         {
             RawTriangles.Serialize(stream);
-            stream.Array(out Elements);
-            stream.Object(out PositionVertexBuffer);
-            stream.Object(out VertexBuffer);
-            stream.Object(out ColorVertexBuffer);
-            stream.UInt32(out NumVertices);
-            stream.BulkArray(out IndexBuffer);
-            stream.BulkArray(out WireframeIndexBuffer);
-            stream.BulkArray(out AdjacencyIndexBuffer);
+            stream.Array(ref Elements);
+            stream.Object(ref PositionVertexBuffer);
+            stream.Object(ref VertexBuffer);
+            stream.Object(ref ColorVertexBuffer);
+            stream.UInt32(ref NumVertices);
+            stream.BulkArray(ref IndexBuffer);
+            stream.BulkArray(ref WireframeIndexBuffer);
+            stream.BulkArray(ref AdjacencyIndexBuffer);
         }
     }
 
@@ -189,11 +189,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.UInt32(out NumTexCoords);
-            stream.UInt32(out Stride);
-            stream.UInt32(out NumVertices);
-            stream.BoolAsInt32(out bUseFullPrecisionUVs);
-            stream.BulkArray(out VertexData);
+            stream.UInt32(ref NumTexCoords);
+            stream.UInt32(ref Stride);
+            stream.UInt32(ref NumVertices);
+            stream.BoolAsInt32(ref bUseFullPrecisionUVs);
+            stream.BulkArray(ref VertexData);
         }
     }
 
@@ -242,11 +242,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             base.Serialize(stream);
 
-            stream.Object(out Bounds);
-            stream.Int32(out BodySetup);
-            stream.Object(out KDOPTree);
-            stream.Int32(out InternalVersion);
-            stream.BoolAsInt32(out bHaveSourceData);
+            stream.Object(ref Bounds);
+            stream.Int32(ref BodySetup);
+            stream.Object(ref KDOPTree);
+            stream.Int32(ref InternalVersion);
+            stream.BoolAsInt32(ref bHaveSourceData);
 
 #if DEBUG
             if (bHaveSourceData)
@@ -255,18 +255,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             }
 #endif
 
-            stream.Array(out OptimizationSettings);
-            stream.BoolAsInt32(out bHasBeenSimplified);
-            stream.Array(out LODModels);
-            stream.Array(out LODInfo);
-            stream.Object(out ThumbnailAngle);
-            stream.Float32(out ThumbnailDistance);
-            stream.String(out HighResSourceMeshName);
-            stream.Int32(out HighResSourceMeshCRC);
-            stream.Guid(out LightingGuid);
-            stream.Int32(out VertexPositionVersionNumber);
-            stream.Float32Array(out CachedStreamingTextureFactors);
-            stream.BoolAsInt32(out bRemoveDegenerates);
+            stream.Array(ref OptimizationSettings);
+            stream.BoolAsInt32(ref bHasBeenSimplified);
+            stream.Array(ref LODModels);
+            stream.Array(ref LODInfo);
+            stream.Object(ref ThumbnailAngle);
+            stream.Float32(ref ThumbnailDistance);
+            stream.String(ref HighResSourceMeshName);
+            stream.Int32(ref HighResSourceMeshCRC);
+            stream.Guid(ref LightingGuid);
+            stream.Int32(ref VertexPositionVersionNumber);
+            stream.Float32Array(ref CachedStreamingTextureFactors);
+            stream.BoolAsInt32(ref bRemoveDegenerates);
         }
     }
 }

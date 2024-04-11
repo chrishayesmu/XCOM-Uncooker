@@ -52,14 +52,14 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             base.Serialize(stream);
 
-            stream.Int32(out Super);
-            stream.Int32(out ScriptText);
-            stream.Int32(out Children);
-            stream.Int32(out CppText);
-            stream.Int32(out Line);
-            stream.Int32(out TextPos);
-            stream.Int32(out ByteScriptSize);
-            stream.Int32(out DataScriptSize);
+            stream.Int32(ref Super);
+            stream.Int32(ref ScriptText);
+            stream.Int32(ref Children);
+            stream.Int32(ref CppText);
+            stream.Int32(ref Line);
+            stream.Int32(ref TextPos);
+            stream.Int32(ref ByteScriptSize);
+            stream.Int32(ref DataScriptSize);
 
             // We aren't interested in script data, just skip it
             // TODO we'll need them eventually
@@ -98,7 +98,8 @@ namespace XCOM_Uncooker.Unreal.Physical
                     return;
                 }
 
-                stream.PropertyTag(out FPropertyTag tag);
+                FPropertyTag tag = default;
+                stream.PropertyTag(ref tag);
 
                 while (!tag.Name.IsNone())
                 {
@@ -130,7 +131,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                     props.Add(prop);
 
                     // Move on to the next property tag
-                    stream.PropertyTag(out tag);
+                    stream.PropertyTag(ref tag);
                 }
             }
             else

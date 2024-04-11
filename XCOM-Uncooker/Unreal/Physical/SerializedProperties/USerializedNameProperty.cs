@@ -20,7 +20,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            stream.Name(out Value);
+            stream.Name(ref Value);
         }
 
         public override void CloneFromOtherArchive(USerializedProperty sourceProp)

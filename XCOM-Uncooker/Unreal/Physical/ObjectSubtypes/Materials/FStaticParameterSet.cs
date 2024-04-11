@@ -22,11 +22,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Guid(out BaseMaterialId);
-            stream.Array(out StaticSwitchParameters);
-            stream.Array(out StaticComponentMaskParameters);
-            stream.Array(out NormalParameters);
-            stream.Array(out TerrainLayerWeightParameters);
+            stream.Guid(ref BaseMaterialId);
+            stream.Array(ref StaticSwitchParameters);
+            stream.Array(ref StaticComponentMaskParameters);
+            stream.Array(ref NormalParameters);
+            stream.Array(ref TerrainLayerWeightParameters);
         }
     }
 }

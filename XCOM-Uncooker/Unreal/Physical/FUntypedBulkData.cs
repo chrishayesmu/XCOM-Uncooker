@@ -34,10 +34,10 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Enum32(out BulkDataFlags);
-            stream.Int32(out NumElements);
-            stream.Int32(out SizeOnDisk);
-            stream.Int32(out Offset);
+            stream.Enum32(ref BulkDataFlags);
+            stream.Int32(ref NumElements);
+            stream.Int32(ref SizeOnDisk);
+            stream.Int32(ref Offset);
 
             if (BulkDataFlags.HasFlag(EBulkDataFlags.StoreInSeparateFile))
             {
@@ -47,7 +47,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 // If the data's not in a separate file, then it will immediately follow the Offset field,
                 // so we don't need to bother seeking for it
-                stream.Bytes(out Data, SizeOnDisk);
+                stream.Bytes(ref Data, SizeOnDisk);
             }
         }
     }

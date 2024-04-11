@@ -22,7 +22,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         {
             base.Serialize(stream);
 
-            stream.Int32(out WorldDataPtr);
+            stream.Int32(ref WorldDataPtr);
         }
     }
 }

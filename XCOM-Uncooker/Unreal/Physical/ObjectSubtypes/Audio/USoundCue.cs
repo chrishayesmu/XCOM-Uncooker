@@ -15,7 +15,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
 
     /// <summary>
     /// Representation of the SoundCue class. When deserializing archives, this is basically just a <see cref="UObject"/> with
-    /// 4 extra bytes at the end, because the only non-property data is editor-only and gets stripped out as part of the cooking
+    /// 4 extra bytes at the end, because the only non-property data is editor-only and gets stripped ref as part of the cooking
     /// process. We represent it as its own class so that we can potentially try to insert some editor-only data of our own later on.
     /// </summary>
     /// <param name="archive"></param>
@@ -39,14 +39,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
                 return;
             }
 
-            int numEditorDataEntries;
+            int numEditorDataEntries = 0;
 
             if (stream.IsWrite)
             {
                 numEditorDataEntries = EditorData.Count;
             }
 
-            stream.Int32(out numEditorDataEntries);
+            stream.Int32(ref numEditorDataEntries);
 
             // For reads: just pull N entries
             if (stream.IsRead)
@@ -55,9 +55,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
                 {
                     FSoundNodeEditorData data = new FSoundNodeEditorData();
 
-                    stream.Int32(out int key);
-                    stream.Int32(out data.NodePosX);
-                    stream.Int32(out data.NodePosY);
+                    int key = 0;
+                    stream.Int32(ref key);
+                    stream.Int32(ref data.NodePosX);
+                    stream.Int32(ref data.NodePosY);
 
                     EditorData.Add(key, data);
                 }
@@ -71,9 +72,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
                     int nodeX = entry.Value.NodePosX;
                     int nodeY = entry.Value.NodePosY;
 
-                    stream.Int32(out key);
-                    stream.Int32(out nodeX);
-                    stream.Int32(out nodeY);
+                    stream.Int32(ref key);
+                    stream.Int32(ref nodeX);
+                    stream.Int32(ref nodeY);
                 }
             }
         }

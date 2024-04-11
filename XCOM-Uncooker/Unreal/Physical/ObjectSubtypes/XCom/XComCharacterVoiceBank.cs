@@ -15,7 +15,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 
         // Maps from XComGame.XGGameData.ECharacterSpeech to the corresponding UProperty within the
         // XComCharacterVoiceBank class. Why this exists is uncertain, since custom voice packs work fine
-        // without this data; probably it's a simple optimization.
+        // withref this data; probably it's a simple optimization.
         [Index(typeof(UProperty))]
         public IDictionary<byte, int> EventToPropertyMap;
 
@@ -27,7 +27,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 
             if (!IsClassDefaultObject())
             {
-                stream.Map(out EventToPropertyMap);
+                stream.Map(ref EventToPropertyMap);
             }
         }
     }

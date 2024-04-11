@@ -23,13 +23,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.Name(out ParameterName);
-            stream.BoolAsInt32(out R);
-            stream.BoolAsInt32(out G);
-            stream.BoolAsInt32(out B);
-            stream.BoolAsInt32(out A);
-            stream.BoolAsInt32(out Override);
-            stream.Guid(out ExpressionGuid);
+            stream.Name(ref ParameterName);
+            stream.BoolAsInt32(ref R);
+            stream.BoolAsInt32(ref G);
+            stream.BoolAsInt32(ref B);
+            stream.BoolAsInt32(ref A);
+            stream.BoolAsInt32(ref Override);
+            stream.Guid(ref ExpressionGuid);
         }
     }
 }

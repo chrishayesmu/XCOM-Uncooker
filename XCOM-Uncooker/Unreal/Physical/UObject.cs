@@ -202,7 +202,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 }
             }
 
-            stream.Int32(out NetIndex);
+            stream.Int32(ref NetIndex);
 
             // Classes don't have tagged properties
             if (this is not UClass)
@@ -294,7 +294,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             if (IsImport)
             {
-                // TODO: without linking imports, we don't have enough data to say for sure whether this is a component
+                // TODO: withref linking imports, we don't have enough data to say for sure whether this is a component
                 return false;
             }
 
@@ -342,11 +342,11 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         protected void SerializeComponentData(IUnrealDataStream stream)
         {
-            stream.Int32(out TemplateOwnerClass);
+            stream.Int32(ref TemplateOwnerClass);
 
             if (IsOwnedByClassDefaultObject())
             {
-                stream.Name(out TemplateName);
+                stream.Name(ref TemplateName);
             }
         }
 
@@ -379,7 +379,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         }
 
         /// <summary>
-        /// Serializes the tagged properties of this object, without relying on the object's class definition. Should only be
+        /// Serializes the tagged properties of this object, withref relying on the object's class definition. Should only be
         /// used if the class definition is unavailable for some reason, as this is much less robust.
         /// </summary>
         /// <param name="props"></param>
@@ -388,7 +388,8 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             if (stream.IsRead)
             {
-                stream.PropertyTag(out FPropertyTag tag);
+                FPropertyTag tag = new FPropertyTag();
+                stream.PropertyTag(ref tag);
 
                 while (!tag.Name.IsNone())
                 {
@@ -404,7 +405,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                     prop.Serialize(stream);
                     props.Add(prop);
 
-                    stream.PropertyTag(out tag);
+                    stream.PropertyTag(ref tag);
                 }
             }
             else

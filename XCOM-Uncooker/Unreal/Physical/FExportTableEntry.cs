@@ -117,18 +117,18 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            stream.Int32(out ClassIndex);
-            stream.Int32(out SuperIndex);
-            stream.Int32(out OuterIndex);
-            stream.Name(out ObjectName);
-            stream.Int32(out ArchetypeIndex);
-            stream.Enum64(out ObjectFlags);
-            stream.Int32(out SerialSize);
-            stream.Int32(out SerialOffset);
-            stream.Enum32(out ExportFlags);
-            stream.Int32Array(out GenerationNetObjectCount);
-            stream.Guid(out PackageGuid);
-            stream.Enum32(out PackageFlags);
+            stream.Int32(ref ClassIndex);
+            stream.Int32(ref SuperIndex);
+            stream.Int32(ref OuterIndex);
+            stream.Name(ref ObjectName);
+            stream.Int32(ref ArchetypeIndex);
+            stream.Enum64(ref ObjectFlags);
+            stream.Int32(ref SerialSize);
+            stream.Int32(ref SerialOffset);
+            stream.Enum32(ref ExportFlags);
+            stream.Int32Array(ref GenerationNetObjectCount);
+            stream.Guid(ref PackageGuid);
+            stream.Enum32(ref PackageFlags);
 
             if (stream.IsRead)
             {

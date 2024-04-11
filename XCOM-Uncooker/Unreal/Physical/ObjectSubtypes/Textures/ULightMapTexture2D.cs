@@ -27,7 +27,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
         {
             base.Serialize(stream);
 
-            stream.Enum32(out LightMapFlags);
+            stream.Enum32(ref LightMapFlags);
         }
     }
 }
