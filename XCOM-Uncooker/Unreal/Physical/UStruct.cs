@@ -99,7 +99,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 }
 
                 FPropertyTag tag = default;
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
 
                 while (!tag.Name.IsNone())
                 {
@@ -131,7 +131,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                     props.Add(prop);
 
                     // Move on to the next property tag
-                    stream.PropertyTag(ref tag);
+                    stream.Object(ref tag);
                 }
             }
             else

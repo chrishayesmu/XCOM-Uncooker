@@ -77,19 +77,19 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                     Size = 8
                 };
 
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Name(ref ProfileName);
 
                 tag.Name = Archive.GetOrCreateName("HorizontalRange");
                 tag.Type = NAME_StructProperty;
                 tag.StructName = Archive.GetOrCreateName("Vector2D");
 
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Bytes(ref BinaryData, tag.Size);
 
                 tag.Name = Archive.GetOrCreateName("VerticalRange");
 
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Bytes(ref BinaryData, tag.Size, 8);
 
                 // AimComponents sizing:
@@ -101,7 +101,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                 tag.Size = 4 + AimComponents.Length * USerializedAimComponentProperty.TaggedPropertiesSize;
 
                 int numAimComponents = AimComponents.Length;
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Int32(ref numAimComponents);
 
                 for (int i = 0; i < numAimComponents; i++)

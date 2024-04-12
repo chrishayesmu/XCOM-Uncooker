@@ -7,8 +7,10 @@ using XCOM_Uncooker.IO;
 
 namespace XCOM_Uncooker.Unreal.Physical
 {
-    public struct FPushedState
+    public struct FPushedState : IUnrealSerializable
     {
+        #region Serialized data
+
         [Index(typeof(UState))]
         public int State;
 
@@ -16,10 +18,21 @@ namespace XCOM_Uncooker.Unreal.Physical
         public int Node;
 
         public int Offset;
+
+        #endregion
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.Int32(ref State);
+            stream.Int32(ref Node);
+            stream.Int32(ref Offset);
+        }
     }
 
-    public class FStateFrame
+    public class FStateFrame : IUnrealSerializable
     {
+        #region Serialized data
+
         [Index(typeof(UStruct))]
         public int Node;
 
@@ -34,13 +47,15 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public int Offset;
 
+        #endregion
+
         public void Serialize(IUnrealDataStream stream)
         {
             stream.Int32(ref Node);
             stream.Int32(ref StateNode);
             stream.Int32(ref ProbeMask);
             stream.Int16(ref LatentAction);
-            stream.PushedStateArray(ref StateStack);
+            stream.Array(ref StateStack);
 
             if (Node != 0)
             {

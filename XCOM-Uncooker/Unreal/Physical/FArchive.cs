@@ -898,7 +898,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
 
             _stream.Guid(ref PackageFileSummary.PackageGuid);
-            _stream.GenerationInfoArray(ref PackageFileSummary.Generations);
+            _stream.Array(ref PackageFileSummary.Generations);
             _stream.Int32(ref PackageFileSummary.EngineVersion);
             _stream.Int32(ref PackageFileSummary.CookerVersion);
             _stream.Enum32(ref PackageFileSummary.CompressionFlags);

@@ -13,7 +13,7 @@ using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.IO
 {
-    public class UnrealDataReader : Stream, IUnrealDataStream
+    public class UnrealDataReader(Stream stream) : Stream, IUnrealDataStream
     {
         /// <summary>
         /// The archive which this stream is operating in the context of. This should be set as soon as
@@ -26,14 +26,10 @@ namespace XCOM_Uncooker.IO
 
         private const int MaxStackAllocSize = 512;
 
-        private readonly Stream _stream;
-
-        public UnrealDataReader(Stream stream)
-        {
-            _stream = stream;
-        }
+        private readonly Stream _stream = stream;
 
         #region Stream class overrides
+
         public override bool CanRead => _stream.CanRead;
 
         public override bool CanSeek => _stream.CanSeek;
@@ -68,6 +64,7 @@ namespace XCOM_Uncooker.IO
         {
             _stream.Write(buffer, offset, count);
         }
+
         #endregion
 
         public void SkipBytes(int numBytes)
@@ -120,7 +117,7 @@ namespace XCOM_Uncooker.IO
 #if DEBUG
             if (boolInt != 0 && boolInt != 1)
             {
-                //Debugger.Break();
+                Debugger.Break();
             }
 #endif
 
@@ -273,30 +270,6 @@ namespace XCOM_Uncooker.IO
             _stream.Read(buffer);
 
             value = MemoryMarshal.Read<float>(buffer);
-        }
-
-        public void GenerationInfo(ref FGenerationInfo info)
-        {
-            info = default;
-            Span<byte> buffer = stackalloc byte[12];
-
-            _stream.Read(buffer);
-
-            info.ExportCount = MemoryMarshal.Read<int>(buffer.Slice(0, 4));
-            info.NameCount = MemoryMarshal.Read<int>(buffer.Slice(4, 4));
-            info.NetObjectCount = MemoryMarshal.Read<int>(buffer.Slice(8, 4));
-        }
-
-        public void GenerationInfoArray(ref FGenerationInfo[] data)
-        {
-            int length = 0;
-            Int32(ref length);
-            data = new FGenerationInfo[length];
-
-            for (int i = 0; i < length; i++)
-            {
-                GenerationInfo(ref data[i]);
-            }
         }
 
         public void GuidArray(ref Guid[] data)
@@ -618,59 +591,6 @@ namespace XCOM_Uncooker.IO
             data.Serialize(this);
         }
 
-        public void PropertyTag(ref FPropertyTag tag)
-        {
-            tag = new FPropertyTag();
-
-            Name(ref tag.Name);
-
-            if (tag.Name.IsNone())
-            {
-                return;
-            }
-
-            Name(ref tag.Type);
-            Int32(ref tag.Size);
-            Int32(ref tag.ArrayIndex);
-
-            if (tag.Type == "BoolProperty")
-            {
-                byte byteVal = 0;
-                UInt8(ref byteVal);
-                tag.BoolVal = byteVal > 0;
-            }
-            else if (tag.Type == "ByteProperty")
-            {
-                Name(ref tag.EnumName);
-            }
-            else if (tag.Type == "StructProperty")
-            {
-                Name(ref tag.StructName);
-            }
-        }
-
-        public void PushedState(ref FPushedState state)
-        {
-            state = default;
-
-            Int32(ref state.State);
-            Int32(ref state.Node);
-            Int32(ref state.Offset);
-        }
-
-        public void PushedStateArray(ref FPushedState[] data)
-        {
-            int length = 0;
-            Int32(ref length);
-
-            data = new FPushedState[length];
-
-            for (int i = 0; i < length; i++)
-            {
-                PushedState(ref data[i]);
-            }
-        }
-
         public void String(ref string value)
         {
             int numChars = 0;
@@ -715,15 +635,6 @@ namespace XCOM_Uncooker.IO
             {
                 String(ref data[i]);
             }
-        }
-
-        public void ThumbnailMetadata(ref FThumbnailMetadata metadata)
-        {
-            metadata = default;
-
-            String(ref metadata.ClassName);
-            String(ref metadata.ObjectPathWithoutPackageName);
-            Int32(ref metadata.FileOffset);
         }
 
         public void UInt8(ref byte value)

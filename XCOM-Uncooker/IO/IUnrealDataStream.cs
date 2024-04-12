@@ -80,10 +80,6 @@ namespace XCOM_Uncooker.IO
 
         public void Float32(ref float value);
 
-        public void GenerationInfo(ref FGenerationInfo info);
-
-        public void GenerationInfoArray(ref FGenerationInfo[] data);
-
         public void GuidArray(ref Guid[] data);
 
         public void Guid(ref Guid guid);
@@ -135,17 +131,9 @@ namespace XCOM_Uncooker.IO
 
         public void Object<T>(ref T data, UObject owner = null) where T : IUnrealSerializable, new();
 
-        public void PropertyTag(ref FPropertyTag tag);
-
-        public void PushedState(ref FPushedState state);
-
-        public void PushedStateArray(ref FPushedState[] data);
-
         public void String(ref string value);
 
         public void StringArray(ref string[] data);
-
-        public void ThumbnailMetadata(ref FThumbnailMetadata metadata);
 
         public void UInt8(ref byte value);
 

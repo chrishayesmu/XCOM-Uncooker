@@ -43,11 +43,18 @@ namespace XCOM_Uncooker.Unreal.Physical
     }
 
     [FixedSize(12)]
-    public struct FGenerationInfo
+    public struct FGenerationInfo : IUnrealSerializable
     {
         public int ExportCount;
         public int NameCount;
         public int NetObjectCount;
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.Int32(ref ExportCount);
+            stream.Int32(ref NameCount);
+            stream.Int32(ref NetObjectCount);
+        }
 
         public override string ToString()
         {
@@ -59,7 +66,7 @@ namespace XCOM_Uncooker.Unreal.Physical
     /// Metadata regarding a thumbnail to be shown in the UE3 Content Browser. Not very relevant for
     /// uncooking, but included here for completeness.
     /// </summary>
-    public struct FThumbnailMetadata
+    public struct FThumbnailMetadata : IUnrealSerializable
     {
         public string ClassName;
 
@@ -69,6 +76,13 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// Position in the package file where the thumbnail data is stored.
         /// </summary>
         public int FileOffset;
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.String(ref ClassName);
+            stream.String(ref ObjectPathWithoutPackageName);
+            stream.Int32(ref FileOffset);
+        }
     }
 
     [FixedSize(4)]

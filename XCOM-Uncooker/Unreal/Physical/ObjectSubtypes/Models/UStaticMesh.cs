@@ -75,7 +75,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public bool LoadPlatformData;
 
-        // public FPS3StaticMeshData PlatformData; // hopefully not needed?
+        // public FPS3StaticMeshData PlatformData; // LoadPlatformData doesn't seem to ever be true in XCOM,
+                                                   // so we don't actually need this field
 
         #endregion
 

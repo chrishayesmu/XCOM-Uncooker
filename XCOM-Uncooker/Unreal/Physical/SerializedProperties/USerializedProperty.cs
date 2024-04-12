@@ -12,7 +12,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
     /// Serialized properties are preceded by an FPropertyTag, which provides the
     /// necessary metadata to deserialize the property.
     /// </summary>
-    public struct FPropertyTag(FArchive Archive)
+    public struct FPropertyTag(FArchive Archive) : IUnrealSerializable
     {
         /// <summary>
         /// The name of the property, which will match the name of a corresponding <see cref="UProperty"/>
@@ -57,6 +57,33 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         public readonly bool IsBoolProperty => Type == "BoolProperty";
         public readonly bool IsEnumProperty => Type == "EnumProperty";
         public readonly bool IsStructProperty => Type == "StructProperty";
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.Name(ref Name);
+
+            if (Name.IsNone())
+            {
+                return;
+            }
+
+            stream.Name(ref Type);
+            stream.Int32(ref Size);
+            stream.Int32(ref ArrayIndex);
+
+            if (Type == "BoolProperty")
+            {
+                stream.Bool(ref BoolVal);
+            }
+            else if (Type == "ByteProperty")
+            {
+                stream.Name(ref EnumName);
+            }
+            else if (Type == "StructProperty")
+            {
+                stream.Name(ref StructName);
+            }
+        }
 
         public void CloneFromOtherArchive(FPropertyTag tag)
         {
