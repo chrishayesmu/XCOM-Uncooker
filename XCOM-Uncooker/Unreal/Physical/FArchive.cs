@@ -167,7 +167,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             _stream.Archive = this;
 
-            // When we're abref to save a brand new archive, we need to set some values that normally the editor would set
+            // When we're about to save a brand new archive, we need to set some values that normally the editor would set
             if (IsSaving)
             {
                 PackageFileSummary = new FPackageFileSummary
@@ -452,6 +452,18 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
         }
 
+        public int[] MapIndicesFromSourceArchive(int[] indices, FArchive source)
+        {
+            int[] output = new int[indices.Length];
+
+            for (int i = 0; i < indices.Length; i++)
+            {
+                output[i] = MapIndexFromSourceArchive(indices[i], source);
+            }
+
+            return output;
+        }
+
         public FName MapNameFromSourceArchive(FName name)
         {
             if (name == null)
@@ -548,7 +560,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         }
 
         /// <summary>
-        /// Gets the export table entry for an object, withref requiring the exported object to be present.
+        /// Gets the export table entry for an object, without requiring the exported object to be present.
         /// Useful when creating an archive in-memory; sometimes we need to reference an export before the
         /// actual object is available.
         /// </summary>
@@ -997,7 +1009,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 _stream.String(ref name);
                 NameTable[i] = name;
 
-                // Every name has a 64-bit object flag field, but we don't care abref them
+                // Every name has a 64-bit object flag field, but we don't care about them
                 _stream.SkipBytes(8);
             }
         }

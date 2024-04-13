@@ -40,7 +40,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
                 if (other.TaggedProperties[i].Tag != null)
                 {
                     tag = new FPropertyTag(Archive);
-                    tag.Value.CloneFromOtherArchive(other.TaggedProperties[i].Tag.Value);
+                    tag.Value.CloneFromOtherArchive(other.TaggedProperties[i].Tag.Value, sourceProp.Archive, Archive);
                 }
                 
             }

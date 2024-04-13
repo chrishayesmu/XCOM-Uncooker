@@ -22,6 +22,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
             stream.Int32(ref NodePosX);
             stream.Int32(ref NodePosY);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSoundClassEditorData) sourceObj;
+
+            NodePosX = other.NodePosX;
+            NodePosY = other.NodePosY;
+        }
     }
 
     public class USoundClass(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

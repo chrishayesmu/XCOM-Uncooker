@@ -21,10 +21,6 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public float[] Max = new float[3]; // fixed size array
 
-        // public FPlane[] Min = new FPlane[3]; // fixed size array
-        // 
-        // public FPlane[] Max = new FPlane[3]; // fixed size array
-
         #endregion
      
         public void Serialize(IUnrealDataStream stream)
@@ -38,6 +34,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             {
                 stream.Float32(ref Max[i]);
             }
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (TkDOP) sourceObj;
+
+            Min = other.Min;
+            Max = other.Max;
         }
     }
 
@@ -63,6 +67,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.BulkArray(ref Nodes);
             stream.BulkArray(ref Triangles);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (TKDOPTree) sourceObj;
+
+            RootBound = other.RootBound;
+            Nodes = other.Nodes;
+            Triangles = other.Triangles;
+        }
     }
 
     public struct VJointPos : IUnrealSerializable
@@ -78,6 +91,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             stream.Object(ref Orientation);
             stream.Object(ref Position);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (VJointPos) sourceObj;
+
+            Orientation = other.Orientation;
+            Position = other.Position;
         }
     }
 
@@ -103,6 +124,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Int32(ref ParentIndex);
             stream.Object(ref BoneColor);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FMeshBone) sourceObj;
+
+            Name = destArchive.MapNameFromSourceArchive(other.Name);
+            Flags = other.Flags;
+            BonePos = other.BonePos;
+            NumChildren = other.NumChildren;
+            ParentIndex = other.ParentIndex;
+            BoneColor = other.BoneColor;
+        }
     }
 
     public struct FMultiSizeIndexContainer : IUnrealSerializable
@@ -123,6 +156,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.UInt8(ref DataTypeSize);
             stream.BulkArray(ref IndexBuffer);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FMultiSizeIndexContainer) sourceObj;
+
+            NeedsCPUAccess = other.NeedsCPUAccess;
+            DataTypeSize = other.DataTypeSize;
+            IndexBuffer = other.IndexBuffer;
+        }
     }
 
     public struct FPerPolyBoneCollisionData : IUnrealSerializable
@@ -139,6 +181,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             stream.Object(ref KDOPTree);
             stream.Array(ref CollisionVerts);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPerPolyBoneCollisionData) sourceObj;
+
+            KDOPTree = other.KDOPTree;
+            CollisionVerts = other.CollisionVerts;
         }
     }
 
@@ -176,6 +226,19 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             stream.Object(ref Color);
             stream.UInt8(ref Bone);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FRigidSkinVertex) sourceObj;
+
+            Position = other.Position;
+            TangentX = other.TangentX;
+            TangentY = other.TangentY;
+            TangentZ = other.TangentZ;
+            UVs = other.UVs;
+            Color = other.Color;
+            Bone = other.Bone;
         }
     }
 
@@ -215,6 +278,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Bytes(ref InfluenceBones, 4);
             stream.Bytes(ref InfluenceWeights, 4);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSoftSkinVertex) sourceObj;
+
+            Position = other.Position;
+            TangentX = other.TangentX;
+            TangentY = other.TangentY;
+            TangentZ = other.TangentZ;
+            UVs = other.UVs;
+            Color = other.Color;
+            InfluenceBones = other.InfluenceBones;
+            InfluenceWeights = other.InfluenceWeights;
+        }
     }
 
     public struct FSkelMeshChunk : IUnrealSerializable
@@ -247,6 +324,19 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Int32(ref NumSoftVertices);
             stream.Int32(ref MaxBoneInfluences);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSkelMeshChunk) sourceObj;
+
+            BaseVertexIndex = other.BaseVertexIndex;
+            RigidVertices = other.RigidVertices;
+            SoftVertices = other.SoftVertices;
+            BoneMap = other.BoneMap;
+            NumRigidVertices = other.NumRigidVertices;
+            NumSoftVertices = other.NumSoftVertices;
+            MaxBoneInfluences = other.MaxBoneInfluences;
+        }
     }
 
     public struct FSkelMeshSection : IUnrealSerializable
@@ -268,6 +358,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Int32(ref BaseIndex);
             stream.Int32(ref NumTriangles);
             stream.UInt8(ref TriangleSorting);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSkelMeshSection) sourceObj;
+
+            MaterialIndex = other.MaterialIndex;
+            ChunkIndex = other.ChunkIndex;
+            BaseIndex = other.BaseIndex;
+            NumTriangles = other.NumTriangles;
+            TriangleSorting = other.TriangleSorting;
         }
     }
 
@@ -291,6 +392,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
                 stream.Object(ref LODModel);
             }
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSkeletalMeshSourceData) sourceObj;
+
+            bHaveSourceData = other.bHaveSourceData;
+
+            LODModel = new FStaticLODModel();
+            LODModel.CloneFromOtherArchive(other.LODModel,  sourceArchive, destArchive);
         }
     }
 
@@ -324,6 +435,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.BulkArray(ref VertexData);
         }
 
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSkeletalMeshVertexBuffer) sourceObj;
+
+            NumTexCoords = other.NumTexCoords;
+            bUseFullPrecisionUVs = other.bUseFullPrecisionUVs;
+            bUsePackedPosition = other.bUsePackedPosition;
+            MeshExtension = other.MeshExtension;
+            MeshOrigin = other.MeshOrigin;
+            VertexData = other.VertexData;
+        }
+
         private void CreateVertexDataBuffer()
         {
             // This function is currently unused; see FGPUSkinVertexBase for why
@@ -354,7 +477,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
     }
 
     // The real version of this struct is more complicated and has more layers; this version
-    // is just pared down to what we care abref for XCOM EW
+    // is just pared down to what we care about for XCOM EW
     public struct FSkeletalMeshVertexColorBuffer : IUnrealSerializable
     {
         #region Serialized data
@@ -366,6 +489,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         public void Serialize(IUnrealDataStream stream)
         {
             stream.BulkArray(ref Data, 4);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSkeletalMeshVertexColorBuffer) sourceObj;
+
+            Data = other.Data;
         }
     }
 
@@ -396,6 +526,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Array(ref Chunks);
             stream.ByteArray(ref RequiredBones);
             stream.UInt8(ref Usage);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSkeletalMeshVertexInfluences) sourceObj;
+
+            Influences = other.Influences;
+            VertexInfluenceMapping = other.VertexInfluenceMapping;
+            Sections = other.Sections;
+            Chunks = other.Chunks;
+            RequiredBones = other.RequiredBones;
+            Usage = other.Usage;
         }
     }
 
@@ -439,6 +581,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         #endregion
 
+        // This is determined by a property on the owning USkeletalMesh, but when we're serializing out
+        // to new archives we may not have the owner reference, so we just persist this field for that usage.
+        public bool bHasVertexColors;
+
         public void Serialize(IUnrealDataStream stream)
         {
             stream.Array(ref Sections);
@@ -452,17 +598,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.UInt32(ref NumTexCoords);
             stream.Object(ref VertexBufferGPUSkin);
 
-            var mesh = (USkeletalMesh) Owner;
+            if (stream.IsRead)
+            {
+                var mesh = (USkeletalMesh) Owner;
 
 #if DEBUG
-            if (mesh == null)
-            {
-                throw new Exception($"{nameof(FStaticLODModel)} has a null owner!");
-            }
+                if (mesh == null)
+                {
+                    throw new Exception($"{nameof(FStaticLODModel)} has a null owner!");
+                }
 #endif
 
-            var bHasVertexColorsProp = mesh.GetSerializedProperty("bHasVertexColors") as USerializedBoolProperty;
-            bool bHasVertexColors = bHasVertexColorsProp?.BoolValue ?? false;
+                var bHasVertexColorsProp = mesh.GetSerializedProperty("bHasVertexColors") as USerializedBoolProperty;
+                bHasVertexColors = bHasVertexColorsProp?.BoolValue ?? false;
+            }
 
             // ColorVertexBuffer is only serialized when the owning SkeletalMesh's bHasVertexColors is true
             if (bHasVertexColors)
@@ -472,6 +621,25 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             stream.Array(ref VertexInfluences);
             stream.Object(ref AdjacencyMultiSizeIndexContainer);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStaticLODModel) sourceObj;
+
+            Sections = IUnrealSerializable.Clone(other.Sections, sourceArchive, destArchive);
+            MultiSizeIndexContainer = other.MultiSizeIndexContainer;
+            ActiveBoneIndices = other.ActiveBoneIndices;
+            Chunks = other.Chunks;
+            Size = other.Size;
+            NumVertices = other.NumVertices;
+            RequiredBones = other.RequiredBones;
+            RawPointIndices = other.RawPointIndices;
+            NumTexCoords = other.NumTexCoords;
+            VertexBufferGPUSkin = other.VertexBufferGPUSkin;
+            ColorVertexBuffer = other.ColorVertexBuffer;
+            VertexInfluences = other.VertexInfluences;
+            AdjacencyMultiSizeIndexContainer = other.AdjacencyMultiSizeIndexContainer;
         }
     }
 
@@ -488,6 +656,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             stream.UInt32(ref Weights);
             stream.UInt32(ref Bones);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FVertexInfluence) sourceObj;
+
+            Weights = other.Weights;
+            Bones = other.Bones;
         }
     }
 

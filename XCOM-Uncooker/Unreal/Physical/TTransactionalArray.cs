@@ -23,5 +23,13 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Int32(ref Owner);
             stream.Array(ref Data);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (TTransactionalArray<T>) sourceObj;
+
+            Owner = destArchive.MapIndexFromSourceArchive(other.Owner, sourceArchive);
+            Data = IUnrealSerializable.Clone(other.Data, sourceArchive, destArchive);
+        }
     }
 }

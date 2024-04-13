@@ -50,5 +50,16 @@ namespace XCOM_Uncooker.Unreal.Physical
                 stream.Bytes(ref Data, SizeOnDisk);
             }
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FUntypedBulkData) sourceObj;
+
+            BulkDataFlags = other.BulkDataFlags;
+            NumElements = other.NumElements;
+            SizeOnDisk = other.SizeOnDisk;
+            Offset = other.Offset;
+            Data = other.Data;
+        }
     }
 }

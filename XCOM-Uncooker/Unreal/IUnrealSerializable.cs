@@ -21,6 +21,27 @@ namespace XCOM_Uncooker.Unreal
             set { }
         }
 
+        public static T[] Clone<T>(T[] data, FArchive sourceArchive, FArchive destArchive) where T : IUnrealSerializable, new()
+        {
+            T[] output = new T[data.Length];
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                output[i] = new T();
+                output[i].CloneFromOtherArchive(data[i], sourceArchive, destArchive);
+            }
+
+            return output;
+        }
+
         public void Serialize(IUnrealDataStream stream);
+
+        /// <summary>
+        /// Causes this object to clone its data from another object, which will be of the same type.
+        /// </summary>
+        /// <param name="sourceObj"></param>
+        /// <param name="sourceArchive"></param>
+        /// <param name="destArchive"></param>
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive);
     }
 }

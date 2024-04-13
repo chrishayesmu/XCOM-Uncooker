@@ -28,6 +28,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             stream.Object(ref BoxExtent);
             stream.Float32(ref SphereRadius);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FBoxSphereBounds) sourceObj;
+
+            Origin = other.Origin;
+            BoxExtent = other.BoxExtent;
+            SphereRadius = other.SphereRadius;
+        }
     }
 
     [FixedSize(64)]
@@ -42,6 +51,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
         public void Serialize(IUnrealDataStream stream)
         {
             stream.Bytes(ref Data, 64);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FBspNode) sourceObj;
+
+            Data = other.Data;
         }
     }
 
@@ -65,6 +81,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
         public int iBrushPoly;
 
+        [Index(typeof(UObject))]
         public int Actor;
 
         public FPlane Plane;
@@ -92,6 +109,24 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             stream.UInt32(ref LightingChannels);
             stream.Int32(ref iLightmassIndex);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FBspSurf) sourceObj;
+
+            Material = destArchive.MapIndexFromSourceArchive(other.Material, sourceArchive);
+            PolyFlags = other.PolyFlags;
+            pBase = other.pBase;
+            vNormal = other.vNormal;
+            vTextureU = other.vTextureU;
+            vTextureV = other.vTextureV;
+            iBrushPoly = other.iBrushPoly;
+            Actor = destArchive.MapIndexFromSourceArchive(other.Actor, sourceArchive);
+            Plane = other.Plane;
+            ShadowMapScale = other.ShadowMapScale;
+            LightingChannels = other.LightingChannels;
+            iLightmassIndex = other.iLightmassIndex;
+        }
     }
 
     public struct FKCachedConvexDataElement : IUnrealSerializable
@@ -105,6 +140,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
         public void Serialize(IUnrealDataStream stream)
         {
             stream.BulkArray(ref Data);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FKCachedConvexDataElement) sourceObj;
+
+            Data = other.Data;
         }
     }
 
@@ -120,6 +162,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
         {
             stream.Array(ref CachedConvexElements);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FKCachedConvexData) sourceObj;
+
+            CachedConvexElements = other.CachedConvexElements;
+        }
     }
 
     public struct FKCachedPerTriData : IUnrealSerializable
@@ -133,6 +182,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
         public void Serialize(IUnrealDataStream stream)
         {
             stream.BulkArray(ref CachedPerTriData);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FKCachedPerTriData) sourceObj;
+
+            CachedPerTriData = other.CachedPerTriData;
         }
     }
 
@@ -173,6 +229,21 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             stream.Float32(ref DiffuseBoost);
             stream.Float32(ref SpecularBoost);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FLightmassPrimitiveSettings) sourceObj;
+
+            bUseTwoSidedLighting = other.bUseTwoSidedLighting;
+            bShadowIndirectOnly = other.bShadowIndirectOnly;
+            FullyOccludedSamplesFraction = other.FullyOccludedSamplesFraction;
+            bUseEmissiveForStaticLighting = other.bUseEmissiveForStaticLighting;
+            EmissiveLightFalloffExponent = other.EmissiveLightFalloffExponent;
+            EmissiveLightExplicitInfluenceRadius = other.EmissiveLightExplicitInfluenceRadius;
+            EmissiveBoost = other.EmissiveBoost;
+            DiffuseBoost = other.DiffuseBoost;
+            SpecularBoost = other.SpecularBoost;
+        }
     }
 
     [FixedSize(36)]
@@ -200,6 +271,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             stream.Object(ref TexCoord);
             stream.Object(ref ShadowTexCoord);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FModelVertex) sourceObj;
+
+            Position = other.Position;
+            TangentX = other.TangentX;
+            TangentZ = other.TangentZ;
+            TexCoord = other.TexCoord;
+            ShadowTexCoord = other.ShadowTexCoord;
+        }
     }
 
     public struct FModelVertexBuffer : IUnrealSerializable
@@ -213,6 +295,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
         public void Serialize(IUnrealDataStream stream)
         {
             stream.BulkArray(ref Vertices, 36);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FModelVertexBuffer) sourceObj;
+
+            Vertices = other.Vertices;
         }
     }
 
@@ -237,6 +326,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             stream.Int32(ref iSide);
             stream.Object(ref ShadowTexCoord);
             stream.Object(ref BackfaceShadowTexCoord);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FVert) sourceObj;
+
+            pVertex = other.pVertex;
+            iSide = other.iSide;
+            ShadowTexCoord = other.ShadowTexCoord;
+            BackfaceShadowTexCoord = other.BackfaceShadowTexCoord;
         }
     }
 }

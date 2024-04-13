@@ -26,6 +26,15 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Object(ref Max);
             stream.Bool(ref IsValid);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FBox) sourceObj;
+
+            Min = other.Min;
+            Max = other.Max;
+            IsValid = other.IsValid;
+        }
     }
 
     [FixedSize(4)]
@@ -39,6 +48,16 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.UInt8(ref G);
             stream.UInt8(ref B);
             stream.UInt8(ref A);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FColor) sourceObj;
+
+            R = other.R;
+            G = other.G;
+            B = other.B;
+            A = other.A;
         }
     }
 
@@ -54,6 +73,15 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Int32(ref ExportCount);
             stream.Int32(ref NameCount);
             stream.Int32(ref NetObjectCount);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FGenerationInfo) sourceObj;
+
+            ExportCount = other.ExportCount;
+            NameCount = other.NameCount;
+            NetObjectCount = other.NetObjectCount;
         }
 
         public override string ToString()
@@ -83,6 +111,15 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.String(ref ObjectPathWithoutPackageName);
             stream.Int32(ref FileOffset);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FThumbnailMetadata) sourceObj;
+
+            ClassName = other.ClassName;
+            ClassName = other.ObjectPathWithoutPackageName;
+            FileOffset = other.FileOffset;
+        }
     }
 
     [FixedSize(4)]
@@ -96,6 +133,16 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.UInt8(ref Y);
             stream.UInt8(ref Z);
             stream.UInt8(ref W);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPackedNormal) sourceObj;
+
+            X = other.X;
+            Y = other.Y;
+            Z = other.Z;
+            W = other.W;
         }
     }
 
@@ -111,6 +158,16 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Float32(ref Z);
             stream.Float32(ref W);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPlane) sourceObj;
+
+            X = other.X;
+            Y = other.Y;
+            Z = other.Z;
+            W = other.W;
+        }
     }
 
     [FixedSize(16)]
@@ -125,6 +182,16 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Float32(ref Z);
             stream.Float32(ref W);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FQuat) sourceObj;
+
+            X = other.X;
+            Y = other.Y;
+            Z = other.Z;
+            W = other.W;
+        }
     }
 
     [FixedSize(12)]
@@ -137,6 +204,15 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Int32(ref Pitch);
             stream.Int32(ref Yaw);
             stream.Int32(ref Roll);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FRotator) sourceObj;
+
+            Pitch = other.Pitch;
+            Yaw = other.Yaw;
+            Roll = other.Roll;
         }
     }
 
@@ -151,6 +227,14 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Object(ref Center);
             stream.Float32(ref W);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSphere) sourceObj;
+
+            Center = other.Center;
+            W = other.W;
+        }
     }
 
     [FixedSize(12)]
@@ -164,6 +248,15 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Float32(ref Y);
             stream.Float32(ref Z);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FVector) sourceObj;
+
+            X = other.X;
+            Y = other.Y;
+            Z = other.Z;
+        }
     }
 
     [FixedSize(8)]
@@ -176,6 +269,14 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Float32(ref X);
             stream.Float32(ref Y);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FVector2D) sourceObj;
+
+            X = other.X;
+            Y = other.Y;
+        }
     }
 
     [FixedSize(4)]
@@ -187,6 +288,14 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             stream.Float16(ref X);
             stream.Float16(ref Y);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FVector2DHalf) sourceObj;
+
+            X = other.X;
+            Y = other.Y;
         }
     }
 }

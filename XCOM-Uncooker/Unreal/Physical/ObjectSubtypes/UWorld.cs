@@ -24,6 +24,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
             stream.Object(ref CamRotation);
             stream.Float32(ref CamOrthoZoom);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FLevelViewportInfo) sourceObj;
+
+            CamPosition = other.CamPosition;
+            CamRotation = other.CamRotation;
+            CamOrthoZoom = other.CamOrthoZoom;
+        }
     }
 
     public class UWorld(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

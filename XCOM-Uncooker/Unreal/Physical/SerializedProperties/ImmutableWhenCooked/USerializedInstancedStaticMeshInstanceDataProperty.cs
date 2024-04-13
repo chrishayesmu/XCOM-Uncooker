@@ -39,19 +39,19 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                     StructName = Archive.GetOrCreateName("Matrix")
                 };
 
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Bytes(ref BinaryData, tag.Size);
 
                 tag.Name = Archive.GetOrCreateName("LightmapUVBias");
                 tag.StructName = Archive.GetOrCreateName("Vector2D");
                 tag.Size = 8;
 
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Bytes(ref BinaryData, tag.Size, 64);
 
                 tag.Name = Archive.GetOrCreateName("ShadowmapUVBias");
 
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Bytes(ref BinaryData, tag.Size, 64 + 8);
             }
         }

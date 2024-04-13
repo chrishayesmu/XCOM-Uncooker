@@ -12,7 +12,7 @@ namespace XCOM_Uncooker.Unreal.Physical
     /// Abstract representation of an entry in either the import or export table of an <see cref="FArchive"/>.
     /// While the internal data of these types in an archive is fairly different, they share an important responsibility:
     /// identifying an object's class and owner. This is needed very often when parsing an archive, therefore
-    /// the two types provide a common abstraction to simplify parsing withref having to always worry abref whether
+    /// the two types provide a common abstraction to simplify parsing without having to always worry about whether
     /// an object is an important or an export.
     /// </summary>
     public abstract class FObjectTableEntry

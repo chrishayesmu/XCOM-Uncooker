@@ -117,7 +117,8 @@ namespace XCOM_Uncooker.IO
 #if DEBUG
             if (boolInt != 0 && boolInt != 1)
             {
-                Debugger.Break();
+                // TODO add this back in and debug
+                // Debugger.Break();
             }
 #endif
 
@@ -142,7 +143,7 @@ namespace XCOM_Uncooker.IO
         public void BulkArray(ref byte[] data)
         {
             // Unlike the other bulk serialization functions, this one doesn't have an expected element size; it can
-            // be used to read any bulk-serialized data where we don't care abref the data's type
+            // be used to read any bulk-serialized data where we don't care about the data's type
             // TODO: we need to know the element size for re-serializing the data later!
             int elementSize = 0;
             Int32(ref elementSize);

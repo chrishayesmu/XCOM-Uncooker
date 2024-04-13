@@ -31,6 +31,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
                 stream.BulkArray(ref VertexData);
             }
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FColorVertexBuffer) sourceObj;
+
+            Stride = other.Stride;
+            NumVertices = other.NumVertices;
+            VertexData = other.VertexData;
+        }
     }
 
     public struct FStaticMeshComponentLODInfo : IUnrealSerializable
@@ -49,7 +58,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
         public bool bLoadVertexColorData;
 
-        public FColorVertexBuffer OverrideVertexColors;
+        public FColorVertexBuffer OverrideVertexColors = new FColorVertexBuffer();
 
         public FVector[] VertexColorPositions;
 
@@ -68,6 +77,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             }
 
             stream.Array(ref VertexColorPositions);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStaticMeshComponentLODInfo) sourceObj;
+
+            ShadowMaps = destArchive.MapIndicesFromSourceArchive(other.ShadowMaps, sourceArchive);
+            ShadowVertexBuffers = destArchive.MapIndicesFromSourceArchive(other.ShadowVertexBuffers, sourceArchive);
+            LightMap.CloneFromOtherArchive(other.LightMap, sourceArchive, destArchive);
+            bLoadVertexColorData = other.bLoadVertexColorData;
+            OverrideVertexColors.CloneFromOtherArchive(other.OverrideVertexColors, sourceArchive, destArchive);
+            VertexColorPositions = IUnrealSerializable.Clone(other.VertexColorPositions, sourceArchive, destArchive);
         }
     }
 

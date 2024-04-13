@@ -26,6 +26,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
             stream.Int32(ref SizeX);
             stream.Int32(ref SizeY);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FTexture2DMipMap) sourceObj;
+
+            Data = other.Data;
+            SizeX = other.SizeX;
+            SizeY = other.SizeY;
+        }
     }
 
     public class UTexture2D(FArchive archive, FObjectTableEntry tableEntry) : UTexture(archive, tableEntry)

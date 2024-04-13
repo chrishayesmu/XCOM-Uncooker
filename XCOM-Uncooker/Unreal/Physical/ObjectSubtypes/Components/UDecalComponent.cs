@@ -28,6 +28,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             stream.Object(ref TangentZ);
             stream.Object(ref LightMapCoordinate);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FDecalVertex) sourceObj;
+
+            Position = other.Position;
+            TangentX = other.TangentX;
+            TangentZ = other.TangentZ;
+            LightMapCoordinate = other.LightMapCoordinate;
+        }
     }
 
     public struct FStaticReceiverData : IUnrealSerializable
@@ -65,6 +75,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             stream.Int32(ref ShadowMap1D);
             stream.Int32(ref Data);
             stream.Int32(ref InstanceIndex);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStaticReceiverData) sourceObj;
+
+            Component = destArchive.MapIndexFromSourceArchive(other.Component, sourceArchive);
+            Vertices = other.Vertices;
+            Indices = other.Indices;
+            NumTriangles = other.NumTriangles;
+            LightMap1D = destArchive.MapIndexFromSourceArchive(other.LightMap1D, sourceArchive);
+            ShadowMap1D = destArchive.MapIndexFromSourceArchive(other.ShadowMap1D, sourceArchive);
+            Data = other.Data;
+            InstanceIndex = other.InstanceIndex;
         }
     }
 

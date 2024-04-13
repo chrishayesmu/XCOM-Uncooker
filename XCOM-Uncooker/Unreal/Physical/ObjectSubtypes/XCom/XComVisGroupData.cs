@@ -27,6 +27,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
             stream.Int32Array(ref ChildGroups);
             stream.Int32(ref PackedBools);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (VisGroupEntry) sourceObj;
+
+            Actors = destArchive.MapIndicesFromSourceArchive(other.Actors, sourceArchive);
+            ChildGroups = other.ChildGroups;
+            PackedBools = other.PackedBools;
+        }
     }
 
     public class XComVisGroupData(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -54,4 +63,3 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         }
     }
 }
-// Act1_IntroLevel.TheWorld.PersistentLevel.WorldInfo_3.XComVisGroupData_0

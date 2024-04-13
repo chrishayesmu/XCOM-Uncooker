@@ -23,6 +23,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
             stream.Int32(ref ColumnIdx); 
             stream.Int32(ref MeshComponent);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (DebrisMeshInfo) sourceObj;
+
+            ColumnIdx = other.ColumnIdx;
+            MeshComponent = destArchive.MapIndexFromSourceArchive(other.MeshComponent, sourceArchive);
+        }
     }
 
 public class XComDestructionInstData(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

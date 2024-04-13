@@ -42,6 +42,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             stream.Float32(ref UScale);
             stream.Float32(ref VScale);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FTextureLookup) sourceObj;
+
+            TexCoordIndex = other.TexCoordIndex;
+            TextureIndex = other.TextureIndex;
+            UScale = other.UScale;
+            VScale = other.VScale;
+        }
     }
 
     public class FMaterial : IUnrealSerializable
@@ -52,7 +62,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
         // Key is the index of a material expression; value is the "texture dependency length" for that expression
         [Index(typeof(UObject))]
-        public IDictionary<int, int> TextureDependencyLengthMap;
+        public IDictionary<int, int> TextureDependencyLengthMap = new Dictionary<int, int>();
 
         public int MaxTextureDependencyLength;
 
@@ -93,6 +103,32 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             stream.Enum32(ref UsingTransforms);
             stream.Array(ref TextureLookups);
             stream.Enum32(ref DroppedFallbackComponents);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FMaterial) sourceObj;
+
+            CompileErrors = other.CompileErrors;
+
+            foreach (var entry in other.TextureDependencyLengthMap)
+            {
+                int newKey = destArchive.MapIndexFromSourceArchive(entry.Key, sourceArchive);
+                TextureDependencyLengthMap.Add(newKey, entry.Value);
+            }
+
+            MaxTextureDependencyLength = other.MaxTextureDependencyLength;
+            Id = other.Id;
+            NumUserTexCoords = other.NumUserTexCoords;
+            UniformExpressionTextures = destArchive.MapIndicesFromSourceArchive(other.UniformExpressionTextures, sourceArchive);
+            bUsesSceneColor = other.bUsesSceneColor;
+            bUsesSceneDepth = other.bUsesSceneDepth;
+            bUsesDynamicParameter = other.bUsesDynamicParameter;
+            bUsesLightmapUVs = other.bUsesLightmapUVs;
+            bUsesMaterialVertexPositionOffset = other.bUsesMaterialVertexPositionOffset;
+            UsingTransforms = other.UsingTransforms;
+            TextureLookups = other.TextureLookups;
+            DroppedFallbackComponents = other.DroppedFallbackComponents;
         }
     }
 }

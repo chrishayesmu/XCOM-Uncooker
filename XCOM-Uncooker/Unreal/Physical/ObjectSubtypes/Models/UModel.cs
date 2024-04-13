@@ -33,6 +33,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.UInt64(ref Visibility);
             stream.Float32(ref LastRenderTime);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FZoneProperties) sourceObj;
+
+            ZoneActor = destArchive.MapIndexFromSourceArchive(other.ZoneActor, sourceArchive);
+            Connectivity = other.Connectivity;
+            Visibility = other.Visibility;
+            LastRenderTime = other.LastRenderTime;
+        }
     }
 
     public class UModel(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

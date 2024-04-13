@@ -58,6 +58,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
                 // Don't write anything when serializing out, because UE3 won't be able to handle it
             }
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FXComMaterialData) sourceObj;
+
+            other.UnknownHeader = UnknownHeader;
+            other.NumBodySections = NumBodySections;
+            other.UnknownBody = UnknownBody;
+            other.UnknownSuffix = UnknownSuffix;
+        }
     }
 
     public class UMaterialInstance(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -81,11 +91,6 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
             if (bHasStaticPermutationResource)
             {
-                if (FullObjectPath == "CHA_SectoidCom_MOD.Materials.MInst_SectoidCom")
-                {
-                    //Debugger.Break();
-                }
-
                 MaterialResource_MSP_SM3.Serialize(stream);
                 UnknownData.Serialize(stream);
                 StaticParameters_MSP_SM3.Serialize(stream);

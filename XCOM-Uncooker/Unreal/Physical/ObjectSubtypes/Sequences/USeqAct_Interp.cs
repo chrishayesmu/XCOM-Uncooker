@@ -22,6 +22,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences
             stream.Object(ref Location);
             stream.Object(ref Rotation);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSavedTransform) sourceObj;
+
+            Location = other.Location;
+            Rotation = other.Rotation;
+        }
     }
 
     public class USeqAct_Interp(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

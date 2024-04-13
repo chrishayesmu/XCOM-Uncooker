@@ -112,7 +112,7 @@ namespace XCOM_Uncooker
             Console.CursorLeft = 0;
             Console.CursorTop = progressBar.BufferRow;
             Console.Write($"[{equalsString}{spacesString}] {percentageString}% - [{progressBar.NumCompleted}/{progressBar.NumTotal}] - {progressBar.Title}: {progressBar.CurrentItem}");
-            Console.WriteLine("                                                                                   "); // just clear ref anything from the last time we printed on this line
+            Console.WriteLine("                                                                                   "); // just clear out anything from the last time we printed on this line
             Console.CursorTop = cursorTop;
 
             Console.ResetColor();

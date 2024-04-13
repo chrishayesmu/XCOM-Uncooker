@@ -27,6 +27,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Object(ref Scale3D);
             stream.Int32(ref CachedDataIndex);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FCachedPerTriPhysSMData) sourceObj;
+
+            Scale3D = other.Scale3D;
+            CachedDataIndex = other.CachedDataIndex;
+        }
     }
 
     [FixedSize(16)]
@@ -45,6 +53,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Object(ref Scale3D);
             stream.Int32(ref CachedDataIndex);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FCachedPhysSMData) sourceObj;
+
+            Scale3D = other.Scale3D;
+            CachedDataIndex = other.CachedDataIndex;
+        }
     }
 
     [FixedSize(5)]
@@ -62,6 +78,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
         {
             stream.Int32(ref ActorRefItem);
             stream.UInt8(ref SlotIdx);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FCoverIndexPair) sourceObj;
+
+            ActorRefItem = other.ActorRefItem;
+            SlotIdx = other.SlotIdx;
         }
     }
 
@@ -91,6 +115,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.BoolAsInt32(ref bAttached);
             stream.Float32(ref OriginalRadius);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FDynamicTextureInstance) sourceObj;
+
+            BoundingSphere = other.BoundingSphere;
+            TexelFactor = other.TexelFactor;
+            Texture = destArchive.MapIndexFromSourceArchive(other.Texture, sourceArchive);
+            bAttached = other.bAttached;
+            OriginalRadius = other.OriginalRadius;
+        }
     }
 
     [FixedSize(20)]
@@ -108,6 +143,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
         {
             stream.Guid(ref Guid);
             stream.Int32(ref RefId);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FGuidPair) sourceObj;
+
+            Guid = other.Guid;
+            RefId = other.RefId;
         }
     }
 
@@ -136,6 +179,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
                 stream.Array(ref Samples);
             }
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPrecomputedLightVolume) sourceObj;
+
+            bInitialized = other.bInitialized;
+            Bounds = other.Bounds;
+            SampleSpacing = other.SampleSpacing;
+            Samples = IUnrealSerializable.Clone(other.Samples, sourceArchive, destArchive);
+        }
     }
 
     public struct FPrecomputedVisibilityBucket : IUnrealSerializable
@@ -155,6 +208,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Int32(ref CellDataSize);
             stream.Array(ref Cells);
             stream.Array(ref CellDataChunks);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPrecomputedVisibilityBucket) sourceObj;
+
+            CellDataSize = other.CellDataSize;
+            Cells = IUnrealSerializable.Clone(other.Cells, sourceArchive, destArchive);
+            CellDataChunks = IUnrealSerializable.Clone(other.CellDataChunks, sourceArchive, destArchive);
         }
     }
 
@@ -176,6 +238,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Int16(ref ChunkIndex);
             stream.Int16(ref DataOffset);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPrecomputedVisibilityCell) sourceObj;
+
+            Min = other.Min;
+            ChunkIndex = other.ChunkIndex;
+            DataOffset = other.DataOffset;
+        }
     }
 
     public struct FCompressedVisibilityChunk : IUnrealSerializable
@@ -195,6 +266,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.BoolAsInt32(ref bCompressed);
             stream.Int32(ref UncompressedSize);
             stream.ByteArray(ref Data);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FCompressedVisibilityChunk) sourceObj;
+
+            bCompressed = other.bCompressed;
+            UncompressedSize = other.UncompressedSize;
+            Data = other.Data;
         }
     }
 
@@ -225,6 +305,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Int32(ref PrecomputedVisibilityNumCellBuckets);
             stream.Array(ref PrecomputedVisibilityCellBuckets);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPrecomputedVisibilityHandler) sourceObj;
+
+            PrecomputedVisibilityCellBucketOriginXY = other.PrecomputedVisibilityCellBucketOriginXY;
+            PrecomputedVisibilityCellSizeXY = other.PrecomputedVisibilityCellSizeXY;
+            PrecomputedVisibilityCellSizeZ = other.PrecomputedVisibilityCellSizeZ;
+            PrecomputedVisibilityCellBucketSizeXY = other.PrecomputedVisibilityCellBucketSizeXY;
+            PrecomputedVisibilityNumCellBuckets = other.PrecomputedVisibilityNumCellBuckets;
+            PrecomputedVisibilityCellBuckets = IUnrealSerializable.Clone(other.PrecomputedVisibilityCellBuckets, sourceArchive, destArchive);
+        }
     }
 
     public struct FPrecomputedVolumeDistanceField : IUnrealSerializable
@@ -254,6 +346,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Int32(ref VolumeSizeZ);
             stream.Array(ref Data);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPrecomputedVolumeDistanceField) sourceObj;
+
+            VolumeMaxDistance = other.VolumeMaxDistance;
+            VolumeBox = other.VolumeBox;
+            VolumeSizeX = other.VolumeSizeX;
+            VolumeSizeY = other.VolumeSizeY;
+            VolumeSizeZ = other.VolumeSizeZ;
+            Data = other.Data;
+        }
     }
 
     [FixedSize(20)]
@@ -271,6 +375,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
         {
             stream.Object(ref BoundingSphere);
             stream.Float32(ref TexelFactor);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStreamableTextureInstance) sourceObj;
+
+            BoundingSphere = other.BoundingSphere;
+            TexelFactor = other.TexelFactor;
         }
     }
 
@@ -313,6 +425,22 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Object(ref EnvironmentRadiance);
             stream.Object(ref AmbientRadiance);
             stream.UInt8(ref bShadowedFromDominantLights);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FVolumeLightingSample) sourceObj;
+
+            Position = other.Position;
+            Radius = other.Radius;
+            IndirectDirectionTheta = other.IndirectDirectionTheta;
+            IndirectDirectionPhi = other.IndirectDirectionPhi;
+            EnvironmentDirectionTheta = other.EnvironmentDirectionTheta;
+            EnvironmentDirectionPhi = other.EnvironmentDirectionPhi;
+            IndirectRadiance = other.IndirectRadiance;
+            EnvironmentRadiance = other.EnvironmentRadiance;
+            AmbientRadiance = other.AmbientRadiance;
+            bShadowedFromDominantLights = other.bShadowedFromDominantLights;
         }
     }
 

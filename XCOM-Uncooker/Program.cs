@@ -42,7 +42,6 @@ namespace XCOM_Uncooker
                 }
             }
 
-            // Omit the patch_ files, which are map patches added in LW
             filePaths = filePaths.Where(IsSupportedFile).ToList();
 
             Log.Info("Attempting to load game archives..");

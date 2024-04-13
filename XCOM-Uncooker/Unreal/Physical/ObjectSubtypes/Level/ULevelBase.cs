@@ -14,6 +14,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
     {
         #region Serialized data
         
+        [Index(typeof(UObject))]
         public int Index;
 
         #endregion
@@ -21,6 +22,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
         public void Serialize(IUnrealDataStream stream)
         {
             stream.Int32(ref Index);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (ActorPointer) sourceObj;
+
+            Index = destArchive.MapIndexFromSourceArchive(other.Index, sourceArchive);
         }
     }
 

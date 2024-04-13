@@ -48,6 +48,22 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Float32Array(ref NeighbourDims);
             stream.Int32(ref UnknownValue);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FFragmentInfo) sourceObj;
+
+            Center = other.Center;
+            ConvexHull = other.ConvexHull;
+            Bounds = other.Bounds;
+            Neighbours = other.Neighbours;
+            bCanBeDestroyed = other.bCanBeDestroyed;
+            bRootFragment = other.bRootFragment;
+            bNeverSpawnPhysicsChunk = other.bNeverSpawnPhysicsChunk;
+            AverageExteriorNormal = other.AverageExteriorNormal;
+            NeighbourDims = other.NeighbourDims;
+            UnknownValue = other.UnknownValue;
+        }
     }
 
     public struct FKConvexElem : IUnrealSerializable
@@ -79,6 +95,19 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Array(ref FaceNormalDirections);
             stream.Array(ref FacePlaneData);
             stream.Object(ref ElemBox);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FKConvexElem) sourceObj;
+
+            VertexData = other.VertexData;
+            PermutedVertexData = other.PermutedVertexData;
+            FaceTriData = other.FaceTriData;
+            EdgeDirections = other.EdgeDirections;
+            FaceNormalDirections = other.FaceNormalDirections;
+            FacePlaneData = other.FacePlaneData;
+            ElemBox = other.ElemBox;
         }
     }
 

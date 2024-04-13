@@ -27,6 +27,15 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Int32(ref Node);
             stream.Int32(ref Offset);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPushedState) sourceObj;
+
+            State = destArchive.MapIndexFromSourceArchive(other.State, sourceArchive);
+            Node = destArchive.MapIndexFromSourceArchive(other.Node, sourceArchive);
+            Offset = other.Offset;
+        }
     }
 
     public class FStateFrame : IUnrealSerializable
@@ -63,25 +72,27 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
         }
 
-        public void CloneFromOtherArchive(FStateFrame sourceFrame, FArchive sourceArchive, FArchive destArchive)
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
         {
-            Node = destArchive.MapIndexFromSourceArchive(sourceFrame.Node, sourceArchive);
-            StateNode = destArchive.MapIndexFromSourceArchive(sourceFrame.StateNode, sourceArchive);
-            ProbeMask = sourceFrame.ProbeMask;
-            LatentAction = sourceFrame.LatentAction;
-            Offset = sourceFrame.Offset;
+            var other = (FStateFrame) sourceObj;
 
-            if (sourceFrame.StateStack != null)
+            Node = destArchive.MapIndexFromSourceArchive(other.Node, sourceArchive);
+            StateNode = destArchive.MapIndexFromSourceArchive(other.StateNode, sourceArchive);
+            ProbeMask = other.ProbeMask;
+            LatentAction = other.LatentAction;
+            Offset = other.Offset;
+
+            if (other.StateStack != null)
             {
-                StateStack = new FPushedState[sourceFrame.StateStack.Length];
+                StateStack = new FPushedState[other.StateStack.Length];
 
                 for (int i = 0; i < StateStack.Length; i++)
                 {
                     StateStack[i] = new FPushedState()
                     {
-                        State = destArchive.MapIndexFromSourceArchive(sourceFrame.StateStack[i].State, sourceArchive),
-                        Node = destArchive.MapIndexFromSourceArchive(sourceFrame.StateStack[i].Node, sourceArchive),
-                        Offset = sourceFrame.StateStack[i].Offset
+                        State = destArchive.MapIndexFromSourceArchive(other.StateStack[i].State, sourceArchive),
+                        Node = destArchive.MapIndexFromSourceArchive(other.StateStack[i].Node, sourceArchive),
+                        Offset = other.StateStack[i].Offset
                     };
                 }
             }

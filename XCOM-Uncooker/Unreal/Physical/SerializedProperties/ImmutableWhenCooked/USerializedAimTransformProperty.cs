@@ -43,14 +43,14 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                     StructName = Archive.GetOrCreateName("Quat")
                 };
 
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Bytes(ref BinaryData, tag.Size);
 
                 tag.Name = Archive.GetOrCreateName("Translation");
                 tag.StructName = Archive.GetOrCreateName("Vector");
                 tag.Size = 12;
 
-                stream.PropertyTag(ref tag);
+                stream.Object(ref tag);
                 stream.Bytes(ref BinaryData, tag.Size, 16);
 
                 // Denote the end of the property block

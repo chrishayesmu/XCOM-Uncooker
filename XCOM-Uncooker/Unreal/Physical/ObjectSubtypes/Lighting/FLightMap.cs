@@ -45,6 +45,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
 
             SimpleSamples.Serialize(stream);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FLightMapData_1D) sourceObj;
+
+            LightGuids = other.LightGuids;
+            Owner = destArchive.MapIndexFromSourceArchive(other.Owner, sourceArchive);
+            DirectionalSamples.CloneFromOtherArchive(other.DirectionalSamples, sourceArchive, destArchive);
+            ScaleVectors = other.ScaleVectors;
+            SimpleSamples.CloneFromOtherArchive(other.SimpleSamples, sourceArchive, destArchive);
+        }
     }
 
     public class FLightMapData_2D : IUnrealSerializable
@@ -77,6 +88,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
             stream.Object(ref CoordinateScale);
             stream.Object(ref CoordinateBias);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FLightMapData_2D) sourceObj;
+
+            LightGuids = other.LightGuids;
+            Textures = destArchive.MapIndicesFromSourceArchive(other.Textures, sourceArchive);
+            ScaleVectors = other.ScaleVectors;
+            CoordinateScale = other.CoordinateScale;
+            CoordinateBias = other.CoordinateBias;
+        }
     }
 
     public class FLightMap : IUnrealSerializable
@@ -107,6 +129,25 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
             }
 
             Data?.Serialize(stream);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FLightMap) sourceObj;
+
+            Type = other.Type;
+
+            switch (Type)
+            {
+                case LightMapType.LMT_1D:
+                    Data = new FLightMapData_1D();
+                    break;
+                case LightMapType.LMT_2D:
+                    Data = new FLightMapData_2D();
+                    break;
+            }
+
+            Data?.CloneFromOtherArchive(sourceObj, sourceArchive, destArchive);
         }
     }
 }

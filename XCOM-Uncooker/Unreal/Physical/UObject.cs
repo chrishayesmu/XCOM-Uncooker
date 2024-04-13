@@ -23,7 +23,7 @@ using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 namespace XCOM_Uncooker.Unreal.Physical
 {
     [DebuggerDisplay("{DebuggerDisplay}")]
-    public class UObject : IUnrealSerializable
+    public class UObject
     {
         private static readonly Logger Log = new Logger(nameof(UObject));
 
@@ -294,7 +294,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             if (IsImport)
             {
-                // TODO: withref linking imports, we don't have enough data to say for sure whether this is a component
+                // TODO: without linking imports, we don't have enough data to say for sure whether this is a component
                 return false;
             }
 
@@ -379,7 +379,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         }
 
         /// <summary>
-        /// Serializes the tagged properties of this object, withref relying on the object's class definition. Should only be
+        /// Serializes the tagged properties of this object, without relying on the object's class definition. Should only be
         /// used if the class definition is unavailable for some reason, as this is much less robust.
         /// </summary>
         /// <param name="props"></param>

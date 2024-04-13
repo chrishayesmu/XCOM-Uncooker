@@ -55,6 +55,26 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Name(ref RulesetVariation);
         }
 
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPoly) sourceObj;
+
+            Base = other.Base;
+            Normal = other.Normal;
+            TextureU = other.TextureU;
+            TextureV = other.TextureV;
+            Vertices = other.Vertices;
+            PolyFlags = other.PolyFlags;
+            Actor = destArchive.MapIndexFromSourceArchive(other.Actor, sourceArchive);
+            ItemName = destArchive.MapNameFromSourceArchive(other.ItemName);
+            Material = destArchive.MapIndexFromSourceArchive(other.Material, sourceArchive);
+            iLink = other.iLink;
+            iBrushPoly = other.iBrushPoly;
+            ShadowMapScale = other.ShadowMapScale;
+            LightingChannels = other.LightingChannels;
+            LightmassSettings = other.LightmassSettings;
+            RulesetVariation = destArchive.MapNameFromSourceArchive(other.RulesetVariation);
+        }
     }
 
     public class UPolys(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

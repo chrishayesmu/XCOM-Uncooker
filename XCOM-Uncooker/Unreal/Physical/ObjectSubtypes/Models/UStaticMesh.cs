@@ -18,13 +18,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public int NumPrimitives;
 
-
         #endregion
 
         public void Serialize(IUnrealDataStream stream)
         {
             stream.Int32(ref BaseIndex);
             stream.Int32(ref NumPrimitives);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FFragmentRange) sourceObj;
+
+            BaseIndex = other.BaseIndex;
+            NumPrimitives = other.NumPrimitives;
         }
     }
 
@@ -45,6 +52,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.UInt32(ref Stride);
             stream.UInt32(ref NumVertices);
             stream.BulkArray(ref VertexData);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FPositionVertexBuffer) sourceObj;
+
+            Stride = other.Stride;
+            NumVertices = other.NumVertices;
+            VertexData = other.VertexData;
         }
     }
 
@@ -101,6 +117,23 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             }
 #endif
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStaticMeshElement) sourceObj;
+
+            Material = destArchive.MapIndexFromSourceArchive(other.Material, sourceArchive);
+            EnableCollision = other.EnableCollision;
+            OldEnableCollision = other.OldEnableCollision;
+            bEnableShadowCasting = other.bEnableShadowCasting;
+            FirstIndex = other.FirstIndex;
+            NumTriangles = other.NumTriangles;
+            MinVertexIndex = other.MinVertexIndex;
+            MaxVertexIndex = other.MaxVertexIndex;
+            MaterialIndex = other.MaterialIndex;
+            Fragments = other.Fragments;
+            LoadPlatformData = other.LoadPlatformData;
+        }
     }
 
     public struct FStaticMeshLODInfo : IUnrealSerializable
@@ -109,6 +142,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             // Deliberate no-op; it seems like this is only "serialized" during internal operations, and
             // not to an archive file. Leaving this here to show that it's not an accidental omission.
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
         }
     }
 
@@ -128,7 +165,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public void Serialize(IUnrealDataStream stream)
         {
-            throw new NotImplementedException();
+            stream.Float32(ref MaxDeviationPercentage);
+            stream.UInt8(ref SilhouetteImportance);
+            stream.UInt8(ref TextureImportance);
+            stream.UInt8(ref NormalMode);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStaticMeshOptimizationSettings) sourceObj;
+
+            MaxDeviationPercentage = other.MaxDeviationPercentage;
+            SilhouetteImportance = other.SilhouetteImportance;
+            TextureImportance = other.TextureImportance;
+            NormalMode = other.NormalMode;
         }
     }
 
@@ -170,6 +220,21 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.BulkArray(ref WireframeIndexBuffer);
             stream.BulkArray(ref AdjacencyIndexBuffer);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStaticMeshRenderData) sourceObj;
+
+            RawTriangles = other.RawTriangles;
+            Elements = IUnrealSerializable.Clone(other.Elements, sourceArchive, destArchive);
+            PositionVertexBuffer = other.PositionVertexBuffer;
+            VertexBuffer = other.VertexBuffer;
+            ColorVertexBuffer = other.ColorVertexBuffer;
+            NumVertices = other.NumVertices;
+            IndexBuffer = other.IndexBuffer;
+            WireframeIndexBuffer = other.WireframeIndexBuffer;
+            AdjacencyIndexBuffer = other.AdjacencyIndexBuffer;
+        }
     }
 
     public struct FStaticMeshVertexBuffer : IUnrealSerializable
@@ -195,6 +260,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.UInt32(ref NumVertices);
             stream.BoolAsInt32(ref bUseFullPrecisionUVs);
             stream.BulkArray(ref VertexData);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStaticMeshVertexBuffer) sourceObj;
+
+            NumTexCoords = other.NumTexCoords;
+            Stride = other.Stride;
+            NumVertices = other.NumVertices;
+            bUseFullPrecisionUVs = other.bUseFullPrecisionUVs;
+            VertexData = other.VertexData;
         }
     }
 

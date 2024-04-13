@@ -41,6 +41,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             stream.Int32Array(ref ShadowMaps);
             stream.GuidArray(ref IrrelevantLights);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FModelElement) sourceObj;
+
+            LightMap.CloneFromOtherArchive(other.LightMap, sourceArchive, destArchive);
+            Component = destArchive.MapIndexFromSourceArchive(other.Component, sourceArchive);
+            Material = destArchive.MapIndexFromSourceArchive(other.Material, sourceArchive);
+            Nodes = other.Nodes;
+            ShadowMaps = destArchive.MapIndicesFromSourceArchive(other.ShadowMaps, sourceArchive);
+            IrrelevantLights = other.IrrelevantLights;
+        }
     }
 
     public class UModelComponent(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

@@ -85,15 +85,17 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             }
         }
 
-        public void CloneFromOtherArchive(FPropertyTag tag)
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
         {
-            Name = Archive.MapNameFromSourceArchive(tag.Name);
-            Type = Archive.MapNameFromSourceArchive(tag.Type);
-            Size = tag.Size;
-            ArrayIndex = tag.ArrayIndex;
-            EnumName = Archive.MapNameFromSourceArchive(tag.EnumName);
-            StructName = Archive.MapNameFromSourceArchive(tag.StructName);
-            BoolVal = tag.BoolVal;
+            var other = (FPropertyTag) sourceObj;
+
+            Name = destArchive.MapNameFromSourceArchive(other.Name);
+            Type = destArchive.MapNameFromSourceArchive(other.Type);
+            Size = other.Size;
+            ArrayIndex = other.ArrayIndex;
+            EnumName = destArchive.MapNameFromSourceArchive(other.EnumName);
+            StructName = destArchive.MapNameFromSourceArchive(other.StructName);
+            BoolVal = other.BoolVal;
         }
     }
 
@@ -131,7 +133,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         #region Serialized data
 
         /// <summary>
-        /// The property's tag, which is largely metadata abref the property and how to interpret it.
+        /// The property's tag, which is largely metadata about the property and how to interpret it.
         /// Not all serialized properties have tags; in particular, immutable structs and items serialized
         /// inside of arrays won't have tags.
         /// </summary>
@@ -146,7 +148,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             if (sourceProp.Tag != null)
             {
                 Tag = new FPropertyTag();
-                Tag.Value.CloneFromOtherArchive(sourceProp.Tag.Value);
+                Tag.Value.CloneFromOtherArchive(sourceProp.Tag.Value, sourceProp.Archive, Archive);
             }
         }
     }

@@ -15,7 +15,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
 
     /// <summary>
     /// Representation of the SoundCue class. When deserializing archives, this is basically just a <see cref="UObject"/> with
-    /// 4 extra bytes at the end, because the only non-property data is editor-only and gets stripped ref as part of the cooking
+    /// 4 extra bytes at the end, because the only non-property data is editor-only and gets stripped out as part of the cooking
     /// process. We represent it as its own class so that we can potentially try to insert some editor-only data of our own later on.
     /// </summary>
     /// <param name="archive"></param>

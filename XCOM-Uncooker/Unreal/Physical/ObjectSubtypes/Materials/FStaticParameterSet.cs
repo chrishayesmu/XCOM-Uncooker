@@ -28,5 +28,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             stream.Array(ref NormalParameters);
             stream.Array(ref TerrainLayerWeightParameters);
         }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FStaticParameterSet) sourceObj;
+
+            BaseMaterialId = other.BaseMaterialId;
+            StaticSwitchParameters = IUnrealSerializable.Clone(other.StaticSwitchParameters, sourceArchive, destArchive);
+            StaticComponentMaskParameters = IUnrealSerializable.Clone(other.StaticComponentMaskParameters, sourceArchive, destArchive);
+            NormalParameters = IUnrealSerializable.Clone(other.NormalParameters, sourceArchive, destArchive);
+            TerrainLayerWeightParameters = IUnrealSerializable.Clone(other.TerrainLayerWeightParameters, sourceArchive, destArchive);
+        }
     }
 }
