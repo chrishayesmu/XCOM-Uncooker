@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 {
@@ -23,6 +24,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
             base.Serialize(stream);
 
             stream.Int32(ref WorldDataPtr);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (XComWorldData) sourceObj;
+
+            WorldDataPtr = Archive.MapIndexFromSourceArchive(other.WorldDataPtr, other.Archive);
         }
     }
 }

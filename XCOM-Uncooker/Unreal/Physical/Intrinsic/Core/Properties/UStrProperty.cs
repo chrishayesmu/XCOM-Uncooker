@@ -13,8 +13,6 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
     /// </summary>
     public class UStrProperty(FArchive archive, FObjectTableEntry tableEntry) : UProperty(archive, tableEntry)
     {
-        public override bool IsSimpleCopyable => true;
-
         public override USerializedProperty CreateSerializedProperty(FArchive archive, FPropertyTag? tag)
         {
             return new USerializedStringProperty(archive, this, tag);

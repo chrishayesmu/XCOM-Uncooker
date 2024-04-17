@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties;
+using XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked;
 
 namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 {
@@ -56,13 +57,14 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             stream.Bytes(ref Data, SizeInBytes);
         }
 
-        public override void CloneFromOtherArchive(USerializedProperty sourceProp)
+        public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
-            base.CloneFromOtherArchive(sourceProp);
+            var tag = ClonePropertyTag(destArchive);
+            var other = new USerializedImmutableStructProperty(destArchive, null, tag);
 
-            USerializedImmutableStructProperty other = (USerializedImmutableStructProperty) sourceProp;
+            other.Data = Data;
 
-            Data = other.Data;
+            return other;
         }
     }
 }

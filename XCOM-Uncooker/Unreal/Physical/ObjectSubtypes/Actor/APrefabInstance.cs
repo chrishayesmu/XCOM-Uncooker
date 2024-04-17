@@ -28,5 +28,31 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor
             stream.Map(ref ArchetypeToInstanceMap);
             stream.Map(ref PI_ObjectMap);
         }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (APrefabInstance) sourceObj;
+
+            ArchetypeToInstanceMap = new Dictionary<int, int>();
+            PI_ObjectMap = new Dictionary<int, int>();
+
+            foreach (var entry in other.ArchetypeToInstanceMap)
+            {
+                int key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                int value = Archive.MapIndexFromSourceArchive(entry.Value, other.Archive);
+
+                ArchetypeToInstanceMap.Add(key, value);
+            }
+
+            foreach (var entry in other.PI_ObjectMap)
+            {
+                int key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                int value = entry.Value;
+
+                PI_ObjectMap.Add(key, value);
+            }
+        }
     }
 }

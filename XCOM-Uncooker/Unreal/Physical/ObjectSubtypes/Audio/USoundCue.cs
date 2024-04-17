@@ -7,10 +7,24 @@ using XCOM_Uncooker.IO;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
 {
-    public struct FSoundNodeEditorData
+    public struct FSoundNodeEditorData : IUnrealSerializable
     {
         public int NodePosX;
         public int NodePosY;
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.Int32(ref NodePosX);
+            stream.Int32(ref NodePosY);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FSoundNodeEditorData) sourceObj;
+
+            NodePosX = other.NodePosX;
+            NodePosY = other.NodePosY;
+        }
     }
 
     /// <summary>
@@ -57,8 +71,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
 
                     int key = 0;
                     stream.Int32(ref key);
-                    stream.Int32(ref data.NodePosX);
-                    stream.Int32(ref data.NodePosY);
+                    stream.Object(ref data);
 
                     EditorData.Add(key, data);
                 }
@@ -69,13 +82,28 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
                 foreach (var entry in EditorData)
                 {
                     int key = entry.Key;
-                    int nodeX = entry.Value.NodePosX;
-                    int nodeY = entry.Value.NodePosY;
+                    var value = entry.Value;
 
                     stream.Int32(ref key);
-                    stream.Int32(ref nodeX);
-                    stream.Int32(ref nodeY);
+                    stream.Object(ref value);
                 }
+            }
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (USoundCue) sourceObj;
+
+            EditorData = new Dictionary<int, FSoundNodeEditorData>();
+
+            foreach (var entry in other.EditorData)
+            {
+                int key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = entry.Value;
+
+                EditorData.Add(key, value);
             }
         }
     }

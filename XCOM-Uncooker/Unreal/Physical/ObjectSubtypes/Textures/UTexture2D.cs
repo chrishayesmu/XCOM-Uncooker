@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
 {
@@ -70,7 +71,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
 #endif
       
             // Not sure what these 8 bytes are, but they seem to be in every texture
+            // TODO figure this out
             stream.Bytes(ref UnknownData, 8);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UTexture2D) sourceObj;
+
+            Mips = other.Mips;
+            TextureFileCacheGuid = other.TextureFileCacheGuid;
+            CachedPVRTCMips = other.CachedPVRTCMips;
+            UnknownData = other.UnknownData;
         }
     }
 }

@@ -147,7 +147,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
                     break;
             }
 
-            Data?.CloneFromOtherArchive(sourceObj, sourceArchive, destArchive);
+            Data?.CloneFromOtherArchive(other.Data, sourceArchive, destArchive);
         }
     }
 }

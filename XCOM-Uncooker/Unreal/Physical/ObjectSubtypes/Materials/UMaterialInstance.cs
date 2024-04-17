@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
@@ -82,18 +83,36 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
         #endregion
 
+        public bool bHasStaticPermutationResource;
+
         public override void Serialize(IUnrealDataStream stream)
         {
             base.Serialize(stream);
 
             var prop = (USerializedBoolProperty) GetSerializedProperty("bHasStaticPermutationResource");
-            bool bHasStaticPermutationResource = prop?.BoolValue ?? false;
+            bHasStaticPermutationResource = prop?.BoolValue ?? false;
 
             if (bHasStaticPermutationResource)
             {
                 MaterialResource_MSP_SM3.Serialize(stream);
                 UnknownData.Serialize(stream);
                 StaticParameters_MSP_SM3.Serialize(stream);
+            }
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UMaterialInstance) sourceObj;
+
+            bHasStaticPermutationResource = other.bHasStaticPermutationResource;
+
+            if (bHasStaticPermutationResource)
+            {
+                MaterialResource_MSP_SM3.CloneFromOtherArchive(other.MaterialResource_MSP_SM3, other.Archive, Archive);
+                UnknownData.CloneFromOtherArchive(other.UnknownData, other.Archive, Archive);
+                StaticParameters_MSP_SM3.CloneFromOtherArchive(other.StaticParameters_MSP_SM3, other.Archive, Archive);
             }
         }
     }

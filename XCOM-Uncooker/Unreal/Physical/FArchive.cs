@@ -291,7 +291,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
 
             // TODO: this is a hack because my definition of FExportTableEntry.ClassName is stupid and I don't want to change it right now
-            UObject destObj = sourceObj.ExportTableEntry.IsClass ? new UClass(this, destTableEntry) : UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
+            // TODO: need to create CDOs as UObject here
+            UObject destObj = sourceObj.ExportTableEntry.IsClass              ? new UClass(this, destTableEntry) : 
+                              sourceObj.ExportTableEntry.IsClassDefaultObject ? new UObject(this, destTableEntry) : 
+                                                                                UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
             destObj.CloneFromOtherArchive(sourceObj);
             ExportedObjects.Add(destObj);
 
@@ -459,6 +462,19 @@ namespace XCOM_Uncooker.Unreal.Physical
             for (int i = 0; i < indices.Length; i++)
             {
                 output[i] = MapIndexFromSourceArchive(indices[i], source);
+            }
+
+            return output;
+        }
+
+        public IList<int> MapIndicesFromSourceArchive(IList<int> indices, FArchive source)
+        {
+            var output = new List<int>(indices.Count);
+
+            for (int i = 0; i < indices.Count; i++)
+            {
+                var index = MapIndexFromSourceArchive(indices[i], source);
+                output.Add(index);
             }
 
             return output;

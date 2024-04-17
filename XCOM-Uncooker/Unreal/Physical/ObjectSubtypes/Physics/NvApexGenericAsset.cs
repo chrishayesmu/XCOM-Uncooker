@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 {
@@ -21,7 +22,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
             stream.BoolAsInt32(ref bAssetValid);
 
-            // TODO: there could be more data here if bAssetValid == true, but that may never apply in XCOM EW
+            // There would be more data here if bAssetValid == true, but that never seems to apply in XCOM EW
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (NvApexGenericAsset) sourceObj;
+
+            bAssetValid = other.bAssetValid;
         }
     }
 }

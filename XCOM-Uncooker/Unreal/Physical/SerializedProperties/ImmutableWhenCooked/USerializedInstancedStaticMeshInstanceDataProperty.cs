@@ -56,11 +56,14 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
             }
         }
 
-        public override void CloneFromOtherArchive(USerializedProperty sourceProp)
+        public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
-            USerializedInstancedStaticMeshInstanceDataProperty other = (USerializedInstancedStaticMeshInstanceDataProperty) sourceProp;
+            var tag = ClonePropertyTag(destArchive);
+            var other = new USerializedInstancedStaticMeshInstanceDataProperty(destArchive, null, tag);
 
-            BinaryData = other.BinaryData;
+            other.BinaryData = BinaryData;
+
+            return other;
         }
     }
 }

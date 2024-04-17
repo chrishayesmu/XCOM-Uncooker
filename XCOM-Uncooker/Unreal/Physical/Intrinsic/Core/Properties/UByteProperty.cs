@@ -11,8 +11,6 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
 {
     public class UByteProperty(FArchive archive, FObjectTableEntry tableEntry) : UProperty(archive, tableEntry)
     {
-        public override bool IsSimpleCopyable => false;
-
         #region Serialized data
 
         /// <summary>

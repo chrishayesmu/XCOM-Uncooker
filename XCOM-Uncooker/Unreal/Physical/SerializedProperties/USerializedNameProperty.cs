@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties;
+using XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked;
 
 namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 {
@@ -23,13 +24,14 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             stream.Name(ref Value);
         }
 
-        public override void CloneFromOtherArchive(USerializedProperty sourceProp)
+        public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
-            base.CloneFromOtherArchive(sourceProp);
+            var tag = ClonePropertyTag(destArchive);
+            var other = new USerializedNameProperty(destArchive, null, tag);
 
-            USerializedNameProperty other = (USerializedNameProperty) sourceProp;
+            other.Value = destArchive.MapNameFromSourceArchive(Value);
 
-            Value = Archive.MapNameFromSourceArchive(other.Value);
+            return other;
         }
     }
 }

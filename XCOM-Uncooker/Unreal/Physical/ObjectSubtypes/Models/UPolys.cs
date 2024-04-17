@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
@@ -109,6 +110,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             {
                 stream.Object(ref Elements.Data[i]);
             }
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UPolys) sourceObj;
+
+            DbNum = other.DbNum;
+            DbMax = other.DbMax;
+            Elements.CloneFromOtherArchive(other.Elements, other.Archive, Archive);
         }
     }
 }

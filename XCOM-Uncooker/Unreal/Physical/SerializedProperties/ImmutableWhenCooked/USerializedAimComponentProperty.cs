@@ -63,20 +63,23 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
             RD.Serialize(stream);
         }
 
-        public override void CloneFromOtherArchive(USerializedProperty sourceProp)
+        public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
-            USerializedAimComponentProperty other = (USerializedAimComponentProperty) sourceProp;
+            var tag = ClonePropertyTag(destArchive);
+            var other = new USerializedAimComponentProperty(destArchive, null, tag);
 
-            BoneName = Archive.MapNameFromSourceArchive(other.BoneName);
-            LU = other.LU;
-            LC = other.LC;
-            LD = other.LD;
-            CU = other.CU;
-            CC = other.CC;
-            CD = other.CD;
-            RU = other.RU;
-            RC = other.RC;
-            RD = other.RD;
+            other.BoneName = destArchive.MapNameFromSourceArchive(BoneName);
+            other.LU = LU;
+            other.LC = LC;
+            other.LD = LD;
+            other.CU = CU;
+            other.CC = CC;
+            other.CD = CD;
+            other.RU = RU;
+            other.RC = RC;
+            other.RD = RD;
+
+            return other;
         }
     }
 }

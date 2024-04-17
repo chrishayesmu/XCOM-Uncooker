@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics;
@@ -460,6 +461,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
         [Index(typeof(UTexture2D))]
         public IDictionary<int, FStreamableTextureInstance[]> TextureToInstancesMap;
 
+        [Index(typeof(UObject))]
         public IDictionary<int, FDynamicTextureInstance[]> DynamicTextureInstances;
 
         public byte[] ApexData;
@@ -556,6 +558,92 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Object(ref PrecomputedLightVolume);
             stream.Object(ref PrecomputedVisibilityHandler);
             stream.Object(ref PrecomputedVolumeDistanceField);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (ULevel) sourceObj;
+
+            Model = Archive.MapIndexFromSourceArchive(other.Model, other.Archive);
+            ModelComponents = Archive.MapIndicesFromSourceArchive(other.ModelComponents, other.Archive);
+            GameSequences = Archive.MapIndicesFromSourceArchive(other.GameSequences, other.Archive);
+
+            TextureToInstancesMap = new Dictionary<int, FStreamableTextureInstance[]>();
+
+            foreach (var entry in other.TextureToInstancesMap)
+            {
+                int key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = IUnrealSerializable.Clone(entry.Value, other.Archive, Archive);
+
+                TextureToInstancesMap[key] = value;
+            }
+
+            DynamicTextureInstances = new Dictionary<int, FDynamicTextureInstance[]>();
+
+            foreach (var entry in other.DynamicTextureInstances)
+            {
+                int key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = IUnrealSerializable.Clone(entry.Value, other.Archive, Archive);
+
+                DynamicTextureInstances[key] = value;
+            }
+
+            ApexData = other.ApexData;
+            CachedPhysBSPData = other.CachedPhysBSPData;
+
+            CachedPhysSMDataMap = new Dictionary<int, IList<FCachedPhysSMData>>();
+
+            foreach (var entry in other.CachedPhysSMDataMap)
+            {
+                int key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = IUnrealSerializable.Clone(entry.Value, other.Archive, Archive);
+
+                CachedPhysSMDataMap[key] = value;
+            }
+
+            CachedPhysSMDataStore = IUnrealSerializable.Clone(other.CachedPhysSMDataStore, other.Archive, Archive);
+
+            CachedPhysPerTriSMDataMap = new Dictionary<int, IList<FCachedPerTriPhysSMData>>();
+
+            foreach (var entry in other.CachedPhysPerTriSMDataMap)
+            {
+                int key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = IUnrealSerializable.Clone(entry.Value, other.Archive, Archive);
+
+                CachedPhysPerTriSMDataMap[key] = value;
+            }
+
+            CachedPhysPerTriSMDataStore = IUnrealSerializable.Clone(other.CachedPhysPerTriSMDataStore, other.Archive, Archive);
+            CachedPhysBSPDataVersion = other.CachedPhysBSPDataVersion;
+            CachedPhysSMDataVersion = other.CachedPhysSMDataVersion;
+
+            ForceStreamTextures = new Dictionary<int, bool>();
+
+            foreach (var entry in other.ForceStreamTextures)
+            {
+                int key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                bool value = entry.Value;
+
+                ForceStreamTextures[key] = value;
+            }
+
+            CachedPhysConvexBSPData = other.CachedPhysConvexBSPData;
+            CachedPhysConvexBSPVersion = other.CachedPhysConvexBSPVersion;
+            NavListStart = Archive.MapIndexFromSourceArchive(other.NavListStart, other.Archive);
+            NavListEnd = Archive.MapIndexFromSourceArchive(other.NavListEnd, other.Archive);
+            CoverListStart = Archive.MapIndexFromSourceArchive(other.CoverListStart, other.Archive);
+            CoverListEnd = Archive.MapIndexFromSourceArchive(other.CoverListEnd, other.Archive);
+            PylonListStart = Archive.MapIndexFromSourceArchive(other.PylonListStart, other.Archive);
+            PylonListEnd = Archive.MapIndexFromSourceArchive(other.PylonListEnd, other.Archive);
+            CrossLevelCoverGuidRefs = other.CrossLevelCoverGuidRefs;
+            CoverLinkRefs = Archive.MapIndicesFromSourceArchive(other.CoverLinkRefs, other.Archive);
+            CoverIndexPairs = other.CoverIndexPairs;
+            CrossLevelActors = Archive.MapIndicesFromSourceArchive(other.CrossLevelActors, other.Archive);
+            PrecomputedLightVolume = other.PrecomputedLightVolume;
+            PrecomputedVisibilityHandler = other.PrecomputedVisibilityHandler;
+            PrecomputedVolumeDistanceField = other.PrecomputedVolumeDistanceField;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 {
@@ -49,6 +50,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
             stream.Object(ref Actors);
             stream.Object(ref Url);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (ULevelBase) sourceObj;
+
+            Actors = new TTransactionalArray<ActorPointer>();
+            Actors.CloneFromOtherArchive(other.Actors, other.Archive, Archive);
+
+            Url = other.Url;
         }
     }
 }

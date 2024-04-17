@@ -22,5 +22,14 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core
 
             stream.Int32(ref DestinationObject);
         }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UObjectRedirector) sourceObj;
+
+            DestinationObject = Archive.MapIndexFromSourceArchive(other.DestinationObject, other.Archive);
+        }
     }
 }

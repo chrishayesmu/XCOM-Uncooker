@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties;
+using XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked;
 
 namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 {
@@ -25,25 +26,20 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             structProp.StructDefinition.SerializeTaggedProperties(TaggedProperties, stream);
         }
 
-        public override void CloneFromOtherArchive(USerializedProperty sourceProp)
+        public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
-            base.CloneFromOtherArchive(sourceProp);
+            var tag = ClonePropertyTag(destArchive);
+            var other = new USerializedStructProperty(destArchive, null, tag);
 
-            USerializedStructProperty other = (USerializedStructProperty) sourceProp;
+            other.TaggedProperties = new List<USerializedProperty>(TaggedProperties.Count);
 
-            FPropertyTag? tag;
-
-            for (int i = 0; i < other.TaggedProperties.Count; i++)
+            for (int i = 0; i < TaggedProperties.Count; i++)
             {
-                tag = null;
-
-                if (other.TaggedProperties[i].Tag != null)
-                {
-                    tag = new FPropertyTag(Archive);
-                    tag.Value.CloneFromOtherArchive(other.TaggedProperties[i].Tag.Value, sourceProp.Archive, Archive);
-                }
-                
+                var clonedProp = TaggedProperties[i].CloneToOtherArchive(destArchive);
+                other.TaggedProperties.Add(clonedProp);
             }
+
+            return other;
         }
     }
 }

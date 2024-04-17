@@ -14,8 +14,6 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
     /// </summary>
     public class UArrayProperty(FArchive archive, FObjectTableEntry tableEntry) : UProperty(archive, tableEntry)
     {
-        public override bool IsSimpleCopyable => Inner.IsSimpleCopyable;
-
         public UProperty Inner => (UProperty) Archive.GetObjectByIndex(InnerProperty);
 
         #region Serialized data

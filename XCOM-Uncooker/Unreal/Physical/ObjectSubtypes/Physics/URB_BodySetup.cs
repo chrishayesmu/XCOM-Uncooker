@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 {
@@ -21,6 +22,15 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             base.Serialize(stream);
 
             stream.Object(ref PreCachedPhysData);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (URB_BodySetup) sourceObj;
+
+            PreCachedPhysData = other.PreCachedPhysData;
         }
     }
 }

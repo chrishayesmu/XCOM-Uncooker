@@ -10,8 +10,6 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
 {
     public class UDelegateProperty(FArchive archive, FObjectTableEntry tableEntry) : UProperty(archive, tableEntry)
     {
-        public override bool IsSimpleCopyable => false;
-
         #region Serialized data
 
         [Index(typeof(UFunction))]
@@ -34,7 +32,7 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
         {
             base.CloneFromOtherArchive(sourceObj);
 
-            UDelegateProperty other = (UDelegateProperty)sourceObj;
+            UDelegateProperty other = (UDelegateProperty) sourceObj;
 
             Function = Archive.MapIndexFromSourceArchive(other.Function, other.Archive);
             SourceDelegate = Archive.MapIndexFromSourceArchive(other.SourceDelegate, other.Archive);

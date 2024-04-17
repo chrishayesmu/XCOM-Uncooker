@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
@@ -152,6 +153,24 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Object(ref PlaneBias);
             stream.Int16(ref NonCriticalBuildVersion);
             stream.Int16(ref LicenseeNonCriticalBuildVersion);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UFracturedStaticMesh) sourceObj;
+
+            SourceStaticMesh = Archive.MapIndexFromSourceArchive(other.SourceStaticMesh, other.Archive);
+            Fragments = other.Fragments;
+            CoreFragmentIndex = other.CoreFragmentIndex;
+            InteriorElementIndex = other.InteriorElementIndex;
+            CoreMeshScale3D = other.CoreMeshScale3D;
+            CoreMeshOffset = other.CoreMeshOffset;
+            CoreMeshRotation = other.CoreMeshRotation;
+            PlaneBias = other.PlaneBias;
+            NonCriticalBuildVersion = other.NonCriticalBuildVersion;
+            LicenseeNonCriticalBuildVersion = other.LicenseeNonCriticalBuildVersion;
         }
     }
 }

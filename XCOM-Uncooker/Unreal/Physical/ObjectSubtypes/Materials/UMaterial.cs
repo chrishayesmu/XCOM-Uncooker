@@ -32,7 +32,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
         {
             base.CloneFromOtherArchive(sourceObj);
 
-            // TODO
+            var other = (UMaterial) sourceObj;
+
+            MaterialResource_MSP_SM3.CloneFromOtherArchive(other.MaterialResource_MSP_SM3, other.Archive, Archive);
+            UnknownData = other.UnknownData;
         }
     }
 }

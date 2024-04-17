@@ -9,8 +9,6 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
 {
     public class UNameProperty(FArchive archive, FObjectTableEntry tableEntry) : UProperty(archive, tableEntry)
     {
-        public override bool IsSimpleCopyable => false;
-
         public override USerializedProperty CreateSerializedProperty(FArchive archive, FPropertyTag? tag)
         {
             return new USerializedNameProperty(archive, this, tag);

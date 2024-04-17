@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
@@ -52,6 +53,21 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 #endif
 
             base.Serialize(stream);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (XVisGroupActor) sourceObj;
+
+            ClassIndex1 = Archive.MapIndexFromSourceArchive(other.ClassIndex1, other.Archive);
+            ClassIndex2 = Archive.MapIndexFromSourceArchive(other.ClassIndex2, other.Archive);
+            UnknownValue1 = other.UnknownValue1;
+            UnknownValue2 = other.UnknownValue2;
+            UnknownByte1 = other.UnknownByte1;
+            UnknownByte2 = other.UnknownByte2;
+            UnknownValue3 = other.UnknownValue3;
         }
 
         protected override USerializedProperty ChooseSerializedPropertyBasedOnTag(FPropertyTag tag)

@@ -27,12 +27,15 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
             stream.Guid(ref Guid);
         }
 
-        public override void CloneFromOtherArchive(USerializedProperty sourceProp)
+        public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
-            USerializedNavReferenceProperty other = (USerializedNavReferenceProperty) sourceProp;
+            var tag = ClonePropertyTag(destArchive);
+            var other = new USerializedNavReferenceProperty(destArchive, null, tag);
 
-            Nav = Archive.MapIndexFromSourceArchive(other.Nav, other.Archive);
-            Guid = other.Guid;
+            other.Nav = destArchive.MapIndexFromSourceArchive(Nav, Archive);
+            other.Guid = Guid;
+
+            return other;
         }
     }
 }

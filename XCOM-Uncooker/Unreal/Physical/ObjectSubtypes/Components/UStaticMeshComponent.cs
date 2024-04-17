@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
@@ -114,6 +115,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             stream.Object(ref SwapMeshData[1]);
             stream.Int32(ref SwapStaticMeshes[0]);
             stream.Int32(ref SwapStaticMeshes[1]);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UStaticMeshComponent) sourceObj;
+
+            LODData = IUnrealSerializable.Clone(other.LODData, other.Archive, Archive);
+            SwapMeshData = IUnrealSerializable.Clone(other.SwapMeshData, other.Archive, Archive);
+            SwapStaticMeshes = Archive.MapIndicesFromSourceArchive(other.SwapStaticMeshes, other.Archive);
         }
     }
 }

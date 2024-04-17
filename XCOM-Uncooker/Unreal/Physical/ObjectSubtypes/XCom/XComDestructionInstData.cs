@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 {
@@ -33,7 +34,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         }
     }
 
-public class XComDestructionInstData(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
+    public class XComDestructionInstData(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
     {
         #region Serialized data
 
@@ -58,6 +59,43 @@ public class XComDestructionInstData(FArchive archive, FObjectTableEntry tableEn
             stream.MultiMap(ref DecoFracToDecoComponents);
             stream.MultiMap(ref DecoFracToDebrisComponents);
             stream.MultiMap(ref DecoFracToDebrisStaticMeshInfos);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (XComDestructionInstData) sourceObj;
+
+            DecoFracToDecoComponents = new Dictionary<int, IList<int>>();
+
+            foreach (var entry in other.DecoFracToDecoComponents)
+            {
+                var key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = Archive.MapIndicesFromSourceArchive(entry.Value, other.Archive);
+
+                DecoFracToDecoComponents[key] = value;
+            }
+
+            DecoFracToDebrisComponents = new Dictionary<int, IList<int>>();
+
+            foreach (var entry in other.DecoFracToDebrisComponents)
+            {
+                var key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = Archive.MapIndicesFromSourceArchive(entry.Value, other.Archive);
+
+                DecoFracToDebrisComponents[key] = value;
+            }
+
+            DecoFracToDebrisStaticMeshInfos = new Dictionary<int, IList<DebrisMeshInfo>>();
+
+            foreach (var entry in other.DecoFracToDebrisStaticMeshInfos)
+            {
+                var key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = IUnrealSerializable.Clone(entry.Value, other.Archive, Archive);
+
+                DecoFracToDebrisStaticMeshInfos[key] = value;
+            }
         }
     }
 }

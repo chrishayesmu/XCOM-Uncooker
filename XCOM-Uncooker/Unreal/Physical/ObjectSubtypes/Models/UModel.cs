@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -110,6 +111,35 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Object(ref VertexBuffer);
             stream.Guid(ref LightingGuid);
             stream.Array(ref LightmassSettings);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UModel) sourceObj;
+
+            Bounds = other.Bounds;
+            Vectors = other.Vectors;
+            Points = other.Points;
+            Nodes = other.Nodes;
+
+            Surfs = new TTransactionalArray<FBspSurf>();
+            Surfs.CloneFromOtherArchive(other.Surfs, other.Archive, Archive);
+
+            Verts = other.Verts;
+            NumSharedSides = other.NumSharedSides;
+            Zones = IUnrealSerializable.Clone(other.Zones, other.Archive, Archive);
+            Polys = Archive.MapIndexFromSourceArchive(other.Polys, other.Archive);
+            LeafHulls = other.LeafHulls;
+            Leaves = other.Leaves;
+            RootOutside = other.RootOutside;
+            Linked = other.Linked;
+            PortalNodes = other.PortalNodes;
+            NumUniqueVertices = other.NumUniqueVertices;
+            VertexBuffer = other.VertexBuffer;
+            LightingGuid = other.LightingGuid;
+            LightmassSettings = other.LightmassSettings;
         }
     }
 }

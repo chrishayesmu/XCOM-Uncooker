@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics;
 
@@ -344,6 +345,34 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Int32(ref VertexPositionVersionNumber);
             stream.Float32Array(ref CachedStreamingTextureFactors);
             stream.BoolAsInt32(ref bRemoveDegenerates);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UStaticMesh) sourceObj;
+
+            Bounds = other.Bounds;
+            BodySetup = Archive.MapIndexFromSourceArchive(other.BodySetup, other.Archive);
+
+            KDOPTree = new TKDOPTree();
+            KDOPTree.CloneFromOtherArchive(other.KDOPTree, other.Archive, Archive);
+
+            InternalVersion = other.InternalVersion;
+            bHaveSourceData = other.bHaveSourceData;
+            OptimizationSettings = other.OptimizationSettings;
+            bHasBeenSimplified = other.bHasBeenSimplified;
+            LODModels = IUnrealSerializable.Clone(other.LODModels, other.Archive, Archive);
+            LODInfo = IUnrealSerializable.Clone(other.LODInfo, other.Archive, Archive);
+            ThumbnailAngle = other.ThumbnailAngle;
+            ThumbnailDistance = other.ThumbnailDistance;
+            HighResSourceMeshName = other.HighResSourceMeshName;
+            HighResSourceMeshCRC = other.HighResSourceMeshCRC;
+            LightingGuid = other.LightingGuid;
+            VertexPositionVersionNumber = other.VertexPositionVersionNumber;
+            CachedStreamingTextureFactors = other.CachedStreamingTextureFactors;
+            bRemoveDegenerates = other.bRemoveDegenerates;
         }
     }
 }

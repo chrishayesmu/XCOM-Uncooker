@@ -12,8 +12,6 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
 {
     public class UStructProperty(FArchive archive, FObjectTableEntry tableEntry) : UProperty(archive, tableEntry)
     {
-        public override bool IsSimpleCopyable => false;
-
         /// <summary>
         /// Structs in XCOM: EW which are known to be immutable, both when cooked and uncooked. Since their representation is the same both ways, 
         /// we don't have to bother with understanding their internals; just copy their input data as their output data.

@@ -34,6 +34,20 @@ namespace XCOM_Uncooker.Unreal
             return output;
         }
 
+        public static IList<T> Clone<T>(IList<T> data, FArchive sourceArchive, FArchive destArchive) where T : IUnrealSerializable, new()
+        {
+            var output = new List<T>(data.Count);
+
+            for (int i = 0; i < data.Count; i++)
+            {
+                var obj = new T();
+                obj.CloneFromOtherArchive(data[i], sourceArchive, destArchive);
+                output.Add(obj);
+            }
+
+            return output;
+        }
+
         public void Serialize(IUnrealDataStream stream);
 
         /// <summary>

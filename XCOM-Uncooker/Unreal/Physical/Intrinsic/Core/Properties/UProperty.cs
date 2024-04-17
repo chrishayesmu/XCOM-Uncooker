@@ -110,13 +110,6 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
 
         #endregion
 
-        /// <summary>
-        /// Whether the data contained in instances of this property can simply be copied without any processing.
-        /// Property types which reference objects or names, or which require transformation due to being immutablewhencooked,
-        /// are not simple-copyable.
-        /// </summary>
-        public abstract bool IsSimpleCopyable { get; }
-
         public override void Serialize(IUnrealDataStream stream)
         {
             base.Serialize(stream);

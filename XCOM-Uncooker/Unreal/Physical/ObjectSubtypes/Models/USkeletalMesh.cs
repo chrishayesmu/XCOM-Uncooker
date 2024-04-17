@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics;
 using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
@@ -400,8 +401,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             bHaveSourceData = other.bHaveSourceData;
 
-            LODModel = new FStaticLODModel();
-            LODModel.CloneFromOtherArchive(other.LODModel,  sourceArchive, destArchive);
+            if (bHaveSourceData)
+            {
+                LODModel = new FStaticLODModel();
+                LODModel.CloneFromOtherArchive(other.LODModel, sourceArchive, destArchive);
+            }
         }
     }
 
@@ -721,6 +725,40 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Int32Array(ref ClothingAssets);
             stream.Float32Array(ref CachedStreamingTextureFactors);
             stream.Object(ref SkelSourceData);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (USkeletalMesh) sourceObj;
+
+            Bounds = other.Bounds;
+            Materials = Archive.MapIndicesFromSourceArchive(other.Materials, other.Archive);
+            Origin = other.Origin;
+            RotOrigin = other.RotOrigin;
+            RefSkeleton = IUnrealSerializable.Clone(other.RefSkeleton, other.Archive, Archive);
+            SkeletalDepth = other.SkeletalDepth;
+            LODModels = IUnrealSerializable.Clone(other.LODModels, other.Archive, Archive);
+
+            NameIndexMap = new Dictionary<FName, int>();
+
+            foreach (var entry in other.NameIndexMap)
+            {
+                var key = Archive.MapNameFromSourceArchive(entry.Key);
+                var value = entry.Value;
+
+                NameIndexMap[key] = value;
+            }
+
+            PerPolyBoneKDOPs = IUnrealSerializable.Clone(other.PerPolyBoneKDOPs, other.Archive, Archive);
+            BoneBreakNames = other.BoneBreakNames;
+            BoneBreakOptions = other.BoneBreakOptions;
+            ClothingAssets = Archive.MapIndicesFromSourceArchive(other.ClothingAssets, other.Archive);
+            CachedStreamingTextureFactors = other.CachedStreamingTextureFactors;
+
+            SkelSourceData = new FSkeletalMeshSourceData();
+            SkelSourceData.CloneFromOtherArchive(other.SkelSourceData, other.Archive, Archive);
         }
     }
 }

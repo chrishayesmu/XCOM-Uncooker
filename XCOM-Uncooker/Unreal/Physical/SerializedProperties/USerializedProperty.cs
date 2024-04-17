@@ -143,13 +143,19 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 
         public abstract void Serialize(IUnrealDataStream stream);
 
-        public virtual void CloneFromOtherArchive(USerializedProperty sourceProp)
+        public abstract USerializedProperty CloneToOtherArchive(FArchive destArchive);
+
+        protected FPropertyTag? ClonePropertyTag(FArchive destArchive)
         {
-            if (sourceProp.Tag != null)
+            if (Tag == null)
             {
-                Tag = new FPropertyTag();
-                Tag.Value.CloneFromOtherArchive(sourceProp.Tag.Value, sourceProp.Archive, Archive);
+                return null;
             }
+
+            var destTag = new FPropertyTag();
+            destTag.CloneFromOtherArchive(Tag.Value, Archive, destArchive);
+
+            return destTag;
         }
     }
 }

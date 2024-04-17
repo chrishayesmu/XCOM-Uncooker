@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models;
 
@@ -81,6 +82,19 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             stream.Array(ref Elements);
             stream.Int16(ref ComponentIndex);
             stream.Int16Array(ref Nodes);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UModelComponent) sourceObj;
+
+            Model = Archive.MapIndexFromSourceArchive(other.Model, other.Archive);
+            ZoneIndex = other.ZoneIndex;
+            Elements = IUnrealSerializable.Clone(other.Elements, other.Archive, Archive);
+            ComponentIndex = other.ComponentIndex;
+            Nodes = other.Nodes;
         }
     }
 }

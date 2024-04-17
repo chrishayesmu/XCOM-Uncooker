@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences
 {
@@ -46,6 +47,23 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences
             base.Serialize(stream);
 
             stream.Map(ref SavedActorTransforms);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (USeqAct_Interp) sourceObj;
+
+            SavedActorTransforms = new Dictionary<int, FSavedTransform>();
+
+            foreach (var entry in other.SavedActorTransforms)
+            {
+                var key = Archive.MapIndexFromSourceArchive(entry.Key, other.Archive);
+                var value = entry.Value;
+
+                SavedActorTransforms[key] = value;
+            }
         }
     }
 }

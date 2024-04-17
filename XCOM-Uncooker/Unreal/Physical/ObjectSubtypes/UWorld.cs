@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
@@ -69,6 +70,19 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
 
             stream.Int32(ref SaveGameSummary);
             stream.Int32Array(ref ExtraReferencedObjects);
+        }
+
+        public override void CloneFromOtherArchive(UObject sourceObj)
+        {
+            base.CloneFromOtherArchive(sourceObj);
+
+            var other = (UWorld) sourceObj;
+
+            PersistentLevel = Archive.MapIndexFromSourceArchive(other.PersistentLevel, other.Archive);
+            PersistentFaceFXAnimSet = Archive.MapIndexFromSourceArchive(other.PersistentFaceFXAnimSet, other.Archive);
+            EditorViews = other.EditorViews;
+            SaveGameSummary = Archive.MapIndexFromSourceArchive(other.SaveGameSummary, other.Archive);
+            ExtraReferencedObjects = Archive.MapIndicesFromSourceArchive(other.ExtraReferencedObjects, other.Archive);
         }
     }
 }

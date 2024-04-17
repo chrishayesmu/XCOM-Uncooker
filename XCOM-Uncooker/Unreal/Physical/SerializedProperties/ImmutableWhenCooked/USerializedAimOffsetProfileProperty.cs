@@ -122,39 +122,29 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
             }
         }
 
-        public override void CloneFromOtherArchive(USerializedProperty sourceProp)
+        public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
-            USerializedAimOffsetProfileProperty other = (USerializedAimOffsetProfileProperty) sourceProp;
+            var tag = ClonePropertyTag(destArchive);
+            var other = new USerializedAimOffsetProfileProperty(destArchive, null, tag);
 
-            ProfileName = Archive.MapNameFromSourceArchive(other.ProfileName);
-
-            FPropertyTag tag = new FPropertyTag()
-            {
-                Name = Archive.GetOrCreateName("HorizontalRange"),
-                Type = Archive.GetOrCreateName("StructProperty"),
-                ArrayIndex = 0,
-                Size = 8,
-                StructName = Archive.GetOrCreateName("Vector2D")
-            };
-
-            AimComponents = new USerializedAimComponentProperty[other.AimComponents.Length];
+            other.AimComponents = new USerializedAimComponentProperty[AimComponents.Length];
 
             for (int i = 0; i < AimComponents.Length; i++)
             {
-                // TODO this is going to be the wrong backing property - does it even matter though?
-                AimComponents[i] = new USerializedAimComponentProperty(Archive, BackingProperty, tag);
-                AimComponents[i].CloneFromOtherArchive(other.AimComponents[i]);
+                other.AimComponents[i] = (USerializedAimComponentProperty) AimComponents[i].CloneToOtherArchive(destArchive);
             }
 
-            AnimName_LU = Archive.MapNameFromSourceArchive(other.AnimName_LU);
-            AnimName_LC = Archive.MapNameFromSourceArchive(other.AnimName_LC);
-            AnimName_LD = Archive.MapNameFromSourceArchive(other.AnimName_LD);
-            AnimName_CU = Archive.MapNameFromSourceArchive(other.AnimName_CU);
-            AnimName_CC = Archive.MapNameFromSourceArchive(other.AnimName_CC);
-            AnimName_CD = Archive.MapNameFromSourceArchive(other.AnimName_CD);
-            AnimName_RU = Archive.MapNameFromSourceArchive(other.AnimName_RU);
-            AnimName_RC = Archive.MapNameFromSourceArchive(other.AnimName_RC);
-            AnimName_RD = Archive.MapNameFromSourceArchive(other.AnimName_RD);
+            other.AnimName_LU = destArchive.MapNameFromSourceArchive(AnimName_LU);
+            other.AnimName_LC = destArchive.MapNameFromSourceArchive(AnimName_LC);
+            other.AnimName_LD = destArchive.MapNameFromSourceArchive(AnimName_LD);
+            other.AnimName_CU = destArchive.MapNameFromSourceArchive(AnimName_CU);
+            other.AnimName_CC = destArchive.MapNameFromSourceArchive(AnimName_CC);
+            other.AnimName_CD = destArchive.MapNameFromSourceArchive(AnimName_CD);
+            other.AnimName_RU = destArchive.MapNameFromSourceArchive(AnimName_RU);
+            other.AnimName_RC = destArchive.MapNameFromSourceArchive(AnimName_RC);
+            other.AnimName_RD = destArchive.MapNameFromSourceArchive(AnimName_RD);
+
+            return other;
         }
     }
 }

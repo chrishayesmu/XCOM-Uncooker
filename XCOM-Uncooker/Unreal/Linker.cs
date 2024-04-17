@@ -403,30 +403,19 @@ namespace XCOM_Uncooker.Unreal
                 {
                     UObject obj = subentry.Value;
 
-                    //Log.Info($"Archive {outArchive.FileName}: trying to add object {obj.FullObjectPath}");
                     outArchive.AddExportObject(obj);
                     numObjects++;
 
-                    if (numObjects % 250 == 0)
+                    if (numObjects % 10000 == 0)
                     {
                         Log.Info($"    {numObjects} export objects added to uncooked archives..");
-
-                        if (numObjects == 50000 || numObjects == 80000)
-                        {
-                            Debugger.Break();
-                        }
                     }
                 }
             }
 
-            //UObject obj = GetCookedObjectByPath("CHH_FacialHair.Textures.FacialHairTile");
-            //
-            //Log.Info($"Archive {outArchive.FileName}: trying to add object {obj.FullObjectPath}");
-            //outArchive.AddExportObject(obj);
-
             Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
 
-            // Log.Info($"After adding: archive has {outArchive.NameTable.Count} names, {outArchive.ExportTable.Count} exports, and {outArchive.ImportTable.Count} imports");
+            // TODO: test write serialization of 
         }
     
         private ProgressBar GetOrCreateParallelProgressBar(string title)
