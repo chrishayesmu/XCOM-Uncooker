@@ -80,6 +80,7 @@ namespace XCOM_Uncooker
                 }
             });
 
+            thread.IsBackground = true;
             thread.Start();
         }
 

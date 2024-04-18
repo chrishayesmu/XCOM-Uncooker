@@ -15,11 +15,23 @@ namespace XCOM_Uncooker.IO
     /// </summary>
     public interface IUnrealDataStream
     {
+        /// <summary>
+        /// The archive which this stream is operating in the context of. This should be set as soon as
+        /// possible, because its data is necessary for understanding how to serialize some types.
+        /// </summary>
+        public FArchive? Archive { get; set; }
+
         public long Position { get; }
 
         public bool IsRead { get; }
 
         public bool IsWrite { get; }
+
+        public void Close();
+
+        public void Dispose();
+
+        public long Seek(long offset, SeekOrigin origin);
 
         /// <summary>
         /// Advances the stream by <c>numBytes</c> bytes. When reading, this results in simply moving the stream position;

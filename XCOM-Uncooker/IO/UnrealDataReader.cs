@@ -15,16 +15,12 @@ namespace XCOM_Uncooker.IO
 {
     public class UnrealDataReader(Stream stream) : Stream, IUnrealDataStream
     {
-        /// <summary>
-        /// The archive which this stream is operating in the context of. This should be set as soon as
-        /// possible, because its data is necessary for understanding how to serialize some types.
-        /// </summary>
-        public FArchive? Archive;
-
         public bool IsRead => true;
         public bool IsWrite => false;
 
         private const int MaxStackAllocSize = 512;
+
+        public FArchive? Archive { get; set; }
 
         private readonly Stream _stream = stream;
 

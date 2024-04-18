@@ -16,7 +16,7 @@ namespace XCOM_Uncooker.IO
         /// The archive which this stream is operating in the context of. This should be set as soon as
         /// possible, because its data is necessary for understanding how to serialize some types.
         /// </summary>
-        public FArchive? Archive;
+        public FArchive? Archive { get; set; }
 
         public bool IsRead => false;
         public bool IsWrite => true;
@@ -64,7 +64,7 @@ namespace XCOM_Uncooker.IO
 
         public void SkipBytes(int numBytes)
         {
-            _stream.Seek(numBytes, SeekOrigin.Current);
+            Write(new byte[numBytes]);
         }
 
         public void Array<T>(ref T[] data, UObject owner = null) where T : IUnrealSerializable, new()

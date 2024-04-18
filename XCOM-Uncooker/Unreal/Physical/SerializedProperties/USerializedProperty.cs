@@ -12,7 +12,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
     /// Serialized properties are preceded by an FPropertyTag, which provides the
     /// necessary metadata to deserialize the property.
     /// </summary>
-    public struct FPropertyTag(FArchive Archive) : IUnrealSerializable
+    public struct FPropertyTag : IUnrealSerializable
     {
         /// <summary>
         /// The name of the property, which will match the name of a corresponding <see cref="UProperty"/>

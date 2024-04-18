@@ -94,7 +94,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// it is true, then the outer array will be non-null, but the inner arrays are not created until the
         /// archive's body has been deserialized.
         /// </remarks>
-        public int[][] DependsMap;
+        public List<int[]> DependsMap = new List<int[]>();
 
         /// <summary>
         /// The deserialized objects which this archive exports. Before <see cref="SerializeExportObjects"/> is called,
@@ -152,19 +152,11 @@ namespace XCOM_Uncooker.Unreal.Physical
         public bool IsSaving => _stream.IsWrite;
 
         private IDictionary<string, FExportTableEntry> ExportTableByObjectPath = new Dictionary<string, FExportTableEntry>();
-        private UnrealDataReader _stream;
+        private IUnrealDataStream _stream;
 
-        public void BeginSerialization(Stream stream)
+        public void BeginSerialization(IUnrealDataStream stream)
         {
-            if (stream is UnrealDataReader udStream)
-            {
-                _stream = udStream;
-            }
-            else
-            {
-                _stream = new UnrealDataReader(stream);
-            }
-
+            _stream = stream;
             _stream.Archive = this;
 
             // When we're about to save a brand new archive, we need to set some values that normally the editor would set
@@ -176,15 +168,18 @@ namespace XCOM_Uncooker.Unreal.Physical
                     FileVersion = 845,
                     LicenseeVersion = 0, // XCOM's is 64, but if we set that, our Unreal Editor won't open the package
                     HeaderSize = 0, // can't be calculated yet
-                    FolderName = "", // TODO
-                    PackageFlags = PackageFlag.AllowDownload | PackageFlag.AllowDownload, // TODO, some conditional flags e.g. Map
+                    FolderName = "None", // TODO
+                    PackageFlags = PackageFlag.AllowDownload,
                     NameCount = NameTable.Count,
                     NameOffset = -1,
                     ExportCount = ExportTable.Count,
                     ExportOffset = -1,
                     ImportCount = ImportTable.Count,
                     ImportOffset = -1,
-                    DependsOffset = -1
+                    DependsOffset = -1,
+                    Generations = [],
+                    AdditionalPackagesToCook = [],
+                    TextureAllocations = new FTextureAllocations()
                 };
             }
         }
@@ -197,19 +192,25 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void SerializeHeaderData()
         {
+            // Note: when writing an archive, this function will get called twice. We don't know all of the sizes/offsets
+            // on the first pass, but we know that the header size won't change. Accordingly, we write the header once with
+            // bad values, serialize all objects (while updating their metadata), then overwrite the header later.
+
             SerializeFileSummary();
             SerializeNameTable();
             SerializeImportTable();
             SerializeExportTable();
             SerializeThumbnailMetadataTable();
 
-            if (HasDependsMap)
+            if (IsLoading)
             {
-                DependsMap = new int[ExportTable.Count][];
+                // Keep ExportedObjects ready to populate in case something is loaded directly by another archive
+                ExportedObjects = new List<UObject>(new UObject[ExportTable.Count]);
             }
-
-            // Keep ExportedObjects ready to populate in case something is loaded directly by another archive
-            ExportedObjects = new List<UObject>(new UObject[ExportTable.Count]);
+            else
+            {
+                PackageFileSummary.HeaderSize = (int) _stream.Position;
+            }
         }
 
         /// <summary>
@@ -223,10 +224,9 @@ namespace XCOM_Uncooker.Unreal.Physical
                 SerializeExportObjects(progressBar);
             }
 
-            ConnectInnerObjects();
-
             if (IsLoading)
             {
+                ConnectInnerObjects();
                 TopLevelPackages = GetTopLevelPackages();
             }
         }
@@ -265,6 +265,13 @@ namespace XCOM_Uncooker.Unreal.Physical
             string fullObjectPath = sourceExportTable.FullObjectPath;
             FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath);
 
+            if (sourceObj is UClass)
+            {
+                PackageFileSummary.PackageFlags |= PackageFlag.ContainsScript;
+            }
+            
+            // TODO similar flags for other types
+
             // We might already have an export table entry, if another object referenced this export before we loaded it. If not,
             // then we'll want to make a new one.
             if (destTableEntry == null)
@@ -291,12 +298,12 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
 
             // TODO: this is a hack because my definition of FExportTableEntry.ClassName is stupid and I don't want to change it right now
-            // TODO: need to create CDOs as UObject here
             UObject destObj = sourceObj.ExportTableEntry.IsClass              ? new UClass(this, destTableEntry) : 
                               sourceObj.ExportTableEntry.IsClassDefaultObject ? new UObject(this, destTableEntry) : 
                                                                                 UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
             destObj.CloneFromOtherArchive(sourceObj);
             ExportedObjects.Add(destObj);
+            DependsMap.Add(new int[0]);
 
             return destObj;
         }
@@ -528,34 +535,6 @@ namespace XCOM_Uncooker.Unreal.Physical
                 return exportEntry.ExportObject ?? LoadExport(exportEntry.TableEntryIndex);
             }
 
-            /*int exportArrayIndex = exportEntry?.TableEntryIndex ?? -1;
-            UObject obj = null;
-            bool found = false;
-
-            if (exportArrayIndex >= 0)
-            {
-                obj = ExportedObjects[exportArrayIndex];
-                int depth = 1;
-                found = true;
-
-                while (depth != pathParts.Length)
-                {
-                    obj = obj.InnerObjects.FirstOrDefault(inner => inner.ObjectName == pathParts[depth]);
-                    depth++;
-
-                    if (obj == null)
-                    {
-                        found = false;
-                        break;
-                    }
-                }
-            }
-
-            if (found)
-            {
-                return obj;
-            }*/
-
             // Some objects are implicitly exported under the archive's name and don't have a top level UPackage to contain
             // them, so try again with the first part of the path stripped if that might be the case here
             if (path.StartsWith(archivePathPrefix))
@@ -664,7 +643,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 {
                     long previousPosition = _stream.Position;
                     ExportedObjects[exportTableIndex] = LoadExport(exportTableIndex);
-                    _stream.Position = previousPosition;
+                    _stream.Seek(previousPosition, SeekOrigin.Begin);
                 }
             }
 
@@ -828,16 +807,33 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// </summary>
         private void SerializeDependsMap()
         {
-            if (!HasDependsMap)
+            if (IsLoading)
             {
-                return;
+                if (!HasDependsMap)
+                {
+                    return;
+                }
+            
+                DependsMap = new List<int[]>(ExportTable.Count);
+                _stream.Seek(PackageFileSummary.DependsOffset, SeekOrigin.Begin);
+
+                // The DependsMap length is implicitly the number of exported objects
+                for (int i = 0; i < ExportTable.Count; i++)
+                {
+                    int[] dependsArray = [];
+                    _stream.Int32Array(ref dependsArray);
+                    DependsMap.Add(dependsArray);
+                }
             }
-
-            _stream.Seek(PackageFileSummary.DependsOffset, SeekOrigin.Begin);
-
-            for (int i = 0; i < DependsMap.Length; i++)
+            else
             {
-                _stream.Int32Array(ref DependsMap[i]);
+                PackageFileSummary.DependsOffset = (int) _stream.Position;
+
+                for (int i = 0; i < ExportTable.Count; i++)
+                {
+                    int[] dependsArray = DependsMap[i];
+                    _stream.Int32Array(ref dependsArray);
+                }
             }
         }
 
@@ -853,7 +849,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 progressBar.Update("", i, ExportTable.Count);
 
                 // This export may have been preloaded by another one - skip it if so
-                if (ExportedObjects[i] != null)
+                if (IsLoading && ExportedObjects[i] != null)
                 {
                     numAlreadyLoaded++;
                     continue;
@@ -861,10 +857,24 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                 try
                 {
-                    ExportedObjects[i] = LoadExport(i);
+                    if (IsLoading)
+                    {
+                        ExportedObjects[i] = LoadExport(i);
+                    }
+                    else
+                    {
+                        int startPosition = (int) _stream.Position;
+                        ExportedObjects[i].ExportTableEntry.SerialOffset = startPosition;
+
+                        ExportedObjects[i].Serialize(_stream);
+
+                        int endPosition = (int) _stream.Position;
+                        ExportedObjects[i].ExportTableEntry.SerialSize = endPosition - startPosition;
+                    }
+
                     numSucceeded++;
                 }
-                catch (Exception e)
+                catch
                 {
                     numFailed++;
                     break; // TODO remove
@@ -877,8 +887,6 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 Log.Info($"Archive {FileName}: done reading export objects. {numSucceeded} succeeded and {numFailed} failed deserialization. {numAlreadyLoaded} were previously loaded.");
             }
-
-            _stream.Close();
         }
 
         /// <summary>
@@ -906,24 +914,14 @@ namespace XCOM_Uncooker.Unreal.Physical
             _stream.Int32(ref PackageFileSummary.ImportCount);
             _stream.Int32(ref PackageFileSummary.ImportOffset);
             _stream.Int32(ref PackageFileSummary.DependsOffset);
+            _stream.Int32(ref PackageFileSummary.ImportExportGuidsOffset);
+            _stream.Int32(ref PackageFileSummary.ImportGuidsCount);
+            _stream.Int32(ref PackageFileSummary.ExportGuidsCount);
 
             // The thumbnail table offset is just here for posterity; XCOM EW is cooked for console,
             // and the thumbnail table is gone. For some reason, the thumbnail table offset is still
             // set, even though it should be set to 0 in a cooked build. 
             _stream.Int32(ref PackageFileSummary.ThumbnailTableOffset);
-
-            // 12 bytes of unknown data to get past
-            if (IsLoading)
-            {
-                _stream.SkipBytes(12);
-            }
-            else
-            {
-                int unknownBytes = 0;
-                _stream.Int32(ref unknownBytes);
-                _stream.Int32(ref unknownBytes);
-                _stream.Int32(ref unknownBytes);
-            }
 
             _stream.Guid(ref PackageFileSummary.PackageGuid);
             _stream.Array(ref PackageFileSummary.Generations);
@@ -941,6 +939,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             _stream.UInt32(ref PackageFileSummary.PackageSource);
             _stream.StringArray(ref PackageFileSummary.AdditionalPackagesToCook);
+            _stream.Object(ref PackageFileSummary.TextureAllocations);
 
 #if DEBUG
             if (IsLoading)
@@ -955,14 +954,21 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         private void SerializeExportTable()
         {
-            ExportTable = new List<FExportTableEntry>(new FExportTableEntry[PackageFileSummary.ExportCount]);
+            if (IsLoading)
+            {
+                ExportTable = new List<FExportTableEntry>(new FExportTableEntry[PackageFileSummary.ExportCount]);
+                _stream.Seek(PackageFileSummary.ExportOffset, SeekOrigin.Begin);
+            }
+            else
+            {
+                PackageFileSummary.ExportOffset = (int) _stream.Position;
+            }
 
             if (PackageFileSummary.ExportCount == 0)
             {
                 return;
             }
 
-            _stream.Seek(PackageFileSummary.ExportOffset, SeekOrigin.Begin);
 
             for (int i = 0; i < PackageFileSummary.ExportCount; i++)
             {
@@ -986,14 +992,20 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         private void SerializeImportTable()
         {
-            ImportTable = new List<FImportTableEntry>(new FImportTableEntry[PackageFileSummary.ImportCount]);
+            if (IsLoading)
+            {
+                ImportTable = new List<FImportTableEntry>(new FImportTableEntry[PackageFileSummary.ImportCount]);
+                _stream.Seek(PackageFileSummary.ImportOffset, SeekOrigin.Begin);
+            }
+            else
+            {
+                PackageFileSummary.ImportOffset = (int) _stream.Position;
+            }
 
             if (PackageFileSummary.ImportCount == 0)
             {
                 return;
             }
-
-            _stream.Seek(PackageFileSummary.ImportOffset, SeekOrigin.Begin);
 
             for (int i = 0; i < PackageFileSummary.ImportCount; i++)
             {
@@ -1009,14 +1021,20 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         private void SerializeNameTable()
         {
-            NameTable = new List<string>(new string[PackageFileSummary.NameCount]);
+            if (IsLoading)
+            {
+                NameTable = new List<string>(new string[PackageFileSummary.NameCount]);
+                _stream.Seek(PackageFileSummary.NameOffset, SeekOrigin.Begin);
+            }
+            else
+            {
+                PackageFileSummary.NameOffset = (int) _stream.Position;
+            }
 
             if (PackageFileSummary.NameCount == 0)
             {
                 return;
             }
-
-            _stream.Seek(PackageFileSummary.NameOffset, SeekOrigin.Begin);
 
             for (int i = 0; i < PackageFileSummary.NameCount; i++)
             {
