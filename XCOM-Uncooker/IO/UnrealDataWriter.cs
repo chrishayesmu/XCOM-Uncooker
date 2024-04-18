@@ -10,7 +10,7 @@ using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.IO
 {
-    public class UnrealDataWriter(Stream stream) : Stream, IUnrealDataStream
+    public class UnrealDataWriter(Stream stream) : IUnrealDataStream
     {
         /// <summary>
         /// The archive which this stream is operating in the context of. This should be set as soon as
@@ -25,37 +25,47 @@ namespace XCOM_Uncooker.IO
 
         #region Stream class overrides
 
-        public override bool CanRead => _stream.CanRead;
+        public bool CanRead => _stream.CanRead;
 
-        public override bool CanSeek => _stream.CanSeek;
+        public bool CanSeek => _stream.CanSeek;
 
-        public override bool CanWrite => _stream.CanWrite;
+        public bool CanWrite => _stream.CanWrite;
 
-        public override long Length => _stream.Length;
+        public long Length => _stream.Length;
 
-        public override long Position { get => _stream.Position; set => _stream.Position = value; }
+        public long Position { get => _stream.Position; set => _stream.Position = value; }
 
-        public override void Flush()
+        public void Dispose()
+        {
+            _stream.Dispose();
+        }
+
+        public void Flush()
         {
             _stream.Flush();
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public int Read(byte[] buffer, int offset, int count)
         {
             return _stream.Read(buffer, offset, count);
         }
 
-        public override long Seek(long offset, SeekOrigin origin)
+        public long Seek(long offset, SeekOrigin origin)
         {
             return _stream.Seek(offset, origin);
         }
 
-        public override void SetLength(long value)
+        public void SetLength(long value)
         {
             _stream.SetLength(value);
         }
+        
+        public void Write(Span<byte> buffer)
+        {
+            _stream.Write(buffer);
+        }
 
-        public override void Write(byte[] buffer, int offset, int count)
+        public void Write(byte[] buffer, int offset, int count)
         {
             _stream.Write(buffer, offset, count);
         }

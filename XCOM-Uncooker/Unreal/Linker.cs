@@ -392,7 +392,7 @@ namespace XCOM_Uncooker.Unreal
             int i = 0, numObjects = 0;
             string output = "Archive\tObjects\tImports\n";
 
-            foreach (var entry in ObjectsByUncookedArchiveName)
+            Parallel.ForEach(ObjectsByUncookedArchiveName, (entry) =>
             {
                 FArchive outArchive = new FArchive(entry.Key, this);
                 outArchive.AddImportObject("Core", "Package", 0, "Core");
@@ -406,7 +406,7 @@ namespace XCOM_Uncooker.Unreal
                     UObject obj = subentry.Value;
 
                     outArchive.AddExportObject(obj);
-                    numObjects++;
+                    Interlocked.Increment(ref numObjects);
 
                     if (numObjects % 10000 == 0)
                     {
@@ -415,7 +415,7 @@ namespace XCOM_Uncooker.Unreal
                 }
 
                 output += $"{outArchive.FileName}\t{outArchive.ExportedObjects.Count}\t{outArchive.ImportTable.Count}\n";
-            }
+            });
 
             File.WriteAllText("uncookedPackages.txt", output);
             Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");

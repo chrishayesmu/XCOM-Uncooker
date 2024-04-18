@@ -13,7 +13,7 @@ namespace XCOM_Uncooker.IO
     /// Interface for reading or writing an <see cref="FArchive" /> file. Whether reading or writing is occurring
     /// is up to the implementing class.
     /// </summary>
-    public interface IUnrealDataStream
+    public interface IUnrealDataStream : IDisposable
     {
         /// <summary>
         /// The archive which this stream is operating in the context of. This should be set as soon as
@@ -26,10 +26,6 @@ namespace XCOM_Uncooker.IO
         public bool IsRead { get; }
 
         public bool IsWrite { get; }
-
-        public void Close();
-
-        public void Dispose();
 
         public long Seek(long offset, SeekOrigin origin);
 

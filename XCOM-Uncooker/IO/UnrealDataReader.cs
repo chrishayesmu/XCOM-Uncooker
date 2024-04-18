@@ -13,7 +13,7 @@ using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.IO
 {
-    public class UnrealDataReader(Stream stream) : Stream, IUnrealDataStream
+    public class UnrealDataReader(Stream stream) : IUnrealDataStream
     {
         public bool IsRead => true;
         public bool IsWrite => false;
@@ -26,37 +26,37 @@ namespace XCOM_Uncooker.IO
 
         #region Stream class overrides
 
-        public override bool CanRead => _stream.CanRead;
+        public bool CanRead => _stream.CanRead;
 
-        public override bool CanSeek => _stream.CanSeek;
+        public bool CanSeek => _stream.CanSeek;
 
-        public override bool CanWrite => _stream.CanWrite;
+        public bool CanWrite => _stream.CanWrite;
 
-        public override long Length => _stream.Length;
+        public long Length => _stream.Length;
 
-        public override long Position { get => _stream.Position; set => _stream.Position = value; }
+        public long Position { get => _stream.Position; set => _stream.Position = value; }
 
-        public override void Flush()
+        public void Dispose()
+        {
+            _stream.Dispose();
+        }
+
+        public void Flush()
         {
             _stream.Flush();
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public int Read(byte[] buffer, int offset, int count)
         {
             return _stream.Read(buffer, offset, count);
         }
 
-        public override long Seek(long offset, SeekOrigin origin)
+        public long Seek(long offset, SeekOrigin origin)
         {
             return _stream.Seek(offset, origin);
         }
 
-        public override void SetLength(long value)
-        {
-            _stream.SetLength(value);
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
+        public void Write(byte[] buffer, int offset, int count)
         {
             _stream.Write(buffer, offset, count);
         }
@@ -636,7 +636,7 @@ namespace XCOM_Uncooker.IO
 
         public void UInt8(ref byte value)
         {
-            value = (byte) ReadByte();
+            value = (byte) _stream.ReadByte();
         }
 
         public void UInt16Array(ref ushort[] data)

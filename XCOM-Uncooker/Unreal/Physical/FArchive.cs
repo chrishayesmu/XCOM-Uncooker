@@ -186,7 +186,6 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public void EndSerialization()
         {
-            _stream.Close();
             _stream.Dispose();
         }
 
@@ -263,7 +262,6 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             FExportTableEntry sourceExportTable = sourceObj.ExportTableEntry;
             string fullObjectPath = sourceExportTable.FullObjectPath;
-            FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath);
 
             if (sourceObj is UClass)
             {
@@ -274,38 +272,42 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             // We might already have an export table entry, if another object referenced this export before we loaded it. If not,
             // then we'll want to make a new one.
-            if (destTableEntry == null)
+            lock (this)
             {
-                destTableEntry = new FExportTableEntry(this)
+                FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath);
+                if (destTableEntry == null)
                 {
-                    ClassIndex = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
-                    SuperIndex = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
-                    OuterIndex = MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
-                    ObjectName = MapNameFromSourceArchive(sourceExportTable.ObjectName),
-                    ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
-                    ObjectFlags = sourceExportTable.ObjectFlags,
-                    SerialSize = -1,
-                    SerialOffset = -1,
-                    ExportFlags = sourceExportTable.ExportFlags,
-                    GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
-                    PackageGuid = sourceExportTable.PackageGuid,
-                    PackageFlags = sourceExportTable.PackageFlags,
-                    TableEntryIndex = ExportTable.Count
-                };
+                    destTableEntry = new FExportTableEntry(this)
+                    {
+                        ClassIndex = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
+                        SuperIndex = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
+                        OuterIndex = MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
+                        ObjectName = MapNameFromSourceArchive(sourceExportTable.ObjectName),
+                        ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
+                        ObjectFlags = sourceExportTable.ObjectFlags,
+                        SerialSize = -1,
+                        SerialOffset = -1,
+                        ExportFlags = sourceExportTable.ExportFlags,
+                        GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
+                        PackageGuid = sourceExportTable.PackageGuid,
+                        PackageFlags = sourceExportTable.PackageFlags,
+                        TableEntryIndex = ExportTable.Count
+                    };
 
-                ExportTable.Add(destTableEntry);
-                ExportTableByObjectPath[fullObjectPath] = destTableEntry;
+                    ExportTable.Add(destTableEntry);
+                    ExportTableByObjectPath[fullObjectPath] = destTableEntry;
+                }
+
+                // TODO: this is a hack because my definition of FExportTableEntry.ClassName is stupid and I don't want to change it right now
+                UObject destObj = sourceObj.ExportTableEntry.IsClass              ? new UClass(this, destTableEntry) : 
+                                  sourceObj.ExportTableEntry.IsClassDefaultObject ? new UObject(this, destTableEntry) : 
+                                                                                    UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
+                destObj.CloneFromOtherArchive(sourceObj);
+                ExportedObjects.Add(destObj);
+                DependsMap.Add(new int[0]);
+
+                return destObj;
             }
-
-            // TODO: this is a hack because my definition of FExportTableEntry.ClassName is stupid and I don't want to change it right now
-            UObject destObj = sourceObj.ExportTableEntry.IsClass              ? new UClass(this, destTableEntry) : 
-                              sourceObj.ExportTableEntry.IsClassDefaultObject ? new UObject(this, destTableEntry) : 
-                                                                                UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
-            destObj.CloneFromOtherArchive(sourceObj);
-            ExportedObjects.Add(destObj);
-            DependsMap.Add(new int[0]);
-
-            return destObj;
         }
 
         public void AddImportObject(string ClassPackage, string ClassName, int OuterIndex, string ObjectName, FArchive sourceArchive = null)
@@ -933,7 +935,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             // We aren't going to do decompression, so just bail
             if (PackageFileSummary.NumCompressedChunks != 0)
             {
-                _stream.Close();
+                _stream.Dispose();
                 return;
             }
 
