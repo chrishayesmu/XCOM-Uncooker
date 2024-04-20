@@ -87,7 +87,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "SkeletalMesh",                      (archive, tableEntry) => new USkeletalMesh(archive, tableEntry) },
             { "SoundClass",                        (archive, tableEntry) => new USoundClass(archive, tableEntry) },
             { "SoundCue",                          (archive, tableEntry) => new USoundCue(archive, tableEntry) },
-            { "SoundNodeWave",                     (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "SoundNodeWave",                     (archive, tableEntry) => new USoundNodeWave(archive, tableEntry) },
             { "SpeedTreeComponent",                (archive, tableEntry) => new USpeedTreeComponent(archive, tableEntry) },
             { "StaticMesh",                        (archive, tableEntry) => new UStaticMesh(archive, tableEntry) },
             { "StaticMeshComponent",               (archive, tableEntry) => new UStaticMeshComponent(archive, tableEntry) },
@@ -223,9 +223,12 @@ namespace XCOM_Uncooker.Unreal.Physical
             TemplateName = Archive.MapNameFromSourceArchive(sourceObj.TemplateName);
             NetIndex = sourceObj.NetIndex;
 
-            for (int i = 0; i < SerializedProperties.Count; i++)
+            SerializedProperties = new List<USerializedProperty>(sourceObj.SerializedProperties.Count);
+
+            for (int i = 0; i < sourceObj.SerializedProperties.Count; i++)
             {
-                // TODO: copy prop data
+                var propCopy = sourceObj.SerializedProperties[i].CloneToOtherArchive(Archive);
+                SerializedProperties.Add(propCopy);
             }
         }
 
@@ -358,23 +361,16 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// <param name="stream">The stream to read from or write to.</param>
         protected virtual void SerializeScriptProperties(List<USerializedProperty> props, IUnrealDataStream stream)
         {
-            if (Archive.IsLoading)
-            {
-                UClass classObj = TableEntry.ClassObj;
+            UClass classObj = TableEntry.ClassObj;
 
-                if (classObj != null)
-                {
-                    TableEntry.ClassObj.SerializeTaggedProperties(props, stream);
-                }
-                else
-                {
-                    // If we don't have a class object, this is likely an intrinsic type, and we'll just have to do the best we can
-                    SerializeTaggedProperties(props, stream);
-                }
+            if (classObj != null)
+            {
+                TableEntry.ClassObj.SerializeTaggedProperties(props, stream);
             }
             else
             {
-                // TODO
+                // If we don't have a class object, this is likely an intrinsic type, and we'll just have to do the best we can
+                SerializeTaggedProperties(props, stream);
             }
         }
 
@@ -393,7 +389,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                 while (!tag.Name.IsNone())
                 {
-                    USerializedProperty prop = ChooseSerializedPropertyBasedOnTag(tag);
+                    USerializedProperty prop = ChooseSerializedPropertyBasedOnTag(tag, stream.Archive!);
 
                     if (prop == null)
                     {
@@ -410,7 +406,19 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
             else
             {
-                Log.Warning($"{nameof(SerializeTaggedProperties)}: write not implemented yet");
+                for (int i = 0; i < props.Count; i++)
+                {
+                    if (props[i].Tag != null)
+                    {
+                        var tag = props[i].Tag!.Value;
+                        stream.Object(ref tag);
+                    }
+
+                    props[i].Serialize(stream);
+                }
+
+                var nameNone = stream.Archive.GetOrCreateName("None");
+                stream.Name(ref nameNone);
             }
         }
 
@@ -418,27 +426,27 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// Chooses a type of <see cref="USerializedProperty"/> based on the given property tag; only used when
         /// the class definition of this object is not available.
         /// </summary>
-        protected virtual USerializedProperty ChooseSerializedPropertyBasedOnTag(FPropertyTag tag)
+        protected virtual USerializedProperty ChooseSerializedPropertyBasedOnTag(FPropertyTag tag, FArchive inArchive)
         {
-            if (tag.IsStructProperty && UStructProperty.TryCreateSerializedStructProperty(Archive, tag, out USerializedProperty prop))
+            if (tag.IsStructProperty && UStructProperty.TryCreateSerializedStructProperty(inArchive, tag, out USerializedProperty prop))
             {
                 return prop;
             }
 
             return (string) tag.Type switch
             {
-                "ArrayProperty" => new USerializedArrayProperty(Archive, null, tag),
-                "BoolProperty" => new USerializedBoolProperty(Archive, null, tag),
-                "ByteProperty" => new USerializedByteProperty(Archive, null, tag),
-                "ClassProperty" => new USerializedObjectProperty(Archive, null, tag),
-                "ComponentProperty" => new USerializedObjectProperty(Archive, null, tag),
-                "DelegateProperty" => new USerializedDelegateProperty(Archive, null, tag),
-                "FloatProperty" => new USerializedFloatProperty(Archive, null, tag),
-                "IntProperty" => new USerializedIntProperty(Archive, null, tag),
-                "NameProperty" => new USerializedNameProperty(Archive, null, tag),
-                "ObjectProperty" => new USerializedObjectProperty(Archive, null, tag),
-                "StrProperty" => new USerializedStringProperty(Archive, null, tag),
-                "StructProperty" => new USerializedStructProperty(Archive, null, tag),
+                "ArrayProperty" => new USerializedArrayProperty(inArchive, null, tag),
+                "BoolProperty" => new USerializedBoolProperty(inArchive, null, tag),
+                "ByteProperty" => new USerializedByteProperty(inArchive, null, tag),
+                "ClassProperty" => new USerializedObjectProperty(inArchive, null, tag),
+                "ComponentProperty" => new USerializedObjectProperty(inArchive, null, tag),
+                "DelegateProperty" => new USerializedDelegateProperty(inArchive, null, tag),
+                "FloatProperty" => new USerializedFloatProperty(inArchive, null, tag),
+                "IntProperty" => new USerializedIntProperty(inArchive, null, tag),
+                "NameProperty" => new USerializedNameProperty(inArchive, null, tag),
+                "ObjectProperty" => new USerializedObjectProperty(inArchive, null, tag),
+                "StrProperty" => new USerializedStringProperty(inArchive, null, tag),
+                "StructProperty" => new USerializedStructProperty(inArchive, null, tag),
                 _ => null,
             };
         }

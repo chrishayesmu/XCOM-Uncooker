@@ -28,7 +28,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public int SizeOnDisk;
 
-        public int Offset;
+        public int Offset; // TODO this needs to be fixed up when uncooking
 
         public byte[] Data;
 
@@ -37,9 +37,19 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.Enum32(ref BulkDataFlags);
             stream.Int32(ref NumElements);
             stream.Int32(ref SizeOnDisk);
+
+            // When we're uncooking, we need to update any inline bulk data to point to the current file
+            // position as its offset; inline data is always immediately following the metadata.
+            bool storedSeparately = BulkDataFlags.HasFlag(EBulkDataFlags.StoreInSeparateFile);
+
+            if (stream.IsWrite && !storedSeparately)
+            {
+                Offset = (int) stream.Position;
+            }
+
             stream.Int32(ref Offset);
 
-            if (BulkDataFlags.HasFlag(EBulkDataFlags.StoreInSeparateFile))
+            if (storedSeparately)
             {
                 // TODO: where the file is depends on the data (e.g. in a TFC for textures)
             }

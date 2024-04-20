@@ -120,6 +120,12 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         /// <summary>
         /// The <see cref="UProperty"/> which defines this property in a <see cref="UStruct"/> somewhere.
         /// </summary>
+        /// <remarks>
+        /// When uncooking archives, this property will often belong to a different, cooked archive.
+        /// That's because it should only be needed for reference, and the fact that it's from a different archive
+        /// should not matter. However, if any code is written assuming that the BackingProperty belongs to
+        /// the same archive as the USerializedProperty itself, that assumption will be wrong in this case.
+        /// </remarks>
         public UProperty BackingProperty { get; private set; } = prop;
 
         public FArchive Archive { get; private set; } = archive;

@@ -106,11 +106,6 @@ namespace XCOM_Uncooker.IO
             Array(ref data, owner);
         }
 
-        public void BulkArray(ref byte[] data)
-        {
-            throw new NotImplementedException("Need to persist the element size for bulk byte arrays!");
-        }
-
         public void BulkArray(ref int[] data)
         {
             int elementSize = 4;
@@ -453,7 +448,7 @@ namespace XCOM_Uncooker.IO
         {
             // A negative string length is used to indicate that a string is UTF-16 encoded rather than ASCII
             bool isAscii = value.All(char.IsAscii);
-            int numChars = isAscii ? value.Length : -1 * value.Length;   ;
+            int numChars = isAscii ? value.Length + 1 : -1 * (value.Length + 2);
             Int32(ref numChars);
 
             Encoding encoding = isAscii ? Encoding.ASCII : Encoding.Unicode;

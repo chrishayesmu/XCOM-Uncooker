@@ -140,11 +140,8 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             return $"""
                 {nameof(FExportTableEntry)}=(
-                    ClassIndex={ClassIndex}, SuperIndex={SuperIndex}, OuterIndex={OuterIndex}, ArchetypeIndex={ArchetypeIndex}
-                    ObjectName={ObjectName}, ClassName={ClassName}
-                    SerialSize={SerialSize}, SerialOffset={SerialOffset}
-                    ObjectFlags=0x{ObjectFlags:x}, ExportFlags=0x{ExportFlags:x}, PackageFlags=0x{PackageFlags:x}
-                    PackageGuid={PackageGuid}
+                   {ObjectName}: {ClassName}
+                   ClassIndex={ClassIndex}, SuperIndex={SuperIndex}, OuterIndex={OuterIndex}, ArchetypeIndex={ArchetypeIndex}
                 )
                 """;
         }

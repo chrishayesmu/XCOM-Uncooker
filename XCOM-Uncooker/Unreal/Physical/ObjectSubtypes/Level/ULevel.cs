@@ -466,7 +466,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
         public byte[] ApexData;
 
-        public byte[] CachedPhysBSPData; // bulk
+        public FByteArrayWithSize CachedPhysBSPData;
 
         [Index(typeof(UStaticMesh))]
         public IDictionary<int, IList<FCachedPhysSMData>> CachedPhysSMDataMap;
@@ -535,7 +535,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             stream.Map(ref TextureToInstancesMap);
             stream.Map(ref DynamicTextureInstances);
             stream.ByteArray(ref ApexData);
-            stream.BulkArray(ref CachedPhysBSPData);
+            stream.Object(ref CachedPhysBSPData);
             stream.MultiMap(ref CachedPhysSMDataMap);
             stream.Array(ref CachedPhysSMDataStore);
             stream.MultiMap(ref CachedPhysPerTriSMDataMap);

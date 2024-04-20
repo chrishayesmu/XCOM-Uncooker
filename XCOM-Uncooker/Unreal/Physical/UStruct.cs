@@ -81,7 +81,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// </remarks>
         public override void SerializeTaggedProperties(List<USerializedProperty> props, IUnrealDataStream stream)
         {
-            if (Archive.IsLoading)
+            if (stream.Archive.IsLoading)
             {
                 LinkProperties();
 
@@ -116,7 +116,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 #endif
 
                     // Having found our property and tag to match, go ahead and proceed with serialization
-                    var prop = currentProperty.CreateSerializedProperty(Archive, tag);
+                    var prop = currentProperty.CreateSerializedProperty(stream.Archive!, tag);
 
 #if DEBUG
                     // Make sure our property matches the type from the property tag
@@ -136,7 +136,19 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
             else
             {
-                // TODO
+                for (int i = 0; i < props.Count; i++)
+                {
+                    if (props[i].Tag != null)
+                    {
+                        var tag = props[i].Tag!.Value;
+                        stream.Object(ref tag);
+                    }
+
+                    props[i].Serialize(stream);
+                }
+
+                FName nameNone = stream.Archive.GetOrCreateName("None");
+                stream.Name(ref nameNone);
             }
         }
 

@@ -70,16 +70,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
             UnknownValue3 = other.UnknownValue3;
         }
 
-        protected override USerializedProperty ChooseSerializedPropertyBasedOnTag(FPropertyTag tag)
+        protected override USerializedProperty ChooseSerializedPropertyBasedOnTag(FPropertyTag tag, FArchive inArchive)
         {
             // For this property:
             //   var() array<VisGroupActor> DependentOn;
             if (tag.Name == "DependentOn")
             {
-                return new USerializedIndexArrayProperty(Archive, null, tag);
+                return new USerializedIndexArrayProperty(inArchive, null, tag);
             }
 
-            return base.ChooseSerializedPropertyBasedOnTag(tag);
+            return base.ChooseSerializedPropertyBasedOnTag(tag, inArchive);
         }
     }
 }

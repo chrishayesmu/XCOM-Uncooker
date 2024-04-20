@@ -125,11 +125,16 @@ namespace XCOM_Uncooker.Unreal
 
                 var progressBar = GetOrCreateParallelProgressBar(archive.FileName);
                 archive.SerializeBodyData(progressBar);
-                archive.EndSerialization();
 
                 ParallelProgressBars.Enqueue(progressBar); // put the bar back in the pool for re-use
                 exportDeserializationProgressBar.Update("Packages processed", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Length);
             });
+
+            // End serialization after all archives are done, due to some threading issues I'm too lazy to fix
+            foreach (var archive in InputArchives)
+            {
+                archive.EndSerialization();
+            }
 
             exportDeserializationProgressBar.Update("Packages processed", InputArchives.Length, InputArchives.Length);
 
@@ -139,19 +144,6 @@ namespace XCOM_Uncooker.Unreal
             }
 
             #endregion
-
-            /*
-            for (int i = 0; i < InputArchives.Length; i++)
-            {
-                if (InputArchives[i] == null)
-                {
-                    continue;
-                }
-
-                exportDeserializationProgressBar.Update(InputArchives[i].FileName, i, InputArchives.Length);
-                InputArchives[i].SerializeBodyData(exportDeserializationSubProgressBar);
-                InputArchives[i].EndSerialization();
-            } */
 
             Log.RemoveProgressBar(exportDeserializationProgressBar);
             Log.Info("Deserialization of export objects is complete.");
@@ -310,7 +302,7 @@ namespace XCOM_Uncooker.Unreal
             }
 
             // Now iterate every package's exports, assigning them to their original source archive
-            int skippedArchives = 0, skippedObjects = 0, repeatObjects = 0;
+            int skippedArchives = 0, numObjects = 0, skippedObjects = 0, repeatObjects = 0;
             foreach (var archive in InputArchives)
             {
                 if (archive == null)
@@ -351,31 +343,13 @@ namespace XCOM_Uncooker.Unreal
                         continue;
                     }
 
+                    numObjects++;
                     ObjectsByUncookedArchiveName[topPackage].Add(fullObjectPath, exportObj);
                     UncookedArchiveNameByObjectPath[fullObjectPath] = topPackage;
                 }
             }
 
-            int total = 0;
-            using (var writer = new StreamWriter("objects-by-archive.csv"))
-            {
-                writer.WriteLine("Archive,Object path");
-                //Log.Info("{0,35}{1,15}", "Archive", "Object count");
-                foreach (var entry in ObjectsByUncookedArchiveName)
-                {
-                    foreach (var subentry in entry.Value)
-                    {
-                        writer.WriteLine($"{entry.Key},{subentry.Key}");
-                    }
-                    // outputData += $"{entry.Key},{entry.Value.Count}\n";
-                    total += entry.Value.Count;
-                    //Log.Info("{0,35}{1,15}", entry.Key, entry.Value.Count);
-                }
-            }
-
-            //File.WriteAllText("object-count-by-archive.csv", outputData);
-
-            Log.Info($"Assigned {total} objects across {ObjectsByUncookedArchiveName.Count} packages.");
+            Log.Info($"Assigned {numObjects} objects across {ObjectsByUncookedArchiveName.Count} packages.");
             Log.Info($"Skipped {skippedArchives} archives, {skippedObjects} export objects, and {repeatObjects} seemingly-repeated objects.");
 
             string folderPath = "";
@@ -389,17 +363,28 @@ namespace XCOM_Uncooker.Unreal
             Log.Info("Copying data into uncooked archives..");
 
             OutputArchives = new FArchive[ObjectsByUncookedArchiveName.Count];
-            int i = 0, numObjects = 0;
+            int i = 0;
+            numObjects = 0;
             string output = "Archive\tObjects\tImports\n";
 
-            Parallel.ForEach(ObjectsByUncookedArchiveName, (entry) =>
+            Parallel.ForEach(ObjectsByUncookedArchiveName, new ParallelOptions { MaxDegreeOfParallelism = 100 }, (entry) =>
             {
                 FArchive outArchive = new FArchive(entry.Key, this);
+
+                // Add a few intrinsics that won't be populated naturally
                 outArchive.AddImportObject("Core", "Package", 0, "Core");
                 outArchive.AddImportObject("Core", "Package", 0, "Engine");
                 outArchive.AddImportObject("Core", "Class", 0, "Enum");
 
+                // Every archive will need None to mark the end of tagged properties, but unless the name None is explicitly
+                // used in an object, it won't get added to the archive's name table until after it's already been serialized to
+                // disk, causing None to be unfindable when loading the UPK later. So we just manually kickstart it here
+                outArchive.GetOrCreateName("None");
+
                 OutputArchives[i++] = outArchive;
+
+                // TODO: the archive should be managing this state internally
+                outArchive.ExportedObjects = new UObject[entry.Value.Count];
 
                 foreach (var subentry in entry.Value)
                 {
@@ -414,7 +399,7 @@ namespace XCOM_Uncooker.Unreal
                     }
                 }
 
-                output += $"{outArchive.FileName}\t{outArchive.ExportedObjects.Count}\t{outArchive.ImportTable.Count}\n";
+                output += $"{outArchive.FileName}\t{outArchive.ExportedObjects.Length}\t{outArchive.ImportTable.Count}\n";
             });
 
             File.WriteAllText("uncookedPackages.txt", output);
@@ -422,22 +407,22 @@ namespace XCOM_Uncooker.Unreal
 
             string[] archivesToWrite = ["GameData_Toughness_DLC"];
 
-            foreach (var archiveName in archivesToWrite)
+            foreach (var archive in OutputArchives)
             {
-                Log.Info($"Attempting to write archive file {archiveName}");
-                var archive = OutputArchives.FirstOrDefault(ar => ar.FileName == archiveName);
-                var stream = new UnrealDataWriter(File.Open($"{archiveName}.upk", FileMode.Create));
+                Log.Info($"Attempting to write archive file {archive.FileName}");
+                // var archive = OutputArchives.FirstOrDefault(ar => ar.FileName == archiveName);
+                var stream = new UnrealDataWriter(File.Open($"archives/{archive.FileName}.upk", FileMode.Create));
 
                 archive.BeginSerialization(stream);
                 archive.SerializeHeaderData();
 
-                var progressBar = GetOrCreateParallelProgressBar(archiveName);
+                var progressBar = GetOrCreateParallelProgressBar(archive.FileName);
                 archive.SerializeBodyData(progressBar);
 
                 // The first time we serialize the header, we don't know all of the sizes/offsets that we need;
                 // so once the body is serialized, we go back and do the header again.
                 stream.Seek(0, SeekOrigin.Begin);
-                archive.SerializeHeaderData(); // TODO updated sizes aren't serializing?
+                archive.SerializeHeaderData();
 
                 archive.EndSerialization();
 

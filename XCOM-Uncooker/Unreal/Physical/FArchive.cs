@@ -100,7 +100,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// The deserialized objects which this archive exports. Before <see cref="SerializeExportObjects"/> is called,
         /// most or all of the entries in this array will be null, save for any which were loaded on demand.
         /// </summary>
-        public List<UObject> ExportedObjects { get; private set; } = [];
+        public UObject[] ExportedObjects { get; set; } = [];
 
         #endregion
 
@@ -162,11 +162,14 @@ namespace XCOM_Uncooker.Unreal.Physical
             // When we're about to save a brand new archive, we need to set some values that normally the editor would set
             if (IsSaving)
             {
+                var generation = new FGenerationInfo();
+
                 PackageFileSummary = new FPackageFileSummary
                 {
                     Signature = UNREAL_SIGNATURE,
                     FileVersion = 845,
                     LicenseeVersion = 0, // XCOM's is 64, but if we set that, our Unreal Editor won't open the package
+                    EngineVersion = 8916,
                     HeaderSize = 0, // can't be calculated yet
                     FolderName = "None", // TODO
                     PackageFlags = PackageFlag.AllowDownload,
@@ -177,7 +180,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                     ImportCount = ImportTable.Count,
                     ImportOffset = -1,
                     DependsOffset = -1,
-                    Generations = [],
+                    Generations = [ generation ],
                     AdditionalPackagesToCook = [],
                     TextureAllocations = new FTextureAllocations()
                 };
@@ -204,7 +207,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             if (IsLoading)
             {
                 // Keep ExportedObjects ready to populate in case something is loaded directly by another archive
-                ExportedObjects = new List<UObject>(new UObject[ExportTable.Count]);
+                ExportedObjects = new UObject[ExportTable.Count];
             }
             else
             {
@@ -267,7 +270,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 PackageFileSummary.PackageFlags |= PackageFlag.ContainsScript;
             }
-            
+
             // TODO similar flags for other types
 
             // We might already have an export table entry, if another object referenced this export before we loaded it. If not,
@@ -303,7 +306,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                                   sourceObj.ExportTableEntry.IsClassDefaultObject ? new UObject(this, destTableEntry) : 
                                                                                     UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
                 destObj.CloneFromOtherArchive(sourceObj);
-                ExportedObjects.Add(destObj);
+                ExportedObjects[destTableEntry.TableEntryIndex] = destObj;
                 DependsMap.Add(new int[0]);
 
                 return destObj;
@@ -362,12 +365,13 @@ namespace XCOM_Uncooker.Unreal.Physical
             FObjectTableEntry sourceTableEntry = source.GetObjectTableEntry(index);
             string fullObjectPath = sourceTableEntry.FullObjectPath;
             string uncookedArchiveName = ParentLinker.GetUncookedArchiveNameForObject(fullObjectPath);
+            bool isIntrinsic = IsIntrinsicObject(fullObjectPath);
 
-            if (uncookedArchiveName == "")
+            if (!isIntrinsic && uncookedArchiveName == "")
             {
                 return 0;
             }
-            else if (uncookedArchiveName == FileName && !IsIntrinsicObject(fullObjectPath))
+            else if (uncookedArchiveName == FileName && !isIntrinsic)
             {
                 // This object is going to end up in our exports; check if it's already in here
                 FExportTableEntry destExportEntry = GetExportTableEntry(fullObjectPath);
@@ -383,27 +387,30 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                 FExportTableEntry sourceExportTable = sourceExportObject.ExportTableEntry;
 
-                destExportEntry = new FExportTableEntry(this)
+                lock (this)
                 {
-                    ClassIndex     = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
-                    SuperIndex     = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
-                    OuterIndex     = MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
-                    ObjectName     = MapNameFromSourceArchive(sourceExportTable.ObjectName),
-                    ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
-                    ObjectFlags    = sourceExportTable.ObjectFlags,
-                    SerialSize     = -1,
-                    SerialOffset   = -1,
-                    ExportFlags    = sourceExportTable.ExportFlags,
-                    GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
-                    PackageGuid    = sourceExportTable.PackageGuid,
-                    PackageFlags   = sourceExportTable.PackageFlags,
-                    TableEntryIndex = ExportTable.Count
-                };
+                    destExportEntry = new FExportTableEntry(this)
+                    {
+                        ClassIndex     = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
+                        SuperIndex     = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
+                        OuterIndex     = MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
+                        ObjectName     = MapNameFromSourceArchive(sourceExportTable.ObjectName),
+                        ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
+                        ObjectFlags    = sourceExportTable.ObjectFlags,
+                        SerialSize     = -1,
+                        SerialOffset   = -1,
+                        ExportFlags    = sourceExportTable.ExportFlags,
+                        GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
+                        PackageGuid    = sourceExportTable.PackageGuid,
+                        PackageFlags   = sourceExportTable.PackageFlags,
+                        TableEntryIndex = ExportTable.Count
+                    };
 
-                int exportIndex = ExportTable.Count + 1;
-                ExportTable.Add(destExportEntry);
-                ExportTableByObjectPath[fullObjectPath] = destExportEntry;
-                return exportIndex;
+                    int exportIndex = ExportTable.Count + 1;
+                    ExportTable.Add(destExportEntry);
+                    ExportTableByObjectPath[fullObjectPath] = destExportEntry;
+                    return exportIndex;
+                }
             }
             else
             {
@@ -414,7 +421,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                 if (sourceTableEntry is FImportTableEntry sourceImportEntry)
                 {
-                    classPackage = sourceImportEntry.ClassPackage;
+                    classPackage = MapNameFromSourceArchive(sourceImportEntry.ClassPackage);
                 }
                 else if (sourceTableEntry is FExportTableEntry sourceExportEntry)
                 {
@@ -448,19 +455,22 @@ namespace XCOM_Uncooker.Unreal.Physical
                     return -1 * (destImportIndex + 1);
                 }
 
-                // Didn't find an existing import; add a new import entry instead
-                FImportTableEntry destImportEntry = new FImportTableEntry(this)
+                lock (this)
                 {
-                    ClassPackage = classPackage!,
-                    _className = className,
-                    OuterIndex = destOuterIndex,
-                    ObjectName = objectName,
-                    TableEntryIndex = ImportTable.Count
-                };
+                    // Didn't find an existing import; add a new import entry instead
+                    FImportTableEntry destImportEntry = new FImportTableEntry(this)
+                    {
+                        ClassPackage = classPackage!,
+                        _className = className,
+                        OuterIndex = destOuterIndex,
+                        ObjectName = objectName,
+                        TableEntryIndex = ImportTable.Count
+                    };
 
-                destImportIndex = -1 * (ImportTable.Count + 1);
-                ImportTable.Add(destImportEntry);
-                return destImportIndex;
+                    destImportIndex = -1 * (ImportTable.Count + 1);
+                    ImportTable.Add(destImportEntry);
+                    return destImportIndex;
+                }
             }
         }
 
@@ -634,9 +644,9 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             int exportTableIndex = index - 1;
 
-            if (exportTableIndex >= ExportedObjects.Count)
+            if (exportTableIndex >= ExportedObjects.Length)
             {
-                throw new ArgumentException($"{nameof(GetObjectByIndex)}: requested index {index} ref of bounds. Only {ExportedObjects.Count} export objects exist in archive {FileName}.");
+                throw new ArgumentException($"{nameof(GetObjectByIndex)}: requested index {index} ref of bounds. Only {ExportedObjects.Length} export objects exist in archive {FileName}.");
             }
 
             if (ExportedObjects[exportTableIndex] == null && IsLoading)
@@ -657,7 +667,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// </summary>
         private void ConnectInnerObjects()
         {
-            for (int i = 0; i < ExportedObjects.Count; i++)
+            for (int i = 0; i < ExportedObjects.Length; i++)
             {
                 UObject outer = ExportedObjects[i].Outer;
 
@@ -675,7 +685,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             var packages = new List<UPackage>();
 
-            for (int i = 0; i < ExportedObjects.Count; i++)
+            for (int i = 0; i < ExportedObjects.Length; i++)
             {
                 if (ExportedObjects[i].TableEntry.OuterIndex != 0)
                 {
@@ -725,6 +735,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 case "Core.StructProperty":
                 // Miscellaneous
                 case "Core.MetaData":
+                case "Core.Package":
                 case "Core.ObjectRedirector": // these should probably never show up in cooked packages
                 case "Core.System":
                 case "Core.TextBuffer":
@@ -887,7 +898,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             if (numFailed > 0)
             {
-                Log.Info($"Archive {FileName}: done reading export objects. {numSucceeded} succeeded and {numFailed} failed deserialization. {numAlreadyLoaded} were previously loaded.");
+                Log.Info($"Archive {FileName}: done serializing export objects. {numSucceeded} succeeded and {numFailed} failed deserialization. {numAlreadyLoaded} were previously loaded.");
             }
         }
 
@@ -897,6 +908,15 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// </summary>
         private void SerializeFileSummary()
         {
+            if (IsSaving)
+            {
+                // Before we can serialize the file summary to disk, we need to populate the generation data.
+                // We always have a single generation.
+                PackageFileSummary.Generations[0].ExportCount = ExportTable.Count;
+                PackageFileSummary.Generations[0].NameCount = NameTable.Count;
+                PackageFileSummary.Generations[0].NetObjectCount = 0; // TODO unclear if this matters or how to calculate it
+            }
+
             _stream.UInt32(ref PackageFileSummary.Signature);
 
             if (IsLoading && PackageFileSummary.Signature != UNREAL_SIGNATURE)

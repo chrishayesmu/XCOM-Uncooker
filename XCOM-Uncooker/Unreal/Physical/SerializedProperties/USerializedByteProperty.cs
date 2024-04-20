@@ -9,15 +9,24 @@ using XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked;
 
 namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 {
+    /// <summary>
+    /// This property can represent either a single byte of data, or an enum value. Enum values are a single byte at
+    /// runtime, but they are serialized to disk using their enum name (8 bytes) instead of their integer value. This
+    /// allows for enum values to be added to or rearranged without invalidating previously-created objects.
+    /// </summary>
     public class USerializedByteProperty(FArchive archive, UProperty prop, FPropertyTag? tag) : USerializedProperty(archive, prop, tag)
     {
         private static readonly Logger Log = new Logger(nameof(USerializedByteProperty));
 
         public override string TagType => "ByteProperty";
 
+        private bool IsEnumType => (BackingProperty as UByteProperty)?.EnumIndex != 0 || (!Tag?.EnumName.IsNone() ?? false);
+
         #region Serialized data
 
-        public ulong Value;
+        public byte ByteValue;
+
+        public FName EnumValue;
 
         #endregion
 
@@ -29,31 +38,24 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             if (!isEnumType)
             {
                 // With no enum name set, this is an actual byte variable, and will be serialized as such
-                if (stream.IsRead)
-                {
-                    byte[] bytes = new byte[1];
-                    stream.Bytes(ref bytes, 1);
-                    Value = bytes[0];
-                }
-                else
-                {
-                    Log.Warning($"Serialized writes not implemented yet");
-                }
+                stream.UInt8(ref ByteValue);
             }
             else
             {
-                stream.UInt64(ref Value);
+                stream.Name(ref EnumValue);
             }
         }
 
         public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
             var tag = ClonePropertyTag(destArchive);
-            var other = new USerializedByteProperty(destArchive, null, tag);
+            var other = new USerializedByteProperty(destArchive, BackingProperty, tag);
 
-            other.Value = Value;
+            other.ByteValue = ByteValue;
+            other.EnumValue = destArchive.MapNameFromSourceArchive(EnumValue);
 
             return other;
         }
+
     }
 }

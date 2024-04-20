@@ -56,17 +56,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public TkDOP RootBound;
 
-        public byte[] Nodes;
+        public FByteArrayWithSize Nodes;
 
-        public byte[] Triangles;
+        public FByteArrayWithSize Triangles;
 
         #endregion
 
         public void Serialize(IUnrealDataStream stream)
         {
             stream.Object(ref RootBound);
-            stream.BulkArray(ref Nodes);
-            stream.BulkArray(ref Triangles);
+            stream.Object(ref Nodes);
+            stream.Object(ref Triangles);
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
@@ -147,7 +147,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public byte DataTypeSize;
 
-        public byte[] IndexBuffer;
+        public FByteArrayWithSize IndexBuffer;
 
         #endregion
      
@@ -155,7 +155,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             stream.BoolAsInt32(ref NeedsCPUAccess);
             stream.UInt8(ref DataTypeSize);
-            stream.BulkArray(ref IndexBuffer);
+            stream.Object(ref IndexBuffer);
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
@@ -425,7 +425,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         // We just treat this field as binary data, since it's bulk serialized
         // public TSkeletalMeshVertexData<FGPUSkinVertexBase> VertexData;
-        public byte[] VertexData;
+        public FByteArrayWithSize VertexData;
 
         #endregion
 
@@ -436,7 +436,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.BoolAsInt32(ref bUsePackedPosition);
             stream.Object(ref MeshExtension);
             stream.Object(ref MeshOrigin);
-            stream.BulkArray(ref VertexData);
+            stream.Object(ref VertexData);
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)

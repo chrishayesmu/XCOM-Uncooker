@@ -44,7 +44,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public uint NumVertices;
 
-        public byte[] VertexData;
+        public FByteArrayWithSize VertexData;
 
         #endregion
 
@@ -52,7 +52,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         {
             stream.UInt32(ref Stride);
             stream.UInt32(ref NumVertices);
-            stream.BulkArray(ref VertexData);
+            stream.Object(ref VertexData);
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
@@ -201,11 +201,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public uint NumVertices;
 
-        public byte[] IndexBuffer;
+        public FByteArrayWithSize IndexBuffer;
 
-        public byte[] WireframeIndexBuffer;
+        public FByteArrayWithSize WireframeIndexBuffer;
 
-        public byte[] AdjacencyIndexBuffer;
+        public FByteArrayWithSize AdjacencyIndexBuffer;
 
         #endregion
 
@@ -217,9 +217,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Object(ref VertexBuffer);
             stream.Object(ref ColorVertexBuffer);
             stream.UInt32(ref NumVertices);
-            stream.BulkArray(ref IndexBuffer);
-            stream.BulkArray(ref WireframeIndexBuffer);
-            stream.BulkArray(ref AdjacencyIndexBuffer);
+            stream.Object(ref IndexBuffer);
+            stream.Object(ref WireframeIndexBuffer);
+            stream.Object(ref AdjacencyIndexBuffer);
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
@@ -250,7 +250,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public bool bUseFullPrecisionUVs; // UBOOL
 
-        public byte[] VertexData;
+        public FByteArrayWithSize VertexData;
 
         #endregion
 
@@ -260,7 +260,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.UInt32(ref Stride);
             stream.UInt32(ref NumVertices);
             stream.BoolAsInt32(ref bUseFullPrecisionUVs);
-            stream.BulkArray(ref VertexData);
+            stream.Object(ref VertexData);
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)

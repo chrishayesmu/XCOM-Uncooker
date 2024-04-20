@@ -18,7 +18,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
         public uint NumVertices;
 
-        public byte[] VertexData;
+        public FByteArrayWithSize VertexData;
 
         #endregion
 
@@ -29,7 +29,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
             if (NumVertices > 0)
             {
-                stream.BulkArray(ref VertexData);
+                stream.Object(ref VertexData);
             }
         }
 

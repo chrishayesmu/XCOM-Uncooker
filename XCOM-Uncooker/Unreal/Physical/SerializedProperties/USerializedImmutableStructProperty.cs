@@ -60,7 +60,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         public override USerializedProperty CloneToOtherArchive(FArchive destArchive)
         {
             var tag = ClonePropertyTag(destArchive);
-            var other = new USerializedImmutableStructProperty(destArchive, null, tag);
+            var other = new USerializedImmutableStructProperty(destArchive, BackingProperty, tag);
 
             other.Data = Data;
 

@@ -59,8 +59,6 @@ namespace XCOM_Uncooker.IO
         /// <param name="elementSize">How many bytes each individual element occupies.</param>
         public void BulkArray<T>(ref T[] data, int elementSize, UObject owner = null) where T : IUnrealSerializable, new();
 
-        public void BulkArray(ref byte[] data);
-
         public void BulkArray(ref int[] data);
 
         public void BulkArray(ref short[] data);

@@ -61,15 +61,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
             stream.Array(ref CachedPVRTCMips);
 
 #if DEBUG
-            int bytesRemaining = (int) (ExportTableEntry.SerialOffset + ExportTableEntry.SerialSize - stream.Position);
-
-            // Texture2D has 8 bytes left, LightMapTexture2D has 12
-            if (bytesRemaining != 8 && bytesRemaining != 12)
+            if (stream.IsRead)
             {
-                Debugger.Break();
+                int bytesRemaining = (int) (ExportTableEntry.SerialOffset + ExportTableEntry.SerialSize - stream.Position);
+
+                // Texture2D has 8 bytes left, LightMapTexture2D has 12
+                if (bytesRemaining != 8 && bytesRemaining != 12)
+                {
+                    Debugger.Break();
+                }
             }
 #endif
-      
+
             // Not sure what these 8 bytes are, but they seem to be in every texture
             // TODO figure this out
             stream.Bytes(ref UnknownData, 8);

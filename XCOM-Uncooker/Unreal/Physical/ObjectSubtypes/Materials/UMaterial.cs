@@ -23,9 +23,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
             MaterialResource_MSP_SM3.Serialize(stream);
 
-            // There's some data at the end that we don't understand; just store it opaquely for now
-            long extraBytes = ExportTableEntry.SerialOffset + ExportTableEntry.SerialSize - stream.Position;
-            stream.Bytes(ref UnknownData, (int)extraBytes);
+            if (stream.IsRead)
+            {
+                // There's some data at the end that we don't understand; just store it opaquely for now
+                long extraBytes = ExportTableEntry.SerialOffset + ExportTableEntry.SerialSize - stream.Position;
+                stream.Bytes(ref UnknownData, (int)extraBytes);
+            }
+            else
+            {
+                stream.Bytes(ref UnknownData, UnknownData.Length);
+            }
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

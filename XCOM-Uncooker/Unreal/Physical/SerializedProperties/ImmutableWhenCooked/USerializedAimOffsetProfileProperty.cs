@@ -127,6 +127,9 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
             var tag = ClonePropertyTag(destArchive);
             var other = new USerializedAimOffsetProfileProperty(destArchive, null, tag);
 
+            other.ProfileName = destArchive.MapNameFromSourceArchive(ProfileName);
+            other.BinaryData = BinaryData;
+
             other.AimComponents = new USerializedAimComponentProperty[AimComponents.Length];
 
             for (int i = 0; i < AimComponents.Length; i++)

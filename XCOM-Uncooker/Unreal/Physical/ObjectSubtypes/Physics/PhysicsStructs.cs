@@ -133,13 +133,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
     {
         #region Serialized data
 
-        public byte[] Data;
+        public FByteArrayWithSize Data;
 
         #endregion
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BulkArray(ref Data);
+            stream.Object(ref Data);
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
@@ -175,13 +175,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
     {
         #region Serialized data
 
-        public byte[] CachedPerTriData;
+        public FByteArrayWithSize CachedPerTriData;
 
         #endregion
 
         public void Serialize(IUnrealDataStream stream)
         {
-            stream.BulkArray(ref CachedPerTriData);
+            stream.Object(ref CachedPerTriData);
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)

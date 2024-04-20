@@ -8,7 +8,7 @@ using XCOM_Uncooker.IO;
 namespace XCOM_Uncooker.Unreal.Physical
 {
     [Flags]
-    public enum ClassFlag
+    public enum ClassFlag : uint
     {
         None = 0x00000000,
         Abstract = 0x00000001,
@@ -46,7 +46,7 @@ namespace XCOM_Uncooker.Unreal.Physical
     }
 
     [Flags]
-    public enum ClassCastFlag
+    public enum ClassCastFlag : uint
     {
         None = 0x00000000,
         UField = 0x00000001,

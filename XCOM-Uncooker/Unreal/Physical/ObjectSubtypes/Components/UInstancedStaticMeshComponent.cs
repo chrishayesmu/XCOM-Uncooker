@@ -12,7 +12,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
     {
         #region Serialized data
 
-        public byte[] PerInstanceSMData;
+        public FByteArrayWithSize PerInstanceSMData;
 
         #endregion
 
@@ -20,7 +20,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
         {
             base.Serialize(stream);
 
-            stream.BulkArray(ref PerInstanceSMData);
+            stream.Object(ref PerInstanceSMData);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)
