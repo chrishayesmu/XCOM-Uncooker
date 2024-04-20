@@ -260,11 +260,17 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// to make them valid within this archive.
         /// </summary>
         /// <param name="sourceObj">The object being added in this archive; must be an export from another archive. It will not be modified.</param>
-        /// <returns>The newly created object which now exists in this archive.</returns>
-        public UObject AddExportObject(UObject sourceObj)
+        public void AddExportObject(UObject sourceObj)
         {
             FExportTableEntry sourceExportTable = sourceObj.ExportTableEntry;
             string fullObjectPath = sourceExportTable.FullObjectPath;
+
+            // Packages don't really exist in individual uncooked archives; they're more of a divider for
+            // demarking when content is combined into a single UPK via cooking
+            if (sourceObj is UPackage)
+            {
+                return;
+            }
 
             if (sourceObj is UClass)
             {
@@ -280,17 +286,19 @@ namespace XCOM_Uncooker.Unreal.Physical
                 FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath);
                 if (destTableEntry == null)
                 {
+                    bool outerIsPackage = sourceObj.Archive.GetObjectByIndex(sourceExportTable.OuterIndex) is UPackage;
+
                     destTableEntry = new FExportTableEntry(this)
                     {
                         ClassIndex = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
                         SuperIndex = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
-                        OuterIndex = MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
+                        OuterIndex = outerIsPackage ? 0 : MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
                         ObjectName = MapNameFromSourceArchive(sourceExportTable.ObjectName),
                         ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
                         ObjectFlags = sourceExportTable.ObjectFlags,
                         SerialSize = -1,
                         SerialOffset = -1,
-                        ExportFlags = sourceExportTable.ExportFlags,
+                        ExportFlags = 0, // drop export flags; they shouldn't apply to uncooked objects
                         GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
                         PackageGuid = sourceExportTable.PackageGuid,
                         PackageFlags = sourceExportTable.PackageFlags,
@@ -308,8 +316,6 @@ namespace XCOM_Uncooker.Unreal.Physical
                 destObj.CloneFromOtherArchive(sourceObj);
                 ExportedObjects[destTableEntry.TableEntryIndex] = destObj;
                 DependsMap.Add(new int[0]);
-
-                return destObj;
             }
         }
 
@@ -319,7 +325,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { 
                 ClassPackage = GetOrCreateName(ClassPackage),
                 _className = GetOrCreateName(ClassName),
-                OuterIndex = sourceArchive == null ? 0 : MapIndexFromSourceArchive(OuterIndex, sourceArchive),
+                OuterIndex = sourceArchive == null ? OuterIndex : MapIndexFromSourceArchive(OuterIndex, sourceArchive),
                 ObjectName = GetOrCreateName(ObjectName),
                 TableEntryIndex = ImportTable.Count
             };
@@ -399,7 +405,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                         ObjectFlags    = sourceExportTable.ObjectFlags,
                         SerialSize     = -1,
                         SerialOffset   = -1,
-                        ExportFlags    = sourceExportTable.ExportFlags,
+                        ExportFlags    = 0, // drop export flags; they shouldn't apply to uncooked objects
                         GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
                         PackageGuid    = sourceExportTable.PackageGuid,
                         PackageFlags   = sourceExportTable.PackageFlags,

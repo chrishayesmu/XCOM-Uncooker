@@ -322,6 +322,11 @@ namespace XCOM_Uncooker.Unreal
                     string fullObjectPath = exportObj.FullObjectPath;
                     string topPackage = fullObjectPath.Split(".")[0];
 
+                    if (exportObj is UPackage)
+                    {
+                        continue;
+                    }
+
                     // TODO: handle map objects better
                     if (topPackage == "TheWorld")
                     {
@@ -374,7 +379,7 @@ namespace XCOM_Uncooker.Unreal
                 // Add a few intrinsics that won't be populated naturally
                 outArchive.AddImportObject("Core", "Package", 0, "Core");
                 outArchive.AddImportObject("Core", "Package", 0, "Engine");
-                outArchive.AddImportObject("Core", "Class", 0, "Enum");
+                outArchive.AddImportObject("Core", "Class", -1, "Enum");
 
                 // Every archive will need None to mark the end of tagged properties, but unless the name None is explicitly
                 // used in an object, it won't get added to the archive's name table until after it's already been serialized to
