@@ -56,9 +56,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         {
             base.Serialize(stream);
 
-            stream.MultiMap(ref DecoFracToDecoComponents);
-            stream.MultiMap(ref DecoFracToDebrisComponents);
-            stream.MultiMap(ref DecoFracToDebrisStaticMeshInfos);
+            if (stream.IsRead)
+            {
+                stream.MultiMap(ref DecoFracToDecoComponents);
+                stream.MultiMap(ref DecoFracToDebrisComponents);
+                stream.MultiMap(ref DecoFracToDebrisStaticMeshInfos);
+            }
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

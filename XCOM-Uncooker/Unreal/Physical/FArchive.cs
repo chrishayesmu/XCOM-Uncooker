@@ -267,7 +267,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             // Packages don't really exist in individual uncooked archives; they're more of a divider for
             // demarking when content is combined into a single UPK via cooking
-            if (sourceObj is UPackage)
+            if (sourceObj is UPackage && sourceObj.ObjectName == FileName)
             {
                 return;
             }
@@ -286,13 +286,13 @@ namespace XCOM_Uncooker.Unreal.Physical
                 FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath);
                 if (destTableEntry == null)
                 {
-                    bool outerIsPackage = sourceObj.Archive.GetObjectByIndex(sourceExportTable.OuterIndex) is UPackage;
+                    bool outerIsThisPackage = (sourceObj.Outer?.ObjectName ?? "") == FileName; // sourceObj.Archive.GetObjectByIndex(sourceExportTable.OuterIndex) is UPackage;
 
                     destTableEntry = new FExportTableEntry(this)
                     {
                         ClassIndex = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
                         SuperIndex = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
-                        OuterIndex = outerIsPackage ? 0 : MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
+                        OuterIndex = outerIsThisPackage ? 0 : MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
                         ObjectName = MapNameFromSourceArchive(sourceExportTable.ObjectName),
                         ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
                         ObjectFlags = sourceExportTable.ObjectFlags,
@@ -385,6 +385,12 @@ namespace XCOM_Uncooker.Unreal.Physical
                 if (destExportEntry != null)
                 {
                     return 1 + destExportEntry.TableEntryIndex;
+                }
+
+                // Don't add export table entries for this package
+                if (sourceTableEntry.ObjectName == FileName)
+                {
+                    return 0;
                 }
 
                 // Get a cooked version of the object we're going to be exporting, and use that to determine
@@ -961,6 +967,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             // We aren't going to do decompression, so just bail
             if (PackageFileSummary.NumCompressedChunks != 0)
             {
+                Log.Warning($"Archive {FileName} is compressed!");
                 _stream.Dispose();
                 return;
             }
@@ -968,16 +975,6 @@ namespace XCOM_Uncooker.Unreal.Physical
             _stream.UInt32(ref PackageFileSummary.PackageSource);
             _stream.StringArray(ref PackageFileSummary.AdditionalPackagesToCook);
             _stream.Object(ref PackageFileSummary.TextureAllocations);
-
-#if DEBUG
-            if (IsLoading)
-            {
-                if (PackageFileSummary.FileVersion != 845 || PackageFileSummary.LicenseeVersion != 64)
-                {
-                    Log.Warning($"Expected archive {FileName} to be version 845/64, but it's actually {PackageFileSummary.FileVersion}/{PackageFileSummary.LicenseeVersion}");
-                }
-            }
-#endif
         }
 
         private void SerializeExportTable()

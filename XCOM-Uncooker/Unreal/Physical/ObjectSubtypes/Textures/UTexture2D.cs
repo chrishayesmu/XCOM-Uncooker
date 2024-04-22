@@ -75,7 +75,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
 
             // Not sure what these 8 bytes are, but they seem to be in every texture
             // TODO figure this out
-            stream.Bytes(ref UnknownData, 8);
+            if (stream.IsRead)
+            {
+                stream.Bytes(ref UnknownData, 8);
+            }
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

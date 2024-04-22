@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,7 +27,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         {
             base.Serialize(stream);
 
-            if (!IsClassDefaultObject())
+            // When deserializing, we can't write this data or it'll crash the UDK due to unread data
+            if (stream.IsRead)
             {
                 stream.Map(ref EventToPropertyMap);
             }

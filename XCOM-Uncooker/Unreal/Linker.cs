@@ -322,7 +322,7 @@ namespace XCOM_Uncooker.Unreal
                     string fullObjectPath = exportObj.FullObjectPath;
                     string topPackage = fullObjectPath.Split(".")[0];
 
-                    if (exportObj is UPackage)
+                    if (exportObj is UPackage && exportObj.ObjectName == archive.FileName)
                     {
                         continue;
                     }

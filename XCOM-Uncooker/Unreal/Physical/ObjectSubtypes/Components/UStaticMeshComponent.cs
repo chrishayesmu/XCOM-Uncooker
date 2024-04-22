@@ -111,10 +111,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             base.Serialize(stream);
 
             stream.Array(ref LODData);
-            stream.Object(ref SwapMeshData[0]);
-            stream.Object(ref SwapMeshData[1]);
-            stream.Int32(ref SwapStaticMeshes[0]);
-            stream.Int32(ref SwapStaticMeshes[1]);
+
+            if (stream.IsRead)
+            {
+                stream.Object(ref SwapMeshData[0]);
+                stream.Object(ref SwapMeshData[1]);
+                stream.Int32(ref SwapStaticMeshes[0]);
+                stream.Int32(ref SwapStaticMeshes[1]);
+            }
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)
@@ -124,6 +128,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             var other = (UStaticMeshComponent) sourceObj;
 
             LODData = IUnrealSerializable.Clone(other.LODData, other.Archive, Archive);
+
             SwapMeshData = IUnrealSerializable.Clone(other.SwapMeshData, other.Archive, Archive);
             SwapStaticMeshes = Archive.MapIndicesFromSourceArchive(other.SwapStaticMeshes, other.Archive);
         }

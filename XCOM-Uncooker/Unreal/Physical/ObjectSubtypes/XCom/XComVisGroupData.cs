@@ -59,8 +59,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         {
             base.Serialize(stream);
 
-            stream.Map(ref ActorToActorGroups);
-            stream.Array(ref VisGroupEntries);
+            if (stream.IsRead)
+            {
+                stream.Map(ref ActorToActorGroups);
+                stream.Array(ref VisGroupEntries);
+            }
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

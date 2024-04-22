@@ -26,7 +26,7 @@ namespace XCOM_Uncooker
             {
                 if (Directory.Exists(arg))
                 {
-                    var dirFiles = Directory.GetFiles(arg, "*.upk", SearchOption.AllDirectories);
+                    var dirFiles = Directory.GetFiles(arg, "*.upk", SearchOption.TopDirectoryOnly);
                     Log.Verbose($"Treating argument '{arg}' as a directory, containing {dirFiles.Count()} UPK files.");
 
                     filePaths.AddRange(dirFiles);

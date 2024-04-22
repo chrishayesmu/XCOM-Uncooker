@@ -43,7 +43,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
 
             // Fall back to string comparison if they're in different archives
-            return (string) name == (string) other;
+            return name.ToString().ToLower() == other.ToString().ToLower();
         }
 
         public static bool operator !=(FName name, FName other) => !(name == other);
