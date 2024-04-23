@@ -50,6 +50,13 @@ namespace XCOM_Uncooker
             Log.Info("Archive loading is complete.");
 
             Log.Info("Attempting to recreate the uncooked archives..");
+
+            // TODO: decide what the arguments to this program are
+            string folderPath = args[0];
+            linker.RegisterTextureFileCache("CharTextures", Path.Combine(folderPath, "CharTextures.tfc"));
+            linker.RegisterTextureFileCache("Lighting", Path.Combine(folderPath, "Lighting.tfc"));
+            linker.RegisterTextureFileCache("Textures", Path.Combine(folderPath, "Textures.tfc"));
+            linker.RegisterTextureFileCache("Textures_startup", Path.Combine(folderPath, "Textures_startup.tfc"));
             linker.UncookArchives();
             Log.Info("Uncooking process is complete.");
 

@@ -28,7 +28,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public int SizeOnDisk;
 
-        public int Offset; // TODO this needs to be fixed up when uncooking
+        public int Offset;
 
         public byte[] Data;
 
@@ -70,6 +70,19 @@ namespace XCOM_Uncooker.Unreal.Physical
             SizeOnDisk = other.SizeOnDisk;
             Offset = other.Offset;
             Data = other.Data;
+        }
+
+        /// <summary>
+        /// Sets the data for this container. This will cause the data to not be marked as <c>StoreInSeparateFile</c>,
+        /// and thus during uncooking it will be serialized into the UPK.
+        /// </summary>
+        /// <param name="data"></param>
+        public void SetData(byte[] data, int numElements)
+        {
+            Data = data;
+            BulkDataFlags &= ~(EBulkDataFlags.StoreInSeparateFile);
+            NumElements = numElements;
+            SizeOnDisk = data.Length;
         }
     }
 }

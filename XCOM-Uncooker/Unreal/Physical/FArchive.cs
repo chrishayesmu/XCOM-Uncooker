@@ -922,11 +922,29 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             if (IsSaving)
             {
+                // Remap the net indices of objects so they're contiguous; this doesn't really matter, but it does make
+                // the UDK spit out a lot less warning logs, which is nice
+                int lastNetIndex = 0;
+
+                for (int i = 0; i < ExportedObjects.Length; i++)
+                {
+                    // FIXME: there's a bug causing ExportedObjects to be bigger than ExportTable somewhere
+                    if (ExportedObjects[i] == null)
+                    {
+                        continue;
+                    }
+
+                    if (ExportedObjects[i].NetIndex != 0)
+                    {
+                        ExportedObjects[i].NetIndex = lastNetIndex++;
+                    }
+                }
+
                 // Before we can serialize the file summary to disk, we need to populate the generation data.
                 // We always have a single generation.
                 PackageFileSummary.Generations[0].ExportCount = ExportTable.Count;
                 PackageFileSummary.Generations[0].NameCount = NameTable.Count;
-                PackageFileSummary.Generations[0].NetObjectCount = 0; // TODO unclear if this matters or how to calculate it
+                PackageFileSummary.Generations[0].NetObjectCount = lastNetIndex;
             }
 
             _stream.UInt32(ref PackageFileSummary.Signature);
@@ -993,7 +1011,6 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 return;
             }
-
 
             for (int i = 0; i < PackageFileSummary.ExportCount; i++)
             {

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
@@ -24,6 +25,7 @@ namespace XCOM_Uncooker.Unreal
         public IDictionary<string, string> UncookedArchiveNameByObjectPath;
         public IDictionary<Guid, UPackage> InputPackagesByGuid;
 
+        private IDictionary<string, FileStream> TextureFileCaches = new Dictionary<string, FileStream>();
         private ConcurrentQueue<ProgressBar> ParallelProgressBars = [];
 
         public void LoadArchives(List<string> filePaths)
@@ -241,6 +243,29 @@ namespace XCOM_Uncooker.Unreal
             return "";
         }
 
+        public byte[] ReadTextureData(string textureFileName, int startPosition, int numBytes)
+        {
+            if (TextureFileCaches.TryGetValue(textureFileName, out FileStream stream))
+            {
+                byte[] buffer = new byte[numBytes];
+
+                lock (stream)
+                {
+                    stream.Seek(startPosition, SeekOrigin.Begin);
+                    stream.Read(buffer, 0, numBytes);
+
+                    return buffer;
+                }
+            }
+            
+            throw new ArgumentException($"Unrecognized TFC file requested: {textureFileName}");
+        }
+
+        public void RegisterTextureFileCache(string textureFileName, string filePath)
+        {
+            TextureFileCaches[textureFileName] = File.OpenRead(filePath);
+        }
+
         public void UncookArchives()
         {
             InputPackagesByGuid = new Dictionary<Guid, UPackage>();
@@ -452,6 +477,19 @@ namespace XCOM_Uncooker.Unreal
             Log.DisplayProgressBar(progressBar);
 
             return progressBar;
+        }
+    
+        private byte[] ReadStreamData(FileStream stream, int startPosition, int numBytes)
+        {
+            byte[] buffer = new byte[numBytes];
+
+            lock (stream)
+            {
+                stream.Seek(startPosition, SeekOrigin.Begin);
+                stream.Read(buffer, 0, numBytes);
+
+                return buffer;
+            }
         }
     }
 }

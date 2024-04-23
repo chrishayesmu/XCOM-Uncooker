@@ -29,7 +29,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
 
             var other = (UTexture) sourceObj;
 
-            SourceArt = other.SourceArt;
+            SourceArt.CloneFromOtherArchive(other.SourceArt, other.Archive, Archive);
         }
     }
 }
