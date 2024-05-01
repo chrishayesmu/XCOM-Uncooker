@@ -63,7 +63,7 @@ namespace XCOM_Uncooker.Unreal.Physical
     /// </summary>
     public class FArchive(string fileName, Linker linker)
     {
-        const uint UNREAL_SIGNATURE = 0x9E2A83C1;
+        public const uint UNREAL_SIGNATURE = 0x9E2A83C1;
 
         private static readonly Logger Log = new Logger(nameof(FArchive));
 

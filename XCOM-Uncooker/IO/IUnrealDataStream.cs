@@ -76,6 +76,8 @@ namespace XCOM_Uncooker.IO
         /// <param name="offset">Offset into the <c>data</c> array to begin serialization from</param>
         public void Bytes(ref byte[] data, int count, int offset = 0);
 
+        public byte[] CompressedData(ECompressionMethod compressionMethod);
+
         public void Enum32<T>(ref T value) where T : Enum;
 
         public void Enum64<T>(ref T value) where T : Enum;

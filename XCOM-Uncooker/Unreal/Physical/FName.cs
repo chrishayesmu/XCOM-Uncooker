@@ -21,9 +21,6 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public FArchive Archive;
 
-        // NOTE: two FNames are equivalent only if they have the same indices and come from the same archive!
-        // Use string comparisons explicitly if they should be compared as strings
-
         public static bool operator ==(FName name, FName other)
         {
             if (name is null && other is null) 
@@ -51,7 +48,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         public static bool operator ==(FName name, string str) => name.ToString() == str;
         public static bool operator !=(FName name, string str) => !(name == str);
 
-        public static implicit operator string(FName name) => name.ToString();
+        public static implicit operator string(FName name) => name?.ToString() ?? "[null]";
 
         public string WithoutSuffix()
         {

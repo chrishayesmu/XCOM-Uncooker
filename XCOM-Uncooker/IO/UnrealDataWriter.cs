@@ -138,6 +138,11 @@ namespace XCOM_Uncooker.IO
             Write(data, offset, count);
         }
 
+        public byte[] CompressedData(ECompressionMethod compressionMethod)
+        {
+            throw new Exception("CompressedData method is not supported in write mode");
+        }
+
         public void Enum32<T>(ref T value) where T : Enum
         {
             uint enumAsUInt = (uint) Convert.ChangeType(value, TypeCode.UInt32);

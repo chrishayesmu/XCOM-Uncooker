@@ -8,6 +8,7 @@ using XCOM_Uncooker.IO;
 
 namespace XCOM_Uncooker.Unreal.Physical
 {
+    [FixedSize(25)]
     public struct FBox : IUnrealSerializable
     {
         #region Serialized data
@@ -34,6 +35,31 @@ namespace XCOM_Uncooker.Unreal.Physical
             Min = other.Min;
             Max = other.Max;
             IsValid = other.IsValid;
+        }
+    }
+
+    public struct FCompressedChunkInfo : IUnrealSerializable
+    {
+        #region Serialized data
+
+        public int CompressedSize;
+
+        public int UncompressedSize;
+
+        #endregion
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.Int32(ref CompressedSize);
+            stream.Int32(ref UncompressedSize);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FCompressedChunkInfo) sourceObj;
+
+            CompressedSize = other.CompressedSize;
+            UncompressedSize = other.UncompressedSize;
         }
     }
 

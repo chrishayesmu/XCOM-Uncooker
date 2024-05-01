@@ -25,13 +25,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
             if (stream.IsRead)
             {
-                // There's some data at the end that we don't understand; just store it opaquely for now
+                // There's some data at the end that we don't understand; just store it opaquely for now. It doesn't appear in
+                // the public UDK, so we don't write it back out during uncooking.
                 long extraBytes = ExportTableEntry.SerialOffset + ExportTableEntry.SerialSize - stream.Position;
                 stream.Bytes(ref UnknownData, (int)extraBytes);
-            }
-            else
-            {
-                stream.Bytes(ref UnknownData, UnknownData.Length);
             }
         }
 

@@ -393,7 +393,7 @@ namespace XCOM_Uncooker.Unreal
             Log.Info("Copying data into uncooked archives..");
 
             OutputArchives = new FArchive[ObjectsByUncookedArchiveName.Count];
-            int i = 0;
+            int outArchiveIndex = 0;
             numObjects = 0;
             string output = "Archive\tObjects\tImports\n";
 
@@ -411,7 +411,11 @@ namespace XCOM_Uncooker.Unreal
                 // disk, causing None to be unfindable when loading the UPK later. So we just manually kickstart it here
                 outArchive.GetOrCreateName("None");
 
-                OutputArchives[i++] = outArchive;
+                lock (this)
+                {
+                    OutputArchives[outArchiveIndex] = outArchive;
+                    Interlocked.Increment(ref outArchiveIndex);
+                }
 
                 // TODO: the archive should be managing this state internally
                 outArchive.ExportedObjects = new UObject[entry.Value.Count];
@@ -435,7 +439,28 @@ namespace XCOM_Uncooker.Unreal
             File.WriteAllText("uncookedPackages.txt", output);
             Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
 
-            string[] archivesToWrite = ["GameData_Toughness_DLC"];
+            var xcomGameClasses = new HashSet<string>();
+            var xcomStrategyGameClasses = new HashSet<string>();
+
+            foreach (var archive in OutputArchives)
+            {
+                for (int i = 0; i < archive.ImportTable.Count; i++)
+                {
+                    if (archive.ImportTable[i].IsClass)
+                    {
+                        string packageName = archive.ImportTable[i].Outer?.ObjectName;
+
+                        if (packageName == "XComGame" && archive.FileName != "XComStrategyGame")
+                        {
+                            xcomGameClasses.Add(archive.ImportTable[i].ObjectName);
+                        }
+                        else if (packageName == "XComStrategyGame")
+                        {
+                            xcomStrategyGameClasses.Add(archive.ImportTable[i].ObjectName);
+                        }
+                    }
+                }
+            }
 
             foreach (var archive in OutputArchives)
             {

@@ -198,6 +198,54 @@ namespace XCOM_Uncooker.IO
             Read(data, offset, count);
         }
 
+        public byte[] CompressedData(ECompressionMethod compressionMethod)
+        {
+            uint signature = 0;
+            int chunkSize = 0, compressedSize = 0, uncompressedSize = 0;
+
+            UInt32(ref signature);
+
+            if (signature != FArchive.UNREAL_SIGNATURE)
+            {
+                throw new Exception("Compressed data does not appear to be valid (signature mismatch)");
+            }
+
+            Int32(ref chunkSize);
+            Int32(ref compressedSize);
+            Int32(ref uncompressedSize);
+
+            int numCompressedBlocks = (uncompressedSize + chunkSize - 1) / chunkSize;
+            FCompressedChunkInfo[] chunkInfo = new FCompressedChunkInfo[numCompressedBlocks];
+            int largestCompressedSize = 0;
+
+            for (int i = 0; i < numCompressedBlocks; i++)
+            {
+                Object(ref chunkInfo[i]);
+
+                if (chunkInfo[i].CompressedSize > largestCompressedSize)
+                {
+                    largestCompressedSize = chunkInfo[i].CompressedSize;
+                }
+            }
+
+            byte[] outputData = new byte[uncompressedSize];
+            byte[] readBuffer = new byte[largestCompressedSize];
+            int outputPos = 0;
+
+            for (int i = 0; i < numCompressedBlocks; i++)
+            {
+                Read(readBuffer, 0, chunkInfo[i].CompressedSize);
+                IOUtils.Decompress(readBuffer, chunkInfo[i].UncompressedSize, outputData, ref outputPos, compressionMethod);
+            }
+
+            if (outputPos != uncompressedSize)
+            {
+                Debugger.Break();
+            }
+
+            return outputData;
+        }
+
         public void Enum32<T>(ref T value) where T : Enum
         {
             uint enumAsUInt = 0;

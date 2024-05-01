@@ -1,11 +1,15 @@
-﻿using System;
+﻿using BCnEncoder.Decoder;
+using BCnEncoder.ImageSharp;
+using BCnEncoder.Shared;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
-using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
@@ -76,7 +80,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
 
             // Not sure what these 8 bytes are, but they seem to be in every texture
             // TODO figure this out? may not actually be needed for loading new textures in XCOM anyway
-            if (stream.IsRead)
+            if (stream.IsRead && stream.Archive.PackageFileSummary.LicenseeVersion > 0)
             {
                 stream.Bytes(ref UnknownData, 8);
             }
@@ -93,6 +97,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
             CachedPVRTCMips = other.CachedPVRTCMips;
             UnknownData = other.UnknownData;
 
+            var compressionFormat = GetCompressionFormat();
+            var nameProp = GetSerializedProperty("TextureFileCacheName") as USerializedNameProperty;
+            string? tfcName = nameProp?.Value?.ToString();
+
+            // Uncooked mipmaps need to be uncompressed in the UPK
+            for (int i = 0; i < Mips.Length; i++)
+            {
+                Mips[i].Data = LoadAndDecompressTextureData(tfcName, compressionFormat, Mips[i].SizeX, Mips[i].SizeY, Mips[i].Data);
+            }
+
             // Retrieve texture data from the TFC so it can be part of the UPK
             if (Mips.Length > 0)
             {
@@ -103,29 +117,19 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
                     return;
                 }
 
-                int numElements = Mips[largestMipsIndex].Data.NumElements;
-                byte[] textureData;
+                FTexture2DMipMap sourceMipMap = Mips[largestMipsIndex];
 
-                if (Mips[largestMipsIndex].Data.BulkDataFlags.HasFlag(EBulkDataFlags.StoreInSeparateFile)) 
-                {
-                    var nameProp = GetSerializedProperty("TextureFileCacheName") as USerializedNameProperty;
+                // Take the largest mip, transform it to PNG, and store it as source art
+                var decoder = new BcDecoder();
+                var decodedImageData = decoder.DecodeRawToImageRgba32(sourceMipMap.Data.Data, sourceMipMap.SizeX, sourceMipMap.SizeY, compressionFormat);
 
-#if DEBUG
-                    if (nameProp == null)
-                    {
-                        throw new Exception($"UTexture2D {FullObjectPath} doesn't have a TextureFileCacheName property!");
-                    }
-#endif
+                var pngData = new MemoryStream(SourceArt.SizeOnDisk);
+                var encoder = new PngEncoder() { ChunkFilter = PngChunkFilter.ExcludeAll };
+                decodedImageData.SaveAsPng(pngData, encoder);
 
-                    textureData = Archive.ParentLinker.ReadTextureData(nameProp.Value, Mips[largestMipsIndex].Data.Offset, Mips[largestMipsIndex].Data.SizeOnDisk);
-                }
-                else
-                {
-                    textureData = Mips[largestMipsIndex].Data.Data;
-                }
-
-                SourceArt.BulkDataFlags = Mips[largestMipsIndex].Data.BulkDataFlags;
-                SourceArt.SetData(textureData, numElements);
+                SourceArt.Data = pngData.ToArray();
+                SourceArt.NumElements = SourceArt.Data.Length;
+                SourceArt.SizeOnDisk = SourceArt.NumElements;
             }
         }
 
@@ -147,6 +151,93 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
             }
 
             return index;
+        }
+    
+        protected CompressionFormat GetCompressionFormat()
+        {
+            var formatProperty = GetSerializedProperty("Format") as USerializedByteProperty;
+
+            if (formatProperty == null || formatProperty.EnumValue == null)
+            {
+                throw new Exception("Can't determine the compression format for this texture");
+            }
+
+            var compressionNoAlphaProperty = GetSerializedProperty("CompressionNoAlpha") as USerializedBoolProperty;
+            bool bCompressionNoAlpha = compressionNoAlphaProperty?.BoolValue ?? false;
+
+            string format = formatProperty.EnumValue;
+            switch (format)
+            {
+                case "PF_DXT1":
+                    return bCompressionNoAlpha ? CompressionFormat.Bc1 : CompressionFormat.Bc1WithAlpha;
+                case "PF_DXT3":
+                    return CompressionFormat.Bc2;
+                case "PF_DXT5":
+                    return CompressionFormat.Bc3;
+                case "PF_BC5":
+                    return CompressionFormat.Bc5;
+                case "PF_V8U8":
+                    return CompressionFormat.Rg;
+                case "PF_A8R8G8B8":
+                    return CompressionFormat.Rgba;
+                case "PF_G8":
+                    return CompressionFormat.R;
+                default:
+                    throw new Exception($"Unsupported EPixelFormat value {formatProperty.EnumValue}");
+            }
+        }
+    
+        /// <summary>
+        /// Loads the texture data from a file (if needed) and decompresses it (if needed), storing the raw data. Note that this undoes
+        /// the compression of the <see cref="FUntypedBulkData"/>, but does not remove any compression inherent to the pixel format 
+        /// (e.g. DXT1).
+        /// </summary>
+        /// <returns>A new <see cref="FUntypedBulkData"/>; the original is unmodified.</returns>
+        protected FUntypedBulkData LoadAndDecompressTextureData(string? tfcName, CompressionFormat compressionFormat, int sizeX, int sizeY, FUntypedBulkData inData)
+        {
+            FUntypedBulkData outData;
+            bool storeInSeparateFile = inData.BulkDataFlags.HasFlag(EBulkDataFlags.StoreInSeparateFile);
+
+            // Check if there's any work to do first
+            if (!storeInSeparateFile && !inData.IsCompressed)
+            {
+                return inData;
+            }
+
+            outData = new FUntypedBulkData();
+            outData.CloneFromOtherArchive(inData, null, null);
+
+            if (inData.NumElements == 0)
+            {
+                return outData;
+            }
+
+            if (storeInSeparateFile)
+            {
+#if DEBUG
+                if (tfcName == null)
+                {
+                    throw new Exception($"UTexture2D {FullObjectPath} doesn't have a TextureFileCacheName property!");
+                }
+#endif
+
+                outData.SetData(Archive.ParentLinker.ReadTextureData(tfcName, inData.Offset, inData.SizeOnDisk), outData.NumElements);
+            }
+
+            outData.Decompress();
+
+            /*
+            if (compressionFormat != CompressionFormat.Rgba) 
+            {
+                var decoder = new BcDecoder();
+                var decodedImageData = decoder.DecodeRawToImageRgba32(outData.Data, sizeX, sizeY, compressionFormat);
+                byte[] rawData = new byte[sizeX * sizeY * 4];
+                decodedImageData.CopyPixelDataTo(rawData);
+                outData.SetData(rawData, outData.NumElements);
+            }
+            */
+
+            return outData;
         }
     }
 }
