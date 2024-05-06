@@ -383,7 +383,7 @@ namespace XCOM_Uncooker.Unreal
             Log.Info($"Skipped {skippedArchives} archives, {skippedObjects} export objects, and {repeatObjects} seemingly-repeated objects.");
 
             string folderPath = "";
-            var unmatchedPackages = allPackages.Where(p => !PackageOrganizer.TryMatchPackageToFolders(p, ref folderPath));
+            var unmatchedPackages = allPackages.Where(p => !PackageOrganizer.TryMatchPackageToFolders(p, out folderPath));
             Log.Info($"There are {unmatchedPackages.Count()} packages which were not matched to a folder structure.");
 
             File.WriteAllText("allPackages.txt", string.Join('\n', allPackages.Order()));
@@ -439,34 +439,27 @@ namespace XCOM_Uncooker.Unreal
             File.WriteAllText("uncookedPackages.txt", output);
             Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
 
-            var xcomGameClasses = new HashSet<string>();
-            var xcomStrategyGameClasses = new HashSet<string>();
-
             foreach (var archive in OutputArchives)
             {
-                for (int i = 0; i < archive.ImportTable.Count; i++)
+                // There's a few archives that we do not want to uncook, because they'll conflict with their
+                // compiled-script equivalents. Uncooked, they shouldn't contain anything but class data anyway
+                switch (archive.FileName)
                 {
-                    if (archive.ImportTable[i].IsClass)
-                    {
-                        string packageName = archive.ImportTable[i].Outer?.ObjectName;
-
-                        if (packageName == "XComGame" && archive.FileName != "XComStrategyGame")
-                        {
-                            xcomGameClasses.Add(archive.ImportTable[i].ObjectName);
-                        }
-                        else if (packageName == "XComStrategyGame")
-                        {
-                            xcomStrategyGameClasses.Add(archive.ImportTable[i].ObjectName);
-                        }
-                    }
+                    case "Core":
+                    case "Engine":
+                    case "XComGame":
+                    case "XComStrategyGame":
+                        continue;
                 }
-            }
 
-            foreach (var archive in OutputArchives)
-            {
-                Log.Info($"Attempting to write archive file {archive.FileName}");
-                // var archive = OutputArchives.FirstOrDefault(ar => ar.FileName == archiveName);
-                var stream = new UnrealDataWriter(File.Open($"archives/{archive.FileName}.upk", FileMode.Create));
+                PackageOrganizer.TryMatchPackageToFolders(archive.FileName, out string archiveFolder);
+                string archiveFolderPath = Path.Combine("archives", archiveFolder);
+                string archivePath = Path.Combine(archiveFolderPath, archive.FileName + ".upk");
+
+                Directory.CreateDirectory(archiveFolderPath);
+
+                Log.Info($"Attempting to write archive file archivePath");
+                var stream = new UnrealDataWriter(File.Open(archivePath, FileMode.Create));
 
                 archive.BeginSerialization(stream);
                 archive.SerializeHeaderData();

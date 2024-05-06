@@ -45,6 +45,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
 
     public class UTexture2D(FArchive archive, FObjectTableEntry tableEntry) : UTexture(archive, tableEntry)
     {
+        private static readonly Logger Log = new Logger(nameof(UTexture2D));
+
         #region Serialized data
 
         public FTexture2DMipMap[] Mips;
@@ -110,7 +112,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
             // Retrieve texture data from the TFC so it can be part of the UPK
             if (Mips.Length > 0)
             {
-                int largestMipsIndex = FindLargestMipsIndex();
+                int largestMipsIndex = FindBestMipsIndex();
 
                 if (largestMipsIndex < 0)
                 {
@@ -118,6 +120,22 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
                 }
 
                 FTexture2DMipMap sourceMipMap = Mips[largestMipsIndex];
+
+                // Occasionally the best mip doesn't match the source art size, because the full size mip was marked as unused
+                // during cooking and never committed to disk. In that case we need to update the original size values of the
+                // texture, or the UDK will think it's corrupted and fail to load it properly.
+                var originalSizeXProp = GetSerializedProperty("OriginalSizeX") as USerializedIntProperty;
+
+                // OriginalSizeX can be null on some textures, like lightmaps
+                if (originalSizeXProp != null && originalSizeXProp.Value != sourceMipMap.SizeX)
+                {
+                    var originalSizeYProp = GetSerializedProperty("OriginalSizeY") as USerializedIntProperty;
+                    
+                    Log.Verbose($"{FullObjectPath}: couldn't find a mip matching the original size ({originalSizeXProp.Value}, {originalSizeYProp.Value}). Replacing with ({sourceMipMap.SizeX}, {sourceMipMap.SizeY}).");
+
+                    originalSizeXProp.Value = sourceMipMap.SizeX;
+                    originalSizeYProp.Value = sourceMipMap.SizeY;
+                }
 
                 // Take the largest mip, transform it to PNG, and store it as source art
                 var decoder = new BcDecoder();
@@ -133,7 +151,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
             }
         }
 
-        protected int FindLargestMipsIndex()
+        protected int FindBestMipsIndex()
         {
             int index = -1;
 

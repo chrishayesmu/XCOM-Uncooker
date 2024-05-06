@@ -20,32 +20,32 @@ namespace XCOM_Uncooker.Unreal
         /// <summary>
         /// Every uncooked asset will end up inside of this folder, and likely some subfolders.
         /// </summary>
-        public const string RootFolder = "XComGame/Content/";
+        public const string RootFolder = "XComGame\\Content\\";
 
-        private const string GameDataFolder = "Packages/GameData/";
-        private const string GFxFolder = "Packages/GFx/";
-        private const string FXFolder = "Packages/FX/";
-        private const string VoicesFolder = "Packages/Sound/Voices/";
-        private const string WaveDataFolder = "Sounds/INT/";
-        private const string WaveDataCueFolder = "Packages/Sound/";
-        private const string WeaponsFolder = "Packages/Weapons/";
-        private const string UIFolder = "Packages/UI/";
-        private const string VehiclesFolder = "Packages/Vehicles/";
+        private const string GameDataFolder = "Packages\\GameData\\";
+        private const string GFxFolder = "Packages\\GFx\\";
+        private const string FXFolder = "Packages\\FX\\";
+        private const string VoicesFolder = "Packages\\Sound\\Voices\\";
+        private const string WaveDataFolder = "Sounds\\INT\\";
+        private const string WaveDataCueFolder = "Packages\\Sound\\";
+        private const string WeaponsFolder = "Packages\\Weapons\\";
+        private const string UIFolder = "Packages\\UI\\";
+        private const string VehiclesFolder = "Packages\\Vehicles\\";
 
         private static readonly IList<PrefixConfig> FolderByPrefix =
         [
             new("GameData_",        GameDataFolder),
-            new("GameUnit_",        GameDataFolder + "Units/"),
-            new("WP_",              GameDataFolder + "Weapons/"),
+            new("GameUnit_",        GameDataFolder + "Units\\"),
+            new("WP_",              GameDataFolder + "Weapons\\"),
             new("gfx",              GFxFolder),
-            new("FX_CH",            FXFolder + "Characters/"),
-            new("FX_Cinematic",     FXFolder + "Cinematic/"),
-            new("FX_Destruction",   FXFolder + "Destruction/"),
-            new("FX_Dev",           FXFolder + "Dev/"),
-            new("FX_Environmental", FXFolder + "Environmental/"),
-            new("FX_Psionics",      FXFolder + "Psionics/"),
-            new("FX_MEC_WP",        FXFolder + "Weapons/"),
-            new("FX_WP",            FXFolder + "Weapons/"),
+            new("FX_CH",            FXFolder + "Characters\\"),
+            new("FX_Cinematic",     FXFolder + "Cinematic\\"),
+            new("FX_Destruction",   FXFolder + "Destruction\\"),
+            new("FX_Dev",           FXFolder + "Dev\\"),
+            new("FX_Environmental", FXFolder + "Environmental\\"),
+            new("FX_Psionics",      FXFolder + "Psionics\\"),
+            new("FX_MEC_WP",        FXFolder + "Weapons\\"),
+            new("FX_WP",            FXFolder + "Weapons\\"),
             new("VEH_",             VehiclesFolder),
             new("AnnetteVoice",     VoicesFolder),
             new("BSF",              VoicesFolder), // Blueshirt female
@@ -71,15 +71,15 @@ namespace XCOM_Uncooker.Unreal
             new( "Weapon_",         WeaponsFolder),
         ];
 
-        public static bool TryMatchPackageToFolders(string packageName, ref string folderPath)
+        public static bool TryMatchPackageToFolders(string packageName, out string folderPath)
         {
-            folderPath = "";
+            folderPath = RootFolder;
 
             for (int i = 0; i < FolderByPrefix.Count; i++)
             {
                 if (packageName.StartsWith(FolderByPrefix[i].Prefix))
                 {
-                    folderPath = FolderByPrefix[i].Folder;
+                    folderPath = Path.Combine(RootFolder, FolderByPrefix[i].Folder);
                     return true;
                 }
             }
