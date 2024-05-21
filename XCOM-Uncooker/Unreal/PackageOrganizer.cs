@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XCOM_Uncooker.Unreal.Physical;
 
 namespace XCOM_Uncooker.Unreal
 {
@@ -18,13 +19,15 @@ namespace XCOM_Uncooker.Unreal
         }
 
         /// <summary>
-        /// Every uncooked asset will end up inside of this folder, and likely some subfolders.
+        /// Almost every uncooked asset will end up inside of this folder, and likely some subfolders.
+        /// Maps are in a different top level folder.
         /// </summary>
-        public const string RootFolder = "XComGame\\Content\\";
+        public const string RootFolder = "XComGame\\";
 
         private const string GameDataFolder = "Packages\\GameData\\";
         private const string GFxFolder = "Packages\\GFx\\";
         private const string FXFolder = "Packages\\FX\\";
+        private const string MapsFolder = "Maps\\";
         private const string VoicesFolder = "Packages\\Sound\\Voices\\";
         private const string WaveDataFolder = "Sounds\\INT\\";
         private const string WaveDataCueFolder = "Packages\\Sound\\";
@@ -71,13 +74,19 @@ namespace XCOM_Uncooker.Unreal
             new( "Weapon_",         WeaponsFolder),
         ];
 
-        public static bool TryMatchPackageToFolders(string packageName, out string folderPath)
+        public static bool TryMatchPackageToFolders(FArchive archive, out string folderPath)
         {
+            if (archive.IsMap)
+            {
+                folderPath = MapsFolder;
+                return true;
+            }
+
             folderPath = RootFolder;
 
             for (int i = 0; i < FolderByPrefix.Count; i++)
             {
-                if (packageName.StartsWith(FolderByPrefix[i].Prefix))
+                if (archive.FileName.StartsWith(FolderByPrefix[i].Prefix))
                 {
                     folderPath = Path.Combine(RootFolder, FolderByPrefix[i].Folder);
                     return true;

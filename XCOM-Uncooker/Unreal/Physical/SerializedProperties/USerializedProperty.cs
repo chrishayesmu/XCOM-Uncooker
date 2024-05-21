@@ -55,7 +55,6 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         public bool BoolVal;
 
         public readonly bool IsBoolProperty => Type == "BoolProperty";
-        public readonly bool IsEnumProperty => Type == "EnumProperty";
         public readonly bool IsStructProperty => Type == "StructProperty";
 
         public void Serialize(IUnrealDataStream stream)
@@ -143,7 +142,7 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         /// Not all serialized properties have tags; in particular, immutable structs and items serialized
         /// inside of arrays won't have tags.
         /// </summary>
-        public FPropertyTag? Tag { get; private set; } = tag;
+        public FPropertyTag? Tag { get; set; } = tag;
 
         #endregion
 

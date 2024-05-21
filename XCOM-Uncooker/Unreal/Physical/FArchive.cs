@@ -107,7 +107,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// <summary>
         /// The name of this archive's file on disk.
         /// </summary>
-        public string FileName { get; private set; } = fileName;
+        public string FileName { get;  set; } = fileName;
 
         private readonly string archivePathPrefix = fileName + ".";
 

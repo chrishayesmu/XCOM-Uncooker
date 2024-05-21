@@ -382,12 +382,12 @@ namespace XCOM_Uncooker.Unreal
             Log.Info($"Assigned {numObjects} objects across {ObjectsByUncookedArchiveName.Count} packages.");
             Log.Info($"Skipped {skippedArchives} archives, {skippedObjects} export objects, and {repeatObjects} seemingly-repeated objects.");
 
-            string folderPath = "";
-            var unmatchedPackages = allPackages.Where(p => !PackageOrganizer.TryMatchPackageToFolders(p, out folderPath));
-            Log.Info($"There are {unmatchedPackages.Count()} packages which were not matched to a folder structure.");
+            // string folderPath = "";
+            // var unmatchedPackages = allPackages.Where(p => !PackageOrganizer.TryMatchPackageToFolders(p, out folderPath));
+            // Log.Info($"There are {unmatchedPackages.Count()} packages which were not matched to a folder structure.");
 
             File.WriteAllText("allPackages.txt", string.Join('\n', allPackages.Order()));
-            File.WriteAllText("unmatchedPackages.txt", string.Join('\n', unmatchedPackages.Order()));
+            // File.WriteAllText("unmatchedPackages.txt", string.Join('\n', unmatchedPackages.Order()));
 
 
             Log.Info("Copying data into uncooked archives..");
@@ -452,13 +452,37 @@ namespace XCOM_Uncooker.Unreal
                         continue;
                 }
 
-                PackageOrganizer.TryMatchPackageToFolders(archive.FileName, out string archiveFolder);
+                // Some archives cause issues in the UDK; still uncook them, but remap their names so they don't get loaded.
+                // This has to be done after adding their export objects, or they won't be found in the export object
+                // map due to archive name mismatch.
+                switch (archive.FileName)
+                {
+                    // Pre-existing engine UPKs
+                    case "EditorResources":
+                    case "EngineDebugMaterials":
+                    case "EngineFonts":
+                    case "EngineMaterials":
+                    case "EngineMeshes":
+                    case "EngineResources":
+                    case "EngineSounds":
+                    case "EngineVolumetrics":
+                    case "Engine_MaterialFunctions02":
+                    case "Engine_MI_Shaders":
+
+                    // UPKs with known issues that prevent loading
+                    case "FX_Weather":
+                    case "PhysicalMaterials":
+                        archive.FileName += "_disabled_by_uncooker";
+                        break;
+                }
+
+                PackageOrganizer.TryMatchPackageToFolders(archive, out string archiveFolder);
                 string archiveFolderPath = Path.Combine("archives", archiveFolder);
                 string archivePath = Path.Combine(archiveFolderPath, archive.FileName + ".upk");
 
                 Directory.CreateDirectory(archiveFolderPath);
 
-                Log.Info($"Attempting to write archive file archivePath");
+                Log.Info($"Attempting to write archive file {archivePath}");
                 var stream = new UnrealDataWriter(File.Open(archivePath, FileMode.Create));
 
                 archive.BeginSerialization(stream);

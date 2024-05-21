@@ -12,6 +12,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 {
     public struct FFragmentInfo : IUnrealSerializable
     {
+        public static Dictionary<int, int> UnknownValCount = new Dictionary<int, int>();
+
         #region Serialized data
 
         public FVector Center;
@@ -20,7 +22,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
         public FBoxSphereBounds Bounds;
 
-        public int[] Neighbours; // supposedly this is byte[], but analysis suggests it should be int[]
+        public int[] Neighbours; // byte[] in normal UE3, int[] in XCOM
 
         public bool bCanBeDestroyed; // UBOOL
 
@@ -41,13 +43,43 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             stream.Object(ref Center);
             stream.Object(ref ConvexHull);
             stream.Object(ref Bounds);
-            stream.Int32Array(ref Neighbours);
+
+            if (stream.IsRead)
+            {
+                stream.Int32Array(ref Neighbours);
+            }
+            else
+            {
+                // UDK expects an array of bytes
+                byte[] neighboursAsBytes = new byte[Neighbours.Length];
+
+                for (int i = 0; i < Neighbours.Length; i++)
+                {
+                    neighboursAsBytes[i] = (byte) Math.Clamp(Neighbours[i], 0, 255);
+                }
+
+                stream.ByteArray(ref neighboursAsBytes);
+            }
+
             stream.BoolAsInt32(ref bCanBeDestroyed);
             stream.BoolAsInt32(ref bRootFragment);
             stream.BoolAsInt32(ref bNeverSpawnPhysicsChunk);
             stream.Object(ref AverageExteriorNormal);
             stream.Float32Array(ref NeighbourDims);
-            stream.Int32(ref UnknownValue);
+
+            if (stream.IsRead)
+            {
+                stream.Int32(ref UnknownValue);
+
+                if (UnknownValCount.TryGetValue(UnknownValue, out int value))
+                {
+                    UnknownValCount[UnknownValue] = value + 1;
+                }
+                else
+                {
+                    UnknownValCount[UnknownValue] = 1;
+                }
+            }
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)

@@ -148,7 +148,42 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
                 SourceArt.Data = pngData.ToArray();
                 SourceArt.NumElements = SourceArt.Data.Length;
                 SourceArt.SizeOnDisk = SourceArt.NumElements;
+
+                // Make sure the texture has the bIsSourceArtUncompressed property set to true
+                // EnsureSourceArtUncompressedPropertyIsSet();
             }
+        }
+
+        protected void EnsureSourceArtUncompressedPropertyIsSet()
+        {
+            var existingProp = GetSerializedProperty("bIsSourceArtUncompressed") as USerializedBoolProperty;
+
+            if (existingProp != null)
+            {
+                if (existingProp.Tag != null)
+                {
+                    var tag = existingProp.Tag.Value;
+                    tag.BoolVal = true;
+                    existingProp.Tag = tag;
+                }
+
+                existingProp.Value = true;
+
+                return;
+            }
+
+            var newTag = new FPropertyTag()
+            {
+                Name = Archive.GetOrCreateName("bIsSourceArtUncompressed"),
+                Type = Archive.GetOrCreateName("BoolProperty"),
+                Size = 0,
+                ArrayIndex = 0,
+                BoolVal = true
+            };
+
+            var newProp = new USerializedBoolProperty(Archive, /* backingProperty */ null, newTag);
+
+            SerializedProperties.Add(newProp);
         }
 
         protected int FindBestMipsIndex()

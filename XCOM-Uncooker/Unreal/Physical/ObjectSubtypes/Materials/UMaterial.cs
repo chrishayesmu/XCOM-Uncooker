@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
 
 namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 {
@@ -40,6 +41,26 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
 
             MaterialResource_MSP_SM3.CloneFromOtherArchive(other.MaterialResource_MSP_SM3, other.Archive, Archive);
             UnknownData = other.UnknownData;
+
+            var expressionsProp = GetSerializedProperty("Expressions") as USerializedArrayProperty;
+            var validExpressions = new List<USerializedObjectProperty>();
+
+            // Remove any null expression object references
+            if (expressionsProp != null)
+            {
+                for (int i = expressionsProp.NumElements - 1; i >= 0; i--)
+                {
+                    var objProp = expressionsProp.Data[i] as USerializedObjectProperty;
+
+                    if (objProp.ObjectIndex != 0)
+                    {
+                        validExpressions.Add(objProp);
+                    }
+                }
+
+                expressionsProp.Data = validExpressions.ToArray();
+                expressionsProp.NumElements = expressionsProp.Data.Length;
+            }
         }
     }
 }

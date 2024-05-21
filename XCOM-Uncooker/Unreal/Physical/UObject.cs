@@ -9,6 +9,7 @@ using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Anims;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level;
@@ -54,7 +55,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "StrProperty",       (archive, tableEntry) => new UStrProperty(archive, tableEntry) },
             { "StructProperty",    (archive, tableEntry) => new UStructProperty(archive, tableEntry) },
 
-            { "AnimSequence",                      (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "AnimSequence",                      (archive, tableEntry) => new UAnimSequence(archive, tableEntry) },
             { "ApexGenericAsset",                  (archive, tableEntry) => new NvApexGenericAsset(archive, tableEntry) },
             { "BrushComponent",                    (archive, tableEntry) => new UBrushComponent(archive, tableEntry) },
             { "DecalComponent",                    (archive, tableEntry) => new UDecalComponent(archive, tableEntry) },
