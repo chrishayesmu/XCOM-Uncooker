@@ -539,6 +539,26 @@ namespace XCOM_Uncooker.IO
             }
         }
 
+        public void Map<K, V>(ref IDictionary<K, V> map) where K : IUnrealSerializable, new()
+                                                         where V : IUnrealSerializable, new()
+        {
+            map = new Dictionary<K, V>();
+
+            int numEntries = 0;
+            Int32(ref numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                K key = new K();
+                key.Serialize(this);
+
+                V value = new V();
+                value.Serialize(this);
+
+                map.Add(key, value);
+            }
+        }
+
         public void MultiMap(ref IDictionary<int, IList<int>> map)
         {
             map = new Dictionary<int, IList<int>>();

@@ -392,6 +392,23 @@ namespace XCOM_Uncooker.IO
             }
         }
 
+        public void Map<K, V>(ref IDictionary<K, V> map) where K : IUnrealSerializable, new()
+                                                 where V : IUnrealSerializable, new()
+        {
+            int numEntries = 0;
+            Int32(ref numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                var entry = map.ElementAt(i);
+                var key = entry.Key;
+                var value = entry.Value;
+
+                Object(ref key);
+                Object(ref value);
+            }
+        }
+
         public void MultiMap(ref IDictionary<int, IList<int>> map)
         {
             // Multimaps only need special handling when read, for accepting repeated keys; for writing

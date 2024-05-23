@@ -272,6 +272,7 @@ namespace XCOM_Uncooker.Unreal
 
             // Start by finding all of the top-level packages that will exist in the uncooked data set
             var allPackages = new HashSet<string>() { "Core", "Engine" };
+            var mapPackages = new HashSet<string>();
             var packageGuids = new Dictionary<Guid, Dictionary<string, string>>();
             foreach (var archive in InputArchives)
             {
@@ -283,6 +284,7 @@ namespace XCOM_Uncooker.Unreal
                 if (archive.IsMap)
                 {
                     allPackages.Add(archive.NormalizedName);
+                    mapPackages.Add(archive.NormalizedName);
                 }
 
                 archive?.TopLevelPackages.ForEach(p => { 
@@ -478,7 +480,8 @@ namespace XCOM_Uncooker.Unreal
 
                 PackageOrganizer.TryMatchPackageToFolders(archive, out string archiveFolder);
                 string archiveFolderPath = Path.Combine("archives", archiveFolder);
-                string archivePath = Path.Combine(archiveFolderPath, archive.FileName + ".upk");
+                string extension = archive.IsMap ? ".umap" : ".upk";
+                string archivePath = Path.Combine(archiveFolderPath, archive.FileName + extension);
 
                 Directory.CreateDirectory(archiveFolderPath);
 

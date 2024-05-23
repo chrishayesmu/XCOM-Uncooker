@@ -641,6 +641,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             RawPointIndices = other.RawPointIndices;
             NumTexCoords = other.NumTexCoords;
             VertexBufferGPUSkin = other.VertexBufferGPUSkin;
+            bHasVertexColors = other.bHasVertexColors;
             ColorVertexBuffer = other.ColorVertexBuffer;
             VertexInfluences = other.VertexInfluences;
             AdjacencyMultiSizeIndexContainer = other.AdjacencyMultiSizeIndexContainer;

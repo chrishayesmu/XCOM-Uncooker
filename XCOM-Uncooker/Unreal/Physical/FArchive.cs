@@ -59,7 +59,6 @@ namespace XCOM_Uncooker.Unreal.Physical
     /// <summary>
     /// An FArchive represents a physical file on disk. It is associated with a top-level Unreal package,
     /// as described in the PackageFileSummary, but can also contain other packages as exports or imports.
-    /// Those packages are effectively just
     /// </summary>
     public class FArchive(string fileName, Linker linker)
     {
@@ -275,6 +274,11 @@ namespace XCOM_Uncooker.Unreal.Physical
             if (sourceObj is UClass)
             {
                 PackageFileSummary.PackageFlags |= PackageFlag.ContainsScript;
+            }
+
+            if (sourceObj.ObjectName == "TheWorld")
+            {
+                PackageFileSummary.PackageFlags |= PackageFlag.ContainsMap;
             }
 
             // TODO similar flags for other types
@@ -871,7 +875,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             for (int i = 0; i < ExportTable.Count; i++)
             {
-                progressBar.Update("", i, ExportTable.Count);
+                progressBar?.Update("", i, ExportTable.Count);
 
                 // This export may have been preloaded by another one - skip it if so
                 if (IsLoading && ExportedObjects[i] != null)
@@ -906,7 +910,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 }
             }
 
-            progressBar.Update("complete", ExportTable.Count, ExportTable.Count);
+            progressBar?.Update("complete", ExportTable.Count, ExportTable.Count);
 
             if (numFailed > 0)
             {

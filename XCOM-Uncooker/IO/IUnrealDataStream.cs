@@ -123,6 +123,9 @@ namespace XCOM_Uncooker.IO
 
         public void Map<T>(ref IDictionary<int, T> map) where T : IUnrealSerializable, new();
 
+        public void Map<K, V>(ref IDictionary<K, V> map) where K : IUnrealSerializable, new() 
+                                                         where V : IUnrealSerializable, new();
+
         /// <summary>
         /// Similar to <see cref="Map(ref IDictionary{int, int[]})"/>, but serialized differently. A normal Map is serialized with
         /// each key having a single entry, and that entry's value being the only value for that key. A MultiMap is serialized such
