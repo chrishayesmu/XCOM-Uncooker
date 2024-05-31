@@ -63,6 +63,14 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
 
             other.BinaryData = BinaryData;
 
+            // Ensure all of these names exist in the destination archive
+            destArchive.GetOrCreateName("LightmapUVBias");
+            destArchive.GetOrCreateName("Matrix");
+            destArchive.GetOrCreateName("ShadowmapUVBias");
+            destArchive.GetOrCreateName("StructProperty");
+            destArchive.GetOrCreateName("Transform");
+            destArchive.GetOrCreateName("Vector2D");
+
             return other;
         }
     }

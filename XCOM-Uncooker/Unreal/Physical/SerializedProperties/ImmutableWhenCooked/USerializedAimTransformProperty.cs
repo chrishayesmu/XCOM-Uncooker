@@ -54,8 +54,8 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                 stream.Bytes(ref BinaryData, tag.Size, 16);
 
                 // Denote the end of the property block
-                FName nameNone = Archive.GetOrCreateName("None");
-                stream.Name(ref nameNone);
+                FName NAME_None = Archive.GetOrCreateName("None");
+                stream.Name(ref NAME_None);
             }
         }
 
@@ -65,6 +65,14 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
             var other = new USerializedAimTransformProperty(destArchive, null, tag);
 
             other.BinaryData = BinaryData;
+
+            // Ensure all of these names exist in the destination archive
+            destArchive.GetOrCreateName("None");
+            destArchive.GetOrCreateName("Quat");
+            destArchive.GetOrCreateName("Quaternion");
+            destArchive.GetOrCreateName("StructProperty");
+            destArchive.GetOrCreateName("Translation");
+            destArchive.GetOrCreateName("Vector");
 
             return other;
         }

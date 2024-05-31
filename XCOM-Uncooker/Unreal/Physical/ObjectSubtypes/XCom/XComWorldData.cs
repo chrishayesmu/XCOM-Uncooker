@@ -23,7 +23,17 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         {
             base.Serialize(stream);
 
-            stream.Int32(ref WorldDataPtr);
+            if (stream.IsRead)
+            {
+                stream.Int32(ref WorldDataPtr);
+            }
+            else
+            {
+                // We can't serialize the XComWorldDataContainer object in a way the UDK can understand, so we
+                // need to remove any reference to it as well
+                int data = 0;
+                stream.Int32(ref data);
+            }
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)

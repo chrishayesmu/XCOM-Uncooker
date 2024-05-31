@@ -238,10 +238,12 @@ namespace XCOM_Uncooker.IO
                 IOUtils.Decompress(readBuffer, chunkInfo[i].UncompressedSize, outputData, ref outputPos, compressionMethod);
             }
 
+#if DEBUG
             if (outputPos != uncompressedSize)
             {
                 Debugger.Break();
             }
+#endif
 
             return outputData;
         }

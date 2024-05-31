@@ -3,6 +3,7 @@ using BCnEncoder.ImageSharp;
 using BCnEncoder.Shared;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -140,6 +141,21 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
                 // Take the largest mip, transform it to PNG, and store it as source art
                 var decoder = new BcDecoder();
                 var decodedImageData = decoder.DecodeRawToImageRgba32(sourceMipMap.Data.Data, sourceMipMap.SizeX, sourceMipMap.SizeY, compressionFormat);
+
+                // For some reason the red and blue channels appear to be swapped in the source art in the UDK.
+                decodedImageData.ProcessPixelRows(accessor =>
+                {
+                    for (int y = 0; y < accessor.Height; y++)
+                    {
+                        var pixelRow = accessor.GetRowSpan(y);
+
+                        for (int x = 0; x < pixelRow.Length; x++)
+                        {
+                            ref Rgba32 pixel = ref pixelRow[x];
+                            (pixel.B, pixel.R) = (pixel.R, pixel.B);
+                        }
+                    }
+                });
 
                 var pngData = new MemoryStream(SourceArt.SizeOnDisk);
                 var encoder = new PngEncoder() { ChunkFilter = PngChunkFilter.ExcludeAll };

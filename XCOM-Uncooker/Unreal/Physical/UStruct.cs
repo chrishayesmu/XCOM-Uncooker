@@ -138,13 +138,36 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 for (int i = 0; i < props.Count; i++)
                 {
+                    long tagStartPosition = stream.Position;
+
                     if (props[i].Tag != null)
                     {
                         var tag = props[i].Tag!.Value;
                         stream.Object(ref tag);
                     }
 
+                    long tagEndPosition = stream.Position;
+
                     props[i].Serialize(stream);
+                    long propEndPosition = stream.Position;
+
+                    // Check if the tag's property size is wrong. This happens only rarely, usually because we're
+                    // uncooking some type which was immutablewhencooked and now has a bunch of tag data it didn't
+                    // used to have.
+                    if (props[i].Tag != null && propEndPosition - tagEndPosition != props[i].Tag!.Value.Size)
+                    {
+                        var tag = props[i].Tag!.Value;
+                        tag.Size = (int) (propEndPosition - tagEndPosition);
+                        
+                        // Write the tag out again with its new size value
+                        stream.Seek(tagStartPosition, SeekOrigin.Begin);
+                        stream.Object(ref tag);
+
+                        props[i].Tag = tag;
+
+                        stream.Seek(propEndPosition, SeekOrigin.Begin);
+                    }
+
                 }
 
                 FName nameNone = stream.Archive.GetOrCreateName("None");

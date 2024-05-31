@@ -171,7 +171,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                     EngineVersion = 8916,
                     HeaderSize = 0, // can't be calculated yet
                     FolderName = "None", // TODO
-                    PackageFlags = PackageFlag.AllowDownload,
+                    PackageFlags = PackageFlag.AllowDownload | PackageFileSummary.PackageFlags, // carry over any flags set during uncooking
                     NameCount = NameTable.Count,
                     NameOffset = -1,
                     ExportCount = ExportTable.Count,
@@ -290,7 +290,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath);
                 if (destTableEntry == null)
                 {
-                    bool outerIsThisPackage = (sourceObj.Outer?.ObjectName ?? "") == FileName; // sourceObj.Archive.GetObjectByIndex(sourceExportTable.OuterIndex) is UPackage;
+                    bool outerIsThisPackage = (sourceObj.Outer?.ObjectName ?? "") == FileName;
 
                     destTableEntry = new FExportTableEntry(this)
                     {
@@ -353,6 +353,52 @@ namespace XCOM_Uncooker.Unreal.Physical
                 Suffix = 0,
                 Archive = this
             };
+        }
+
+        /// <summary>
+        /// Finds an existing import matching the inputs, or creates one
+        /// and returns its index if one doesn't already exist.
+        /// </summary>
+        /// <param name="classPackage">The package where the object's class is found.</param>
+        /// <param name="className">The class of the object being imported.</param>
+        /// <param name="objectName">The name of the object to import.</param>
+        /// <param name="outerIndex">The outer index of the object; must be 0 (none) or negative (indicating another import).</param>
+        /// <returns>The import index of the entry.</returns>
+        public int GetOrCreateImport(FName classPackage, FName className, FName objectName, int outerIndex)
+        {
+#if DEBUG
+            if (outerIndex > 0)
+            {
+                throw new Exception($"The outer index of an import cannot be an export; received {outerIndex}");
+            }
+#endif
+
+            int importIndex = ImportTable.FindIndex(imp => imp.OuterIndex == outerIndex
+                                                            && imp.ObjectName == objectName
+                                                            && imp.ClassPackage == classPackage!
+                                                            && imp.ClassName == className);
+
+            if (importIndex >= 0)
+            {
+                return -1 * (importIndex + 1);
+            }
+
+            lock (this)
+            {
+                // Didn't find an existing import; add a new import entry instead
+                FImportTableEntry importEntry = new FImportTableEntry(this)
+                {
+                    ClassPackage = classPackage!,
+                    _className = className,
+                    OuterIndex = outerIndex,
+                    ObjectName = objectName,
+                    TableEntryIndex = ImportTable.Count
+                };
+
+                importIndex = -1 * (ImportTable.Count + 1);
+                ImportTable.Add(importEntry);
+                return importIndex;
+            }
         }
 
         /// <summary>
@@ -430,16 +476,35 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
             else
             {
+                // Before we add an import, we need to make sure this isn't a private object which got cooked
+                // into a package (probably a map). That would cause the uncooked package to be unopenable.
+                // Theoretically, if this is a problem, the source table entry will be from a cooked package
+                // and therefore we'll have an FExportTableEntry to read from. That saves us an expensive lookup
+                // for the object by name.
+                var sourceExportEntry = sourceTableEntry as FExportTableEntry;
+                if (sourceExportEntry != null)
+                {
+                    if (!sourceExportEntry.ObjectFlags.HasFlag(ObjectFlag.Public))
+                    {
+                        return 0;
+                    }
+                }
+
                 // This will be an import; see if we already have the same import
-                int destOuterIndex = MapIndexFromSourceArchive(sourceTableEntry.OuterIndex, sourceTableEntry.Archive);
-                FName objectName = MapNameFromSourceArchive(sourceTableEntry.ObjectName), className = MapNameFromSourceArchive(sourceTableEntry.ClassName);
+                FName objectName = MapNameFromSourceArchive(sourceTableEntry.ObjectName);
+                FName className = sourceTableEntry.IsClass ? GetOrCreateName("Class") : MapNameFromSourceArchive(sourceTableEntry.ClassName);
                 FName classPackage = null;
 
-                if (sourceTableEntry is FImportTableEntry sourceImportEntry)
+                if (sourceTableEntry.IsClass)
+                {
+                    // If this is a class, it'll always be a "Core.Class"
+                    classPackage = GetOrCreateName("Core");
+                }
+                else if (sourceTableEntry is FImportTableEntry sourceImportEntry)
                 {
                     classPackage = MapNameFromSourceArchive(sourceImportEntry.ClassPackage);
                 }
-                else if (sourceTableEntry is FExportTableEntry sourceExportEntry)
+                else if (sourceExportEntry != null)
                 {
                     // If this is an export, then the class package has to be pulled more indirectly
                     var sourceClassEntry = sourceTableEntry.Archive.GetObjectTableEntry(sourceExportEntry.ClassIndex);
@@ -461,32 +526,20 @@ namespace XCOM_Uncooker.Unreal.Physical
                     // can't ever get here; there's only two subclasses of FObjectTableEntry
                 }
 
-                int destImportIndex = ImportTable.FindIndex(imp => imp.OuterIndex == destOuterIndex 
-                                                                && imp.ObjectName == objectName 
-                                                                && imp.ClassPackage == classPackage! 
-                                                                && imp.ClassName == className);
+                int destOuterIndex = 0;
 
-                if (destImportIndex >= 0)
+                if (sourceTableEntry.OuterIndex != 0)
                 {
-                    return -1 * (destImportIndex + 1);
+                    destOuterIndex = MapIndexFromSourceArchive(sourceTableEntry.OuterIndex, sourceTableEntry.Archive);
+                }
+                else if (uncookedArchiveName != "" && !sourceTableEntry.IsPackage)
+                {
+                    // If the object has no outer index, then it's already in its uncooked destination. If it's a package,
+                    // skip adding an outer import; top level packages don't have one.
+                    destOuterIndex = GetOrCreateImport(GetOrCreateName("Core"), GetOrCreateName("Package"), GetOrCreateName(uncookedArchiveName), /* outerIndex */ 0);
                 }
 
-                lock (this)
-                {
-                    // Didn't find an existing import; add a new import entry instead
-                    FImportTableEntry destImportEntry = new FImportTableEntry(this)
-                    {
-                        ClassPackage = classPackage!,
-                        _className = className,
-                        OuterIndex = destOuterIndex,
-                        ObjectName = objectName,
-                        TableEntryIndex = ImportTable.Count
-                    };
-
-                    destImportIndex = -1 * (ImportTable.Count + 1);
-                    ImportTable.Add(destImportEntry);
-                    return destImportIndex;
-                }
+                return GetOrCreateImport(classPackage!, className, objectName, destOuterIndex);
             }
         }
 
@@ -731,6 +784,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 // UPackages
                 case "Core":
                 case "Engine":
+
                 // Various pieces of the type system
                 case "Core.ArrayProperty":
                 case "Core.BoolProperty":
@@ -749,6 +803,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 case "Core.ScriptStruct":
                 case "Core.StrProperty":
                 case "Core.StructProperty":
+
                 // Miscellaneous
                 case "Core.MetaData":
                 case "Core.Package":
@@ -779,7 +834,11 @@ namespace XCOM_Uncooker.Unreal.Physical
                 case "Engine.StaticMesh":
                 case "Engine.VoiceChannel":
                 case "Engine.World":
+
+                // Added in XCOM
+                case "UnrealEd.VisGroupActor":
                     return true;
+
             }
 
             return false;

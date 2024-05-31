@@ -16,7 +16,9 @@ namespace XCOM_Uncooker.Unreal
     {
         private static readonly Logger Log = new Logger(nameof(Linker));
 
-        public static readonly List<string> FilesToSkip = []; // ["Act1_IntroLevel.upk", "Act1_IntroLevel_Anim.upk", "Act1_IntroLevel_Anim_LOC_INT.upk", "Act1_IntroLevel_Script.upk", "Act1_IntroLevel_Script_LOC_INT.upk"];
+        public static readonly List<string> FilesToSkip = [];
+
+        public static readonly List<string> UncookOnly = [];
 
         public FArchive[] InputArchives;
         public FArchive[] OutputArchives;
@@ -287,7 +289,7 @@ namespace XCOM_Uncooker.Unreal
                     mapPackages.Add(archive.NormalizedName);
                 }
 
-                archive?.TopLevelPackages.ForEach(p => { 
+                archive.TopLevelPackages.ForEach(p => { 
                     allPackages.Add(p.NormalizedName);
 
                     if (p.ExportTableEntry.PackageGuid != Guid.Empty)
@@ -337,13 +339,6 @@ namespace XCOM_Uncooker.Unreal
                     continue;
                 }
 
-                // TODO: need a way to remove the dependencies from map packages and only leave the level stuff
-                if (archive.IsMap)
-                {
-                    //skippedArchives++;
-                    //continue;
-                }
-
                 foreach (var exportObj in archive.ExportedObjects)
                 {
                     string fullObjectPath = exportObj.FullObjectPath;
@@ -354,7 +349,15 @@ namespace XCOM_Uncooker.Unreal
                         continue;
                     }
 
-                    // TODO: handle map objects better
+                    // VisGroupActor and XComWorldDataContainer are XCOM-only intrinsic classes which we can't replicate in the UDK.
+                    // Having them present in an archive will result in a crash. Here, we check IsMap first because these objects can
+                    // only exist in maps, and that check is much cheaper than the class name check.
+                    if (archive.IsMap && (exportObj.TableEntry.ClassName == "VisGroupActor" || exportObj.TableEntry.ClassName == "XComWorldDataContainer"))
+                    {
+                        continue;
+                    }
+
+                    // Any object where the outermost object is TheWorld is an object within a map, so direct it to the map's archive
                     if (topPackage == "TheWorld")
                     {
                         topPackage = archive.NormalizedName;
@@ -362,9 +365,7 @@ namespace XCOM_Uncooker.Unreal
 
                     if (!ObjectsByUncookedArchiveName.ContainsKey(topPackage))
                     {
-                        //ObjectsByUncookedArchiveName.Add(topPackage, new Dictionary<string, UObject>());
-                        skippedObjects++;
-                        continue;
+                        ObjectsByUncookedArchiveName.Add(topPackage, new Dictionary<string, UObject>());
                     }
 
                     // If this object already exists, it must've been exported by another archive also, in which
@@ -422,6 +423,11 @@ namespace XCOM_Uncooker.Unreal
                 // TODO: the archive should be managing this state internally
                 outArchive.ExportedObjects = new UObject[entry.Value.Count];
 
+                if (UncookOnly.Count > 0 && !UncookOnly.Contains(outArchive.FileName))
+                {
+                    return;
+                }
+
                 foreach (var subentry in entry.Value)
                 {
                     UObject obj = subentry.Value;
@@ -443,15 +449,32 @@ namespace XCOM_Uncooker.Unreal
 
             foreach (var archive in OutputArchives)
             {
+                // Occasionally an uncooked archive is empty, because it only consisted of things which don't exist in an uncooked
+                // archive - for example, if its name was used as a package grouping but never contained anything except for
+                // other packages. Just skip those archives.
+                if (archive.ExportedObjects.Length == 0)
+                {
+                    continue;
+                }
+
                 // There's a few archives that we do not want to uncook, because they'll conflict with their
                 // compiled-script equivalents. Uncooked, they shouldn't contain anything but class data anyway
                 switch (archive.FileName)
                 {
                     case "Core":
                     case "Engine":
+                    case "GameFramework":
+                    case "GFxUI":
+                    case "IpDrv":
+                    case "OnlineSubsystemSteamworks":
                     case "XComGame":
                     case "XComStrategyGame":
                         continue;
+                }
+
+                if (UncookOnly.Count > 0 && !UncookOnly.Contains(archive.FileName))
+                {
+                    continue;
                 }
 
                 // Some archives cause issues in the UDK; still uncook them, but remap their names so they don't get loaded.
@@ -480,7 +503,7 @@ namespace XCOM_Uncooker.Unreal
 
                 PackageOrganizer.TryMatchPackageToFolders(archive, out string archiveFolder);
                 string archiveFolderPath = Path.Combine("archives", archiveFolder);
-                string extension = archive.IsMap ? ".umap" : ".upk";
+                string extension = archive.IsMap ? ".udk" : ".upk";
                 string archivePath = Path.Combine(archiveFolderPath, archive.FileName + extension);
 
                 Directory.CreateDirectory(archiveFolderPath);

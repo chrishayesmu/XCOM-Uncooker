@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -85,12 +86,12 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                 tag.StructName = Archive.GetOrCreateName("Vector2D");
 
                 stream.Object(ref tag);
-                stream.Bytes(ref BinaryData, tag.Size);
+                stream.Bytes(ref BinaryData, 8);
 
                 tag.Name = Archive.GetOrCreateName("VerticalRange");
 
                 stream.Object(ref tag);
-                stream.Bytes(ref BinaryData, tag.Size, 8);
+                stream.Bytes(ref BinaryData, 8, 8);
 
                 // AimComponents sizing:
                 //     4 bytes: array size
@@ -110,15 +111,47 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
                     AimComponents[i].Serialize(stream);
                 }
 
+                tag.Type = Archive.GetOrCreateName("NameProperty");
+                tag.Size = 8;
+
+                tag.Name = Archive.GetOrCreateName("AnimName_LU");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_LU);
+
+                tag.Name = Archive.GetOrCreateName("AnimName_LC");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_LC);
+
+                tag.Name = Archive.GetOrCreateName("AnimName_LD");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_LD);
+
+                tag.Name = Archive.GetOrCreateName("AnimName_CU");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_CU);
+
+                tag.Name = Archive.GetOrCreateName("AnimName_CC");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_CC);
+
+                tag.Name = Archive.GetOrCreateName("AnimName_CD");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_CD);
+
+                tag.Name = Archive.GetOrCreateName("AnimName_RU");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_RU);
+
+                tag.Name = Archive.GetOrCreateName("AnimName_RC");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_RC);
+
+                tag.Name = Archive.GetOrCreateName("AnimName_RD");
+                stream.Object(ref tag);
                 stream.Name(ref AnimName_RD);
+
+                FName NAME_None = Archive.GetOrCreateName("None");
+                stream.Name(ref NAME_None);
             }
         }
 
@@ -146,6 +179,26 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
             other.AnimName_RU = destArchive.MapNameFromSourceArchive(AnimName_RU);
             other.AnimName_RC = destArchive.MapNameFromSourceArchive(AnimName_RC);
             other.AnimName_RD = destArchive.MapNameFromSourceArchive(AnimName_RD);
+
+            // Ensure all of these names exist in the destination archive
+            destArchive.GetOrCreateName("AimComponents");
+            destArchive.GetOrCreateName("ArrayProperty");
+            destArchive.GetOrCreateName("HorizontalRange");
+            destArchive.GetOrCreateName("NameProperty");
+            destArchive.GetOrCreateName("None");
+            destArchive.GetOrCreateName("ProfileName");
+            destArchive.GetOrCreateName("StructProperty");
+            destArchive.GetOrCreateName("Vector2D");
+            destArchive.GetOrCreateName("VerticalRange");
+            destArchive.GetOrCreateName("AnimName_LU");
+            destArchive.GetOrCreateName("AnimName_LC");
+            destArchive.GetOrCreateName("AnimName_LD");
+            destArchive.GetOrCreateName("AnimName_CU");
+            destArchive.GetOrCreateName("AnimName_CC");
+            destArchive.GetOrCreateName("AnimName_CD");
+            destArchive.GetOrCreateName("AnimName_RU");
+            destArchive.GetOrCreateName("AnimName_RC");
+            destArchive.GetOrCreateName("AnimName_RD");
 
             return other;
         }

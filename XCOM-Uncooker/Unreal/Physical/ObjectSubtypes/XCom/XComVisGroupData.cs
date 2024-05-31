@@ -43,8 +43,6 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
     {
         #region Serialized data
 
-        // public MultiMap_Mirror ActorToActorGroups;
-
         // Key is index of an Actor; values are array indices within the VisActorGroups script property
         [Index(typeof(UObject))]
         public IDictionary<int, int[]> ActorToActorGroups;

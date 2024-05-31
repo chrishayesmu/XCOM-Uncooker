@@ -56,7 +56,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             }
             else
             {
-                // Don't write anything when serializing out, because UE3 won't be able to handle it
+                // Don't write anything when serializing out, because the UDK won't be able to handle it
             }
         }
 
