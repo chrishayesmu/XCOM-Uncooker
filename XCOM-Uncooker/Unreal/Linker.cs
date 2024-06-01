@@ -282,6 +282,9 @@ namespace XCOM_Uncooker.Unreal
                     continue;
                 }
 
+                // TODO: this is probably not needed, leaving it in case it is and I forget about it
+                // allPackages.Add(archive.NormalizedName);
+
                 if (archive.IsMap)
                 {
                     allPackages.Add(archive.NormalizedName);

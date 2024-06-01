@@ -423,6 +423,16 @@ namespace XCOM_Uncooker.Unreal.Physical
             string uncookedArchiveName = ParentLinker.GetUncookedArchiveNameForObject(fullObjectPath);
             bool isIntrinsic = IsIntrinsicObject(fullObjectPath);
 
+            if (uncookedArchiveName == "")
+            {
+                // Some top-level packages won't be returned by GetUncookedArchiveNameForObject, e.g. if there wasn't
+                // a UPackage object in the cooked archive. This is most likely to occur for archives that are mostly scripts.
+                if (sourceTableEntry.IsPackage && sourceTableEntry.OuterIndex == 0)
+                {
+                    uncookedArchiveName = sourceTableEntry.ObjectName;
+                }
+            }
+
             if (!isIntrinsic && uncookedArchiveName == "")
             {
                 return 0;
