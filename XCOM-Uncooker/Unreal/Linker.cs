@@ -363,9 +363,12 @@ namespace XCOM_Uncooker.Unreal
                         topPackage = archive.NormalizedName;
                     }
 
+                    // If an object's top level package doesn't exist in the map, and we add it here instead of skipping the object,
+                    // things start crashing in the UDK. A lot. Unfortunately I kinda forgot why so we're just skipping those objects
                     if (!ObjectsByUncookedArchiveName.ContainsKey(topPackage))
                     {
-                        ObjectsByUncookedArchiveName.Add(topPackage, new Dictionary<string, UObject>());
+                        skippedObjects++;
+                        continue;
                     }
 
                     // If this object already exists, it must've been exported by another archive also, in which
