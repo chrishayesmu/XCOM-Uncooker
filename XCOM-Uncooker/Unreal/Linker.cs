@@ -496,7 +496,6 @@ namespace XCOM_Uncooker.Unreal
                     case "Engine_MI_Shaders":
 
                     // UPKs with known issues that prevent loading
-                    case "FX_Weather":
                     case "PhysicalMaterials":
                         archive.FileName += "_disabled_by_uncooker";
                         break;
