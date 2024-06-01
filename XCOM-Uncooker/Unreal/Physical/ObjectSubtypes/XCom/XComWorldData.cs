@@ -25,14 +25,8 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 
             if (stream.IsRead)
             {
+                // This is a native prop in XCOM, so we can only read it but not write it
                 stream.Int32(ref WorldDataPtr);
-            }
-            else
-            {
-                // We can't serialize the XComWorldDataContainer object in a way the UDK can understand, so we
-                // need to remove any reference to it as well
-                int data = 0;
-                stream.Int32(ref data);
             }
         }
 
