@@ -12,6 +12,7 @@ using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Anims;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Flash;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models;
@@ -92,7 +93,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "SpeedTreeComponent",                (archive, tableEntry) => new USpeedTreeComponent(archive, tableEntry) },
             { "StaticMesh",                        (archive, tableEntry) => new UStaticMesh(archive, tableEntry) },
             { "StaticMeshComponent",               (archive, tableEntry) => new UStaticMeshComponent(archive, tableEntry) },
-            { "SwfMovie",                          (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
+            { "SwfMovie",                          (archive, tableEntry) => new USwfMovie(archive, tableEntry) },
             { "Texture2D",                         (archive, tableEntry) => new UTexture2D(archive, tableEntry) },
             { "TextureCube",                       (archive, tableEntry) => new UTexture(archive, tableEntry) },
             { "TextureFlipBook",                   (archive, tableEntry) => new UTexture2D(archive, tableEntry) },
