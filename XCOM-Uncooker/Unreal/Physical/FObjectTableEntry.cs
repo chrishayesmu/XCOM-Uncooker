@@ -126,7 +126,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                     if (!path.StartsWith(topLevelPackage))
                     {
-                        path= topLevelPackage + path;
+                        path = topLevelPackage + path;
                     }
                 }
                 else if (!IsPackage)

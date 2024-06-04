@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 using XCOM_Uncooker.Unreal.Physical;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core;
+using XCOM_Uncooker.Utils;
 
 namespace XCOM_Uncooker.Unreal
 {
@@ -20,10 +21,12 @@ namespace XCOM_Uncooker.Unreal
 
         public static readonly List<string> UncookOnly = [];
 
+        public static readonly List<string> NeverUncook = [ "Core", "Engine", "GameFramework", "GFxUI", "GFxUIEditor", "IpDrv", "OnlineSubsystemSteamworks", "XComGame", "XComStrategyGame", "XComUIShell" ];
+
         public FArchive[] InputArchives;
         public FArchive[] OutputArchives;
 
-        public IDictionary<string, IDictionary<string, UObject>> ObjectsByUncookedArchiveName;
+        public IDictionary<string, MultiValueDictionary<string, UObject>> ObjectsByUncookedArchiveName;
         public IDictionary<string, string> UncookedArchiveNameByObjectPath;
         public IDictionary<Guid, UPackage> InputPackagesByGuid;
 
@@ -157,21 +160,32 @@ namespace XCOM_Uncooker.Unreal
         /// Finds the object specified by the given path, as long as it exists in at least one of the currently-loaded archives.
         /// </summary>
         /// <param name="fullObjectPath">The full object path, as from <see cref="FObjectTableEntry.FullObjectPath"/>.</param>
+        /// <param name="tableEntry">Optionally, a table entry for an existing copy of the object. If provided, it will be used
+        /// to help disambiguate scenarios where the same object path is used for multiple objects.</param>
         /// <returns>The corresponding <see cref="UObject"/> if found, else null.</returns>
         /// <remarks>
         /// The return value of this is ambiguous if there are multiple objects with the same path. UE3 itself seems to
         /// have the same problem, and explicitly recommends against naming two objects with the same path. For uncooking, this
         /// will occur naturally because the same logical object has been pulled into multiple archives; we simply assume that
-        /// all copies of the object are the same and use the first match we find.
+        /// all copies of the object are the same and use the first match we find. The exception is if the tableEntry param is set,
+        /// in which case we only match objects if they have the same class as the table entry.
         /// </remarks>
-        public UObject GetCookedObjectByPath(string fullObjectPath)
+        public UObject GetCookedObjectByPath(string fullObjectPath, FObjectTableEntry tableEntry = null)
         {
             foreach (var archive in InputArchives)
             {
-                var obj = archive.GetExportedObjectByPath(fullObjectPath);
+                var obj = archive.GetExportedObjectByPath(fullObjectPath, tableEntry);
 
                 if (obj != null)
                 {
+                    if (tableEntry != null)
+                    {
+                        if (obj.TableEntry.ClassName != tableEntry.ClassName)
+                        {
+                            continue;
+                        }
+                    }
+
                     return obj;
                 }
             }
@@ -283,7 +297,7 @@ namespace XCOM_Uncooker.Unreal
                 }
 
                 // TODO: this is probably not needed, leaving it in case it is and I forget about it
-                // allPackages.Add(archive.NormalizedName);
+                allPackages.Add(archive.NormalizedName);
 
                 if (archive.IsMap)
                 {
@@ -323,12 +337,14 @@ namespace XCOM_Uncooker.Unreal
             Log.Info($"Found {allPackages.Count} distinct top level packages.");
 
             // Initialize storage for each of these, arranged by package
-            ObjectsByUncookedArchiveName = new Dictionary<string, IDictionary<string, UObject>>();
+            // TODO: since the inner dictionary assumes each object name is unique, the size of ExportedObjects in the
+            // output archives is wrong, and uncooking errors when it gets overflowed
+            ObjectsByUncookedArchiveName = new Dictionary<string, MultiValueDictionary<string, UObject>>();
             UncookedArchiveNameByObjectPath = new Dictionary<string, string>();
-
+            
             foreach (var package in allPackages)
             {
-                ObjectsByUncookedArchiveName.Add(package, new Dictionary<string, UObject>());
+                ObjectsByUncookedArchiveName.Add(package, new MultiValueDictionary<string, UObject>());
             }
 
             // Now iterate every package's exports, assigning them to their original source archive
@@ -374,10 +390,24 @@ namespace XCOM_Uncooker.Unreal
 
                     // If this object already exists, it must've been exported by another archive also, in which
                     // case we assume the objects are identical and just use whichever one got there first
-                    if (ObjectsByUncookedArchiveName[topPackage].ContainsKey(fullObjectPath))
+                    if (ObjectsByUncookedArchiveName[topPackage].TryGetValue(fullObjectPath, out var objectsWithSamePath))
                     {
-                        repeatObjects++;
-                        continue;
+                        bool isRepeat = false;
+
+                        for (int i = 0; i < objectsWithSamePath.Count; i++)
+                        {
+                            if (objectsWithSamePath[i].TableEntry.ClassName == exportObj.TableEntry.ClassName)
+                            {
+                                isRepeat = true;
+                                break;
+                            }
+                        }
+
+                        if (isRepeat)
+                        {
+                            repeatObjects++;
+                            continue;
+                        }
                     }
 
                     numObjects++;
@@ -389,23 +419,22 @@ namespace XCOM_Uncooker.Unreal
             Log.Info($"Assigned {numObjects} objects across {ObjectsByUncookedArchiveName.Count} packages.");
             Log.Info($"Skipped {skippedArchives} archives, {skippedObjects} export objects, and {repeatObjects} seemingly-repeated objects.");
 
-            // string folderPath = "";
-            // var unmatchedPackages = allPackages.Where(p => !PackageOrganizer.TryMatchPackageToFolders(p, out folderPath));
-            // Log.Info($"There are {unmatchedPackages.Count()} packages which were not matched to a folder structure.");
-
-            File.WriteAllText("allPackages.txt", string.Join('\n', allPackages.Order()));
-            // File.WriteAllText("unmatchedPackages.txt", string.Join('\n', unmatchedPackages.Order()));
-
-
             Log.Info("Copying data into uncooked archives..");
 
             OutputArchives = new FArchive[ObjectsByUncookedArchiveName.Count];
             int outArchiveIndex = 0;
             numObjects = 0;
-            string output = "Archive\tObjects\tImports\n";
 
             Parallel.ForEach(ObjectsByUncookedArchiveName, new ParallelOptions { MaxDegreeOfParallelism = 100 }, (entry) =>
             {
+                string fileName = entry.Key;
+                MultiValueDictionary<string, UObject> objectsByName = entry.Value;
+
+                if (NeverUncook.Contains(fileName))
+                {
+                    return;
+                }
+
                 FArchive outArchive = new FArchive(entry.Key, this);
 
                 // Add a few intrinsics that won't be populated naturally
@@ -425,34 +454,40 @@ namespace XCOM_Uncooker.Unreal
                 }
 
                 // TODO: the archive should be managing this state internally
-                outArchive.ExportedObjects = new UObject[entry.Value.Count];
+                outArchive.ExportedObjects = new UObject[entry.Value.NumValues];
 
                 if (UncookOnly.Count > 0 && !UncookOnly.Contains(outArchive.FileName))
                 {
                     return;
                 }
 
-                foreach (var subentry in entry.Value)
+                foreach (var subentry in objectsByName)
                 {
-                    UObject obj = subentry.Value;
+                    List<UObject> objects = subentry.Value;
 
-                    outArchive.AddExportObject(obj);
-                    Interlocked.Increment(ref numObjects);
-
-                    if (numObjects % 10000 == 0)
+                    foreach (var obj in objects)
                     {
-                        Log.Info($"{numObjects} export objects added to uncooked archives..");
+                        outArchive.AddExportObject(obj);
+                        Interlocked.Increment(ref numObjects);
+
+                        if (numObjects % 10000 == 0)
+                        {
+                            Log.Info($"{numObjects} export objects added to uncooked archives..");
+                        }
                     }
                 }
-
-                output += $"{outArchive.FileName}\t{outArchive.ExportedObjects.Length}\t{outArchive.ImportTable.Count}\n";
             });
 
-            File.WriteAllText("uncookedPackages.txt", output);
             Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
 
             foreach (var archive in OutputArchives)
             {
+                // Some archives may be null because they're in the NeverUncook set; just skip
+                if (archive == null)
+                {
+                    continue;
+                }
+
                 // Occasionally an uncooked archive is empty, because it only consisted of things which don't exist in an uncooked
                 // archive - for example, if its name was used as a package grouping but never contained anything except for
                 // other packages. Just skip those archives.
@@ -463,17 +498,9 @@ namespace XCOM_Uncooker.Unreal
 
                 // There's a few archives that we do not want to uncook, because they'll conflict with their
                 // compiled-script equivalents. Uncooked, they shouldn't contain anything but class data anyway
-                switch (archive.FileName)
+                if (NeverUncook.Contains(archive.FileName))
                 {
-                    case "Core":
-                    case "Engine":
-                    case "GameFramework":
-                    case "GFxUI":
-                    case "IpDrv":
-                    case "OnlineSubsystemSteamworks":
-                    case "XComGame":
-                    case "XComStrategyGame":
-                        continue;
+                    continue;
                 }
 
                 if (UncookOnly.Count > 0 && !UncookOnly.Contains(archive.FileName))

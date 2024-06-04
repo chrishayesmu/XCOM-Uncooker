@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core;
+using XCOM_Uncooker.Utils;
 
 namespace XCOM_Uncooker.Unreal.Physical
 {
@@ -150,7 +151,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         public bool IsLoading => _stream.IsRead;
         public bool IsSaving => _stream.IsWrite;
 
-        private IDictionary<string, FExportTableEntry> ExportTableByObjectPath = new Dictionary<string, FExportTableEntry>();
+        private MultiValueDictionary<string, FExportTableEntry> ExportTableByObjectPath = new MultiValueDictionary<string, FExportTableEntry>();
         private IUnrealDataStream _stream;
 
         public void BeginSerialization(IUnrealDataStream stream)
@@ -287,7 +288,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             // then we'll want to make a new one.
             lock (this)
             {
-                FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath);
+                FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath, sourceObj.TableEntry);
                 if (destTableEntry == null)
                 {
                     bool outerIsThisPackage = (sourceObj.Outer?.ObjectName ?? "") == FileName;
@@ -310,7 +311,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                     };
 
                     ExportTable.Add(destTableEntry);
-                    ExportTableByObjectPath[fullObjectPath] = destTableEntry;
+                    ExportTableByObjectPath.Add(fullObjectPath, destTableEntry);
                 }
 
                 // TODO: this is a hack because my definition of FExportTableEntry.ClassName is stupid and I don't want to change it right now
@@ -431,8 +432,25 @@ namespace XCOM_Uncooker.Unreal.Physical
                 {
                     uncookedArchiveName = sourceTableEntry.ObjectName;
                 }
+                else if (fullObjectPath == "UnrealEd.CascadeParticleSystemComponent")
+                {
+                    // Somehow this class is referenced in an archive but doesn't seem to have shipped with the game?
+                    uncookedArchiveName = "UnrealEd";
+                }
+                else
+                {
+                    string objectClassName = sourceTableEntry.ClassName;
+
+                    // These are intrinsic classes which can't be exported during uncooking
+                    if (objectClassName == "VisGroupActor" || objectClassName == "XComWorldDataContainer")
+                    {
+                        return 0;
+                    }
+                }
             }
 
+            // TODO: class imports keep getting all screwed up. Either fix whatever made this check necessary, or just
+            // handle class imports specially so they don't go through all this process
             if (!isIntrinsic && uncookedArchiveName == "")
             {
                 return 0;
@@ -440,7 +458,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             else if (uncookedArchiveName == FileName && !isIntrinsic)
             {
                 // This object is going to end up in our exports; check if it's already in here
-                FExportTableEntry destExportEntry = GetExportTableEntry(fullObjectPath);
+                FExportTableEntry destExportEntry = GetExportTableEntry(fullObjectPath, sourceTableEntry);
 
                 if (destExportEntry != null)
                 {
@@ -448,16 +466,21 @@ namespace XCOM_Uncooker.Unreal.Physical
                 }
 
                 // Don't add export table entries for this package
-                if (sourceTableEntry.ObjectName == FileName)
+                if (sourceTableEntry.ObjectName == FileName && sourceTableEntry.ClassName == "Package")
                 {
                     return 0;
                 }
 
                 // Get a cooked version of the object we're going to be exporting, and use that to determine
                 // our export table properties
-                UObject sourceExportObject = ParentLinker.GetCookedObjectByPath(fullObjectPath);
+                UObject sourceExportObject = ParentLinker.GetCookedObjectByPath(sourceTableEntry.FullObjectPath, sourceTableEntry);
 
                 FExportTableEntry sourceExportTable = sourceExportObject.ExportTableEntry;
+
+                if (sourceExportObject.ObjectName.ToString().StartsWith("WP_"))
+                {
+                    // Debugger.Break();
+                }
 
                 lock (this)
                 {
@@ -480,7 +503,8 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                     int exportIndex = ExportTable.Count + 1;
                     ExportTable.Add(destExportEntry);
-                    ExportTableByObjectPath[fullObjectPath] = destExportEntry;
+                    ExportTableByObjectPath.Add(fullObjectPath, destExportEntry);
+
                     return exportIndex;
                 }
             }
@@ -616,14 +640,18 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// Retrieves an exported object by its path, if it is in this archive. For archives which are being
         /// deserialized from disk, this shouldn't be called until after <see cref="SerializeBodyData"/> is called.
         /// </summary>
-        public UObject GetExportedObjectByPath(string path)
+        public UObject GetExportedObjectByPath(string path, FObjectTableEntry tableEntry)
         {
-            // Look for a top level object matching the first part of the path; there should only be one at most
-            ExportTableByObjectPath.TryGetValue(path, out FExportTableEntry exportEntry);
-            
-            if (exportEntry != null)
+            // Look for top level objects matching the first part of the path
+            if (ExportTableByObjectPath.TryGetValue(path, out var exportTableEntries))
             {
-                return exportEntry.ExportObject ?? LoadExport(exportEntry.TableEntryIndex);
+                for (int i = 0; i < exportTableEntries.Count; i++)
+                {
+                    if (exportTableEntries[i].ClassName == tableEntry.ClassName)
+                    {
+                        return exportTableEntries[i].ExportObject ?? LoadExport(exportTableEntries[i].TableEntryIndex);
+                    }
+                }
             }
 
             // Some objects are implicitly exported under the archive's name and don't have a top level UPackage to contain
@@ -631,7 +659,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             if (path.StartsWith(archivePathPrefix))
             {
                 path = path.Substring(archivePathPrefix.Length);
-                return GetExportedObjectByPath(path);
+                return GetExportedObjectByPath(path, tableEntry);
             }
 
             return null;
@@ -652,11 +680,22 @@ namespace XCOM_Uncooker.Unreal.Physical
         /// </summary>
         /// <param name="fullObjectPath"></param>
         /// <returns>The table entry if found, or null otherwise.</returns>
-        public FExportTableEntry GetExportTableEntry(string fullObjectPath)
+        public FExportTableEntry GetExportTableEntry(string fullObjectPath, FObjectTableEntry tableEntry)
         {
-            if (ExportTableByObjectPath.TryGetValue(fullObjectPath, out var value))
+            if (fullObjectPath.StartsWith("Command1.TheWorld.PersistentLevel.XComFacilityVolume"))
             {
-                return value;
+                // Debugger.Break();
+            }
+
+            if (ExportTableByObjectPath.TryGetValue(fullObjectPath, out var exportEntries))
+            {
+                for (int i = 0; i < exportEntries.Count; i++)
+                {
+                    if (exportEntries[i].ClassName == tableEntry.ClassName)
+                    {
+                        return exportEntries[i];
+                    }
+                }
             }
 
             return null;
@@ -718,7 +757,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             if (index < 0)
             {
                 int importTableIndex = -1 * (index + 1);
-                return ParentLinker.GetCookedObjectByPath(ImportTable[importTableIndex].FullObjectPath);
+                return ParentLinker.GetCookedObjectByPath(ImportTable[importTableIndex].FullObjectPath, ImportTable[importTableIndex]);
             }
 
             int exportTableIndex = index - 1;
@@ -803,16 +842,23 @@ namespace XCOM_Uncooker.Unreal.Physical
                 case "Core.ClassProperty":
                 case "Core.ComponentProperty":
                 case "Core.Const":
+                case "Core.DelegateProperty":
                 case "Core.Enum":
+                case "Core.Field":
                 case "Core.FloatProperty":
                 case "Core.Function":
                 case "Core.InterfaceProperty":
                 case "Core.IntProperty":
+                case "Core.MapProperty":
                 case "Core.NameProperty":
                 case "Core.ObjectProperty":
+                case "Core.RotatorProperty":
                 case "Core.ScriptStruct":
+                case "Core.State":
                 case "Core.StrProperty":
+                case "Core.Struct":
                 case "Core.StructProperty":
+                case "Core.VectorProperty":
 
                 // Miscellaneous
                 case "Core.MetaData":
@@ -820,15 +866,18 @@ namespace XCOM_Uncooker.Unreal.Physical
                 case "Core.ObjectRedirector": // these should probably never show up in cooked packages
                 case "Core.System":
                 case "Core.TextBuffer":
+                case "Core.TextBufferFactory":
                 case "Engine.ActorChannel":
                 case "Engine.ChannelDownload":
                 case "Engine.ChildConnection":
+                case "Engine.Client":
                 case "Engine.CodecMovieBink":
                 case "Engine.ControlChannel":
                 case "Engine.FileChannel":
                 case "Engine.FracturedStaticMesh":
                 case "Engine.GuidCache":
                 case "Engine.Level":
+                case "Engine.LevelBase":
                 case "Engine.LightMapTexture2D":
                 case "Engine.Model":
                 case "Engine.PendingLevel":
@@ -844,9 +893,12 @@ namespace XCOM_Uncooker.Unreal.Physical
                 case "Engine.StaticMesh":
                 case "Engine.VoiceChannel":
                 case "Engine.World":
+                case "UnrealEd.OptionsProxy":
+                case "UnrealEd.TexAligner":
 
                 // Added in XCOM
                 case "UnrealEd.VisGroupActor":
+                case "XComGame.XComWorldDataContainer":
                     return true;
 
             }
@@ -1100,7 +1152,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 for (int i = 0; i < PackageFileSummary.ExportCount; i++)
                 {
-                    ExportTableByObjectPath[ExportTable[i].FullObjectPath] = ExportTable[i];
+                    ExportTableByObjectPath.Add(ExportTable[i].FullObjectPath, ExportTable[i]);
                 }
             }
         }

@@ -34,9 +34,7 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
         {
             base.CloneFromOtherArchive(sourceObj);
 
-            var other = (XComWorldData) sourceObj;
-
-            WorldDataPtr = Archive.MapIndexFromSourceArchive(other.WorldDataPtr, other.Archive);
+            // Don't try to map the WorldDataPtr; it can't exist in an uncooked archive
         }
     }
 }

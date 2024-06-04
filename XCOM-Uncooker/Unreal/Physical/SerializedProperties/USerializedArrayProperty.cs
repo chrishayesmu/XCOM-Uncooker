@@ -23,8 +23,6 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 
         public override void Serialize(IUnrealDataStream stream)
         {
-            UProperty innerProp = (BackingProperty as UArrayProperty).Inner;
-            
             stream.Int32(ref NumElements);
 
             if (stream.IsRead)
@@ -32,10 +30,12 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
                 Data = new USerializedProperty[NumElements];
             }
 
+            // TODO this is horribly inefficient for large byte arrays
             for (int i = 0; i < NumElements; i++)
             {
                 if (stream.IsRead)
                 {
+                    UProperty innerProp = (BackingProperty as UArrayProperty).Inner;
                     Data[i] = innerProp.CreateSerializedProperty(Archive, null);
                 }
 

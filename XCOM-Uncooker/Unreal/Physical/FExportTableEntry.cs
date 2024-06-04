@@ -86,7 +86,9 @@ namespace XCOM_Uncooker.Unreal.Physical
         public Guid PackageGuid;
         public PackageFlag PackageFlags;
 
-        public override FName ClassName => IsClass ? ObjectName : Archive.GetObjectTableEntry(ClassIndex).ObjectName;
+        // TODO: this ClassName definition conflicts with the one in FImportTableEntry and is causing problems
+        // TODO: I don't feel good about the GetOrCreateName call during read deserialization
+        public override FName ClassName => IsClass ? Archive.GetOrCreateName("Class") : Archive.GetObjectTableEntry(ClassIndex).ObjectName;
 
         public override bool IsClass => ClassIndex == 0;
 
