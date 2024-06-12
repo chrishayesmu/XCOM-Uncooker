@@ -50,12 +50,12 @@ namespace XCOM_Uncooker
 
 #if false
             Log.Info("Attempting to read global shader cache..");
-            var globalShaderStream = new UnrealDataReader( File.Open(Path.Combine(folderPath, "GlobalShaderCache-PC-D3D-SM3.bin"), FileMode.Open, FileAccess.Read));
+            var globalShaderStream = new UnrealDataReader(File.Open(Path.Combine(folderPath, "GlobalShaderCache-PC-D3D-SM3.bin"), FileMode.Open, FileAccess.Read));
             var globalShaderFile = new GlobalShaderFile(globalShaderStream);
             Log.Info("Done reading global shader cache.");
 
             // TODO copy data to local shader cache file
-            var localShaderStream = new UnrealDataWriter( File.Open(Path.Combine(folderPath, "LocalShaderCache-PC-D3D-SM3.upk"), FileMode.Open, FileAccess.Write));
+            var localShaderStream = new UnrealDataWriter(File.Open(Path.Combine(folderPath, "LocalShaderCache-PC-D3D-SM3.upk"), FileMode.Open, FileAccess.Write));
             var localShaderArchive = new FArchive("LocalShaderCache-PC-D3D-SM3", null);
 
             // Write the local shader archive to disk
@@ -65,6 +65,66 @@ namespace XCOM_Uncooker
             localShaderStream.Seek(0, SeekOrigin.Begin);
             localShaderArchive.SerializeHeaderData();
             localShaderArchive.EndSerialization();
+#endif
+
+#if true
+            Log.Info("Attempting to read ref shader cache..");
+            var refShaderStream = new UnrealDataReader(File.Open(Path.Combine(folderPath, "RefShaderCache-PC-D3D-SM3.upk"), FileMode.Open, FileAccess.Read));
+            var refShaderArchive = new FArchive("RefShaderCache-PC-D3D-SM3", null);
+
+            refShaderArchive.BeginSerialization(refShaderStream);
+            refShaderArchive.SerializeHeaderData();
+            refShaderArchive.SerializeBodyData(null);
+            refShaderArchive.EndSerialization();
+
+            var localShaderStream = new UnrealDataReader(File.Open(Path.Combine(folderPath, "LocalShaderCache-PC-D3D-SM3.upk"), FileMode.Open, FileAccess.Read));
+            var localShaderArchive = new FArchive("LocalShaderCache-PC-D3D-SM3", null);
+
+            localShaderArchive.BeginSerialization(localShaderStream);
+            localShaderArchive.SerializeHeaderData();
+            localShaderArchive.SerializeBodyData(null);
+            localShaderArchive.EndSerialization();
+
+            var refShaderCache = refShaderArchive.ExportedObjects[0] as UShaderCache;
+            var localShaderCache = localShaderArchive.ExportedObjects[0] as UShaderCache;
+
+            /*
+            FShaderCacheEntry defaultValue = default;
+            var unmatchedEntries = new List<FShaderCacheEntry>();
+            var matchedEntries = new List<FShaderCacheEntry>();
+            var sameHashEntries = new List<FShaderCacheEntry>();
+            var differentHashEntries = new List<FShaderCacheEntry>();
+
+            foreach (var entry in refShaderCache.ShaderCache.CacheEntries)
+            {
+                var matchingEntry = localShaderCache.ShaderCache.CacheEntries.FirstOrDefault(ent => ent.ShaderId == entry.ShaderId, defaultValue);
+
+                if (matchingEntry.ShaderId == defaultValue.ShaderId)
+                {
+                    unmatchedEntries.Add(entry);
+                    continue;
+                }
+
+                matchedEntries.Add(entry);
+            } */
+
+            Log.Info("Done reading ref shader cache.");
+
+            Log.Info("Attempting to write modified shader cache..");
+
+            // Normally you can't just turn an archive around and serialize it back out,
+            // but the RefShaderCache is a single export object that we're only changing
+            // native data in, so we can get away with this hack.
+            var refShaderStreamWrite = new UnrealDataWriter(File.Open(Path.Combine("archives", "RefShaderCache-PC-D3D-SM3.upk"), FileMode.Create));
+
+            refShaderArchive.BeginSerialization(refShaderStreamWrite);
+            refShaderArchive.SerializeHeaderData();
+            refShaderArchive.SerializeBodyData(null);
+            refShaderStreamWrite.Seek(0, SeekOrigin.Begin);
+            refShaderArchive.SerializeHeaderData();
+            refShaderArchive.EndSerialization();
+
+            Log.Info("Done writing modified ref shader cache.");
 #endif
 
             Log.Info("Attempting to load game archives..");
@@ -95,7 +155,7 @@ namespace XCOM_Uncooker
                 return false;
             }
 
-            // Zero interest in reversing this, and no need either
+            // We handle the ref shader cache in a separate way from other files
             if (fileName.Contains("RefShaderCache"))
             {
                 return false;

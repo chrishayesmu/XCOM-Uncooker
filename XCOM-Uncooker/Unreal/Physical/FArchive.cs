@@ -190,6 +190,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         public void EndSerialization()
         {
             _stream.Dispose();
+            _stream = null;
         }
 
         public void SerializeHeaderData()
@@ -757,7 +758,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             if (index < 0)
             {
                 int importTableIndex = -1 * (index + 1);
-                return ParentLinker.GetCookedObjectByPath(ImportTable[importTableIndex].FullObjectPath, ImportTable[importTableIndex]);
+                return ParentLinker?.GetCookedObjectByPath(ImportTable[importTableIndex].FullObjectPath, ImportTable[importTableIndex]);
             }
 
             int exportTableIndex = index - 1;
@@ -1112,7 +1113,8 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 Log.Warning($"Archive {FileName} is compressed!");
                 _stream.Dispose();
-                return;
+                _stream = null;
+                throw new Exception($"Archive {FileName} is compressed!");
             }
 
             _stream.UInt32(ref PackageFileSummary.PackageSource);

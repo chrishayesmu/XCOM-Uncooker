@@ -9,6 +9,79 @@ using XCOM_Uncooker.Unreal.Physical;
 
 namespace XCOM_Uncooker.Unreal.Shaders
 {
+    public struct FShader : IUnrealSerializable
+    {
+        public FShader() { }
+
+        #region Serialized data
+
+        public byte TargetPlatform;
+        
+        public byte TargetFrequency;
+
+        public byte[] Code;
+
+        public uint ParameterMapCRC;
+        
+        public uint Unknown;
+
+        public Guid Id;
+
+        public FShaderType Type;
+
+        public byte[] Hash = new byte[20]; // fixed size
+
+        public uint NumInstructions;
+
+        #endregion
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.UInt8(ref TargetPlatform);
+            stream.UInt8(ref TargetFrequency);
+            stream.ByteArray(ref Code);
+
+            if (stream.IsRead && stream.Archive.FileName.StartsWith("RefShaderCache"))
+            {
+                stream.UInt32(ref Unknown);
+            }
+
+            stream.UInt32(ref ParameterMapCRC);
+            stream.Guid(ref Id);
+            stream.Object(ref Type);
+            stream.Bytes(ref Hash, 20);
+            stream.UInt32(ref NumInstructions);
+        }
+    }
+
+    // This is FShader when serialized with operator<<
+    public struct FShaderMetadata : IUnrealSerializable
+    {
+        #region Serialized data
+
+        public Guid ShaderId;
+
+        public FShaderType ShaderType;
+
+        #endregion
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.Guid(ref ShaderId);
+            stream.Object(ref ShaderType);
+        }
+    }
+
     public struct FShaderType : IUnrealSerializable
     {
         #region Serialized data
@@ -25,12 +98,13 @@ namespace XCOM_Uncooker.Unreal.Shaders
         {
             var other = (FShaderType) sourceObj;
 
-            Name = destArchive.GetOrCreateName(other.NameAsString);
+            Name = other.Name is not null ? destArchive.MapNameFromSourceArchive(other.Name) : destArchive.GetOrCreateName(other.NameAsString);
+            NameAsString = Name.ToString();
         }
 
         public void Serialize(IUnrealDataStream stream)
         {
-            if (stream.IsRead)
+            if (stream.Archive.FileName.StartsWith("GlobalShaderCache"))
             {
                 stream.String(ref NameAsString);
             }
@@ -82,6 +156,10 @@ namespace XCOM_Uncooker.Unreal.Shaders
 
         public int SkipOffset; // offset of the following shader
 
+        public ushort[] Serializations;
+
+        public FShader Shader;
+
         public byte[] ShaderData;
 
         #endregion
@@ -96,6 +174,22 @@ namespace XCOM_Uncooker.Unreal.Shaders
             ShaderId = other.ShaderId;
             SavedHash = other.SavedHash;
             SkipOffset = other.SkipOffset;
+
+            // Copy the serializations, but skip index 4 because it's for a value we aren't serializing out
+            Serializations = new ushort[other.Serializations.Length - 1];
+            Serializations[0] = other.Serializations[0];
+            Serializations[1] = other.Serializations[1];
+            Serializations[2] = other.Serializations[2];
+            Serializations[3] = other.Serializations[3];
+
+            for (int i = 4; i < Serializations.Length; i++)
+            {
+                Serializations[i] = other.Serializations[i + 1];
+            }
+
+            Shader = new FShader();
+            Shader.CloneFromOtherArchive(other.Shader, sourceArchive, destArchive);
+
             ShaderData = other.ShaderData;
         }
 
@@ -104,7 +198,32 @@ namespace XCOM_Uncooker.Unreal.Shaders
             stream.Object(ref ShaderType);
             stream.Guid(ref ShaderId);
             stream.Bytes(ref SavedHash, 20);
+
+            long skipOffsetPosition = stream.Position;
             stream.Int32(ref SkipOffset);
+
+            if (stream.IsRead)
+            {
+                stream.UInt16Array(ref Serializations);
+            }
+            else
+            {
+                // We need to skip one index in this array when writing out
+                int newLength = Serializations.Length - 1;
+                stream.Int32(ref newLength);
+
+                for (int i = 0; i < Serializations.Length; i++)
+                {
+                    if (i == 4)
+                    {
+                        continue;
+                    }
+
+                    stream.UInt16(ref Serializations[i]);
+                }
+            }
+
+            stream.Object(ref Shader);
 
             if (stream.IsRead)
             {
@@ -114,6 +233,13 @@ namespace XCOM_Uncooker.Unreal.Shaders
             else
             {
                 stream.Bytes(ref ShaderData, ShaderData.Length);
+
+                // Go back and overwrite the skipOffset
+                int endPosition = (int) stream.Position;
+
+                stream.Seek(skipOffsetPosition, SeekOrigin.Begin);
+                stream.Int32(ref endPosition);
+                stream.Seek(endPosition, SeekOrigin.Begin);
             }
         }
     }
@@ -124,7 +250,7 @@ namespace XCOM_Uncooker.Unreal.Shaders
 
         public byte Platform;
 
-        public uint Dummy; // would be a map size, but the map is never populated
+        public uint DummyCompressedCache; // would be a map size, but the map is never populated
 
         public FShaderCacheEntry[] CacheEntries;
 
@@ -135,7 +261,7 @@ namespace XCOM_Uncooker.Unreal.Shaders
             var other = (FShaderCache) sourceObj;
 
             Platform = other.Platform;
-            Dummy = other.Dummy;
+            DummyCompressedCache = other.DummyCompressedCache;
             CacheEntries = new FShaderCacheEntry[other.CacheEntries.Length];
 
             for (int i = 0; i < CacheEntries.Length; i++)
@@ -148,10 +274,10 @@ namespace XCOM_Uncooker.Unreal.Shaders
         public void Serialize(IUnrealDataStream stream)
         {
             stream.UInt8(ref Platform);
-            stream.UInt32(ref Dummy);
+            stream.UInt32(ref DummyCompressedCache);
 
 #if DEBUG
-            if (Dummy != 0)
+            if (DummyCompressedCache != 0)
             {
                 Debugger.Break();
             }

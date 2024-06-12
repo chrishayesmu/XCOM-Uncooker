@@ -87,6 +87,30 @@ namespace XCOM_Uncooker.Unreal.Physical
         }
     }
 
+    [FixedSize(16)]
+    public struct FLinearColor : IUnrealSerializable
+    {
+        public float R, G, B, A;
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.Float32(ref R);
+            stream.Float32(ref G);
+            stream.Float32(ref B);
+            stream.Float32(ref A);
+        }
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FLinearColor) sourceObj;
+
+            R = other.R;
+            G = other.G;
+            B = other.B;
+            A = other.A;
+        }
+    }
+
     [FixedSize(12)]
     public struct FGenerationInfo : IUnrealSerializable
     {

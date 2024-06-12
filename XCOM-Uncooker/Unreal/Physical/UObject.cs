@@ -21,6 +21,7 @@ using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom;
 using XCOM_Uncooker.Unreal.Physical.SerializedProperties;
+using XCOM_Uncooker.Unreal.Shaders;
 
 namespace XCOM_Uncooker.Unreal.Physical
 {
@@ -84,6 +85,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "PrefabInstance",                    (archive, tableEntry) => new APrefabInstance(archive, tableEntry) },
             { "RB_BodySetup",                      (archive, tableEntry) => new URB_BodySetup(archive, tableEntry) },
             { "SeqAct_Interp",                     (archive, tableEntry) => new USeqAct_Interp(archive, tableEntry) },
+            { "ShaderCache",                       (archive, tableEntry) => new UShaderCache(archive, tableEntry) },
             { "ShadowMap1D",                       (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
             { "ShadowMapTexture2D",                (archive, tableEntry) => new UTexture2D(archive, tableEntry) },
             { "SkeletalMesh",                      (archive, tableEntry) => new USkeletalMesh(archive, tableEntry) },
