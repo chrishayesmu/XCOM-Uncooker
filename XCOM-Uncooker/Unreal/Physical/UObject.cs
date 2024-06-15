@@ -84,6 +84,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "PrefabInstance",                    (archive, tableEntry) => new APrefabInstance(archive, tableEntry) },
             { "RB_BodySetup",                      (archive, tableEntry) => new URB_BodySetup(archive, tableEntry) },
             { "SeqAct_Interp",                     (archive, tableEntry) => new USeqAct_Interp(archive, tableEntry) },
+            { "Sequence",                          (archive, tableEntry) => new USequence(archive, tableEntry) },
             { "ShadowMap1D",                       (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
             { "ShadowMapTexture2D",                (archive, tableEntry) => new UTexture2D(archive, tableEntry) },
             { "SkeletalMesh",                      (archive, tableEntry) => new USkeletalMesh(archive, tableEntry) },
@@ -232,6 +233,15 @@ namespace XCOM_Uncooker.Unreal.Physical
                 var propCopy = sourceObj.SerializedProperties[i].CloneToOtherArchive(Archive);
                 SerializedProperties.Add(propCopy);
             }
+        }
+
+        /// <summary>
+        /// Called after an entire archive has been cloned. This is called on objects in the newly cloned archive,
+        /// not the source archive. Objects can use this if they need to do any post-processing before the archive
+        /// is serialized back to disk.
+        /// </summary>
+        public virtual void PostArchiveCloneComplete()
+        {
         }
 
         /// <summary>

@@ -163,6 +163,26 @@ namespace XCOM_Uncooker.Unreal.Physical
             DllBindName = Archive.MapNameFromSourceArchive(other.DllBindName);
             ClassDefaultObject = Archive.MapIndexFromSourceArchive(other.ClassDefaultObject, other.Archive);
         }
+
+        /// <summary>
+        /// Checks whether this UClass is a child class of the class with the given name (or is that same class).
+        /// </summary>
+        public bool IsChildClassOf(string className)
+        {
+            var classObj = this;
+
+            while (classObj != null)
+            {
+                if (classObj.ObjectName == className)
+                {
+                    return true;
+                }
+
+                classObj = classObj.SuperField as UClass;
+            }
+
+            return false;
+        }
     }
 
 }

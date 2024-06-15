@@ -320,7 +320,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                                                                                     UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
                 destObj.CloneFromOtherArchive(sourceObj);
                 ExportedObjects[destTableEntry.TableEntryIndex] = destObj;
-                DependsMap.Add(new int[0]);
+                DependsMap.Add(Array.Empty<int>());
             }
         }
 

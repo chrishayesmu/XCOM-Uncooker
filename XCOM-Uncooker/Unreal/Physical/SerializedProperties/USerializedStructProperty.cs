@@ -40,5 +40,18 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 
             return other;
         }
+
+        public USerializedProperty GetSerializedProperty(string propName)
+        {
+            foreach (var prop in TaggedProperties)
+            {
+                if (prop.Tag?.Name == propName)
+                {
+                    return prop;
+                }
+            }
+
+            return null;
+        }
     }
 }
