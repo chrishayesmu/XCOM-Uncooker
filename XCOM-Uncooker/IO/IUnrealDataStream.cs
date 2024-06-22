@@ -119,6 +119,8 @@ namespace XCOM_Uncooker.IO
 
         public void Map(ref IDictionary<FName, int> map);
 
+        public void Map(ref IDictionary<FName, Guid> map);
+
         public void Map<T>(ref IDictionary<int, T[]> map) where T : IUnrealSerializable, new();
 
         public void Map<T>(ref IDictionary<int, T> map) where T : IUnrealSerializable, new();

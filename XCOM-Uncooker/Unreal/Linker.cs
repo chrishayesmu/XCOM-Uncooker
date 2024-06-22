@@ -26,7 +26,7 @@ namespace XCOM_Uncooker.Unreal
 
         public static readonly List<string> NeverUncook = [ "Core", "Engine", "GameFramework", "GFxUI", "GFxUIEditor", "IpDrv", "OnlineSubsystemSteamworks", "XComGame", "XComStrategyGame", "XComUIShell" ];
 
-        public FArchive[] InputArchives;
+        public List<FArchive> InputArchives;
         public FArchive[] OutputArchives;
 
         public IDictionary<string, MultiValueDictionary<string, UObject>> ObjectsByUncookedArchiveName;
@@ -40,13 +40,13 @@ namespace XCOM_Uncooker.Unreal
         {
             var validPaths = filePaths.Where(path => Path.Exists(path) && !FilesToSkip.Contains(Path.GetFileName(path))).ToList();
 
-            InputArchives = new FArchive[validPaths.Count];
+            InputArchives = new List<FArchive>(validPaths.Count);
 
             int numArchivesCompleted = 0, numSucceeded = 0, numFailed = 0;
 
             #region Deserialize archive headers
 
-            Log.Info($"Attempting to read archive headers for {InputArchives.Length} archives..");
+            Log.Info($"Attempting to read archive headers for {validPaths.Count} archives..");
 
             ProgressBar headerProgressBar = new ProgressBar("Reading headers");
             Log.DisplayProgressBar(headerProgressBar);
@@ -55,11 +55,12 @@ namespace XCOM_Uncooker.Unreal
             for (int i = 0; i < validPaths.Count; i++) 
             {
                 var stream = new UnrealDataReader( File.Open(validPaths[i], FileMode.Open, FileAccess.Read));
-                InputArchives[i] = new FArchive(Path.GetFileNameWithoutExtension(validPaths[i]), this);
+                InputArchives.Add(new FArchive(Path.GetFileNameWithoutExtension(validPaths[i]), this));
                 InputArchives[i].BeginSerialization(stream);
             }
 
             numArchivesCompleted = 0;
+            var compressedArchives = new ConcurrentQueue<FArchive>();
 
             Parallel.ForEach(InputArchives, (archive) =>
             {
@@ -67,8 +68,12 @@ namespace XCOM_Uncooker.Unreal
                 {
                     archive.SerializeHeaderData();
                     Interlocked.Increment(ref numSucceeded);
-                    headerProgressBar.Update("", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Length);
+                    headerProgressBar.Update("", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Count);
 
+                    if (archive.IsBodyCompressed || archive.IsFullyCompressed)
+                    {
+                        compressedArchives.Enqueue(archive);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -78,9 +83,52 @@ namespace XCOM_Uncooker.Unreal
                 }
             });
 
-            headerProgressBar.Update("complete", InputArchives.Length, InputArchives.Length);
+            headerProgressBar.Update("complete", InputArchives.Count, InputArchives.Count);
             Log.RemoveProgressBar(headerProgressBar);
             Log.Info($"Done parsing archive headers. {numSucceeded} succeeded and {numFailed} failed.");
+
+            if (!compressedArchives.IsEmpty)
+            {
+                Log.Info($"{compressedArchives.Count} archives are compressed. Decompressed versions will be copied to a temporary directory:");
+                Log.Info($"        {Program.TempDirectory.FullName}");
+
+                ProgressBar decompressionProgressBar = new ProgressBar("Decompressing files");
+                Log.DisplayProgressBar(decompressionProgressBar);
+
+                numArchivesCompleted = 0;
+                var decompressedArchives = new ConcurrentQueue<FArchive>();
+
+                Parallel.ForEach(compressedArchives, new ParallelOptions() { MaxDegreeOfParallelism = 4 }, (archive) =>
+                {
+                    string archivePath = Path.Combine(Program.TempDirectory.FullName, archive.FileName + ".upk");
+                    
+                    using (UnrealDataWriter tempFileStream = new UnrealDataWriter(File.Open(archivePath, FileMode.Create)))
+                    {
+                        archive.DecompressToStream(tempFileStream);
+                        archive.EndSerialization();
+                    }
+
+                    // Create a new archive and catch it up to where any previous archives are. Replace the previous stream
+                    // with a read-only one, because having a write stream open will interfere with cleaning up the temp directory.
+                    var fileStream = File.Open(archivePath, FileMode.Open, FileAccess.Read);
+                    var decompressedArchive = new FArchive(archive.FileName, this);
+                    decompressedArchive.BeginSerialization(new UnrealDataReader(fileStream));
+                    decompressedArchive.SerializeHeaderData();
+
+                    decompressedArchives.Enqueue(decompressedArchive);
+
+                    decompressionProgressBar.Update("Files processed", Interlocked.Increment(ref numArchivesCompleted), compressedArchives.Count);
+                });
+
+                InputArchives.RemoveAll(archive => compressedArchives.Contains(archive));
+                InputArchives.AddRange(decompressedArchives);
+
+                // We don't need the compressed archives anymore, make them eligible for GC
+                compressedArchives = null;
+
+                decompressionProgressBar.Update("Files processed", compressedArchives.Count, compressedArchives.Count);
+                Log.RemoveProgressBar(decompressionProgressBar);
+            }
 
             #endregion
 
@@ -102,10 +150,10 @@ namespace XCOM_Uncooker.Unreal
 
                 archive.SerializeClassExports();
 
-                classDeserializationProgressBar.Update(archive.FileName, Interlocked.Increment(ref numArchivesCompleted), InputArchives.Length);
+                classDeserializationProgressBar.Update(archive.FileName, Interlocked.Increment(ref numArchivesCompleted), InputArchives.Count);
             });
 
-            classDeserializationProgressBar.Update("complete", InputArchives.Length, InputArchives.Length);
+            classDeserializationProgressBar.Update("complete", InputArchives.Count, InputArchives.Count);
             Log.RemoveProgressBar(classDeserializationProgressBar);
             Log.Info("Deserialization of exported classes is complete.");
 
@@ -122,7 +170,7 @@ namespace XCOM_Uncooker.Unreal
             };
             
             Log.DisplayProgressBar(exportDeserializationProgressBar);
-            exportDeserializationProgressBar.Update("Packages processed", 0, InputArchives.Length);
+            exportDeserializationProgressBar.Update("Packages processed", 0, InputArchives.Count);
 
             numArchivesCompleted = 0;
 
@@ -137,7 +185,7 @@ namespace XCOM_Uncooker.Unreal
                 archive.SerializeBodyData(progressBar);
 
                 ParallelProgressBars.Enqueue(progressBar); // put the bar back in the pool for re-use
-                exportDeserializationProgressBar.Update("Packages processed", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Length);
+                exportDeserializationProgressBar.Update("Packages processed", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Count);
             });
 
             // End serialization after all archives are done, due to some threading issues I'm too lazy to fix
@@ -146,7 +194,7 @@ namespace XCOM_Uncooker.Unreal
                 archive.EndSerialization();
             }
 
-            exportDeserializationProgressBar.Update("Packages processed", InputArchives.Length, InputArchives.Length);
+            exportDeserializationProgressBar.Update("Packages processed", InputArchives.Count, InputArchives.Count);
 
             while (ParallelProgressBars.TryDequeue(out ProgressBar progressBar))
             {
@@ -175,6 +223,11 @@ namespace XCOM_Uncooker.Unreal
         /// </remarks>
         public UObject GetCookedObjectByPath(string fullObjectPath, FObjectTableEntry tableEntry = null)
         {
+            if (fullObjectPath == "Engine.OnlineSubsystem.UniqueNetId.Uid")
+            {
+                Debugger.Break();
+            }
+
             foreach (var archive in InputArchives)
             {
                 var obj = archive.GetExportedObjectByPath(fullObjectPath, tableEntry);
@@ -324,6 +377,7 @@ namespace XCOM_Uncooker.Unreal
                 });
             }
 
+#if false
             using (var writer = new StreamWriter("packages-and-guids.csv"))
             {
                 writer.WriteLine("Package Name,Normalized Name,GUID");
@@ -336,6 +390,7 @@ namespace XCOM_Uncooker.Unreal
                     }
                 }
             }
+#endif
 
             Log.Info($"Found {allPackages.Count} distinct top level packages.");
 

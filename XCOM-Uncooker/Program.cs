@@ -10,6 +10,10 @@ namespace XCOM_Uncooker
     {
         private static readonly Logger Log = new Logger("XCOM Uncooker");
 
+        // Temp directory which will contain uncompressed versions of compressed archives, if needed.
+        // The main Program.cs is responsible for deleting this when the process exits.
+        public static readonly DirectoryInfo TempDirectory = Directory.CreateTempSubdirectory("XComUncooker_");
+
         static int Main(string[] args)
         {
             Logger.MinLevel = LogLevel.Info;
@@ -23,6 +27,27 @@ namespace XCOM_Uncooker
 
             Console.CursorVisible = false;
 
+            try
+            {
+                Execute(args);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Exception occurred while executing: ${e}");
+                return -1;
+            }
+            finally
+            {
+                // Always try our best to clean up the temp directory, because it's probably full of decompressed
+                // versions of UPK files, meaning it's many gigabytes in size
+                Directory.Delete(TempDirectory.FullName, true);
+            }
+
+            return 0;
+        }
+
+        private static void Execute(string[] args) 
+        {
             var filePaths = new List<string>();
 
             foreach (string arg in args)
@@ -41,7 +66,7 @@ namespace XCOM_Uncooker
                 else
                 {
                     Log.Error($"Argument '{arg}' does not appear to be a path to a file or directory!");
-                    return -1;
+                    return;
                 }
             }
 
@@ -81,8 +106,6 @@ namespace XCOM_Uncooker
             linker.RegisterTextureFileCache("Textures_startup", Path.Combine(folderPath, "Textures_startup.tfc"));
             linker.UncookArchives();
             Log.Info("Uncooking process is complete.");
-
-            return 0;
         }
 
         private static bool IsSupportedFile(string path)
@@ -95,8 +118,7 @@ namespace XCOM_Uncooker
                 return false;
             }
 
-            // Zero interest in reversing this, and no need either
-            if (fileName.Contains("RefShaderCache"))
+            if (fileName.Contains("ShaderCache") || fileName.Contains("GlobalPersistentCookerData"))
             {
                 return false;
             }

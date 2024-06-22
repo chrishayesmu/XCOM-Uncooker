@@ -504,6 +504,24 @@ namespace XCOM_Uncooker.IO
             }
         }
 
+        public void Map(ref IDictionary<FName, Guid> map)
+        {
+            int numEntries = 0;
+            Int32(ref numEntries);
+
+            map = new Dictionary<FName, Guid>(numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                FName name = default;
+                Guid value = default;
+                Name(ref name);
+                Guid(ref value);
+
+                map.Add(name, value);
+            }
+        }
+
         public void Map<T>(ref IDictionary<int, T[]> map) where T : IUnrealSerializable, new()
         {
             map = new Dictionary<int, T[]>();

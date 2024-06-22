@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using XCOM_Uncooker.IO;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core;
 using XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties;
+using XCOM_Uncooker.Unreal.Physical.Intrinsic.Engine;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Anims;
@@ -69,6 +70,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "Font",                              (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
             { "FracturedStaticMesh"         ,      (archive, tableEntry) => new UFracturedStaticMesh(archive, tableEntry) },
             { "FracturedStaticMeshComponent",      (archive, tableEntry) => new UStaticMeshComponent(archive, tableEntry) },
+            { "GuidCache",                         (archive, tableEntry) => new UGuidCache(archive, tableEntry) },
             { "ImageBasedReflectionComponent",     (archive, tableEntry) => new UStaticMeshComponent(archive, tableEntry) },
             { "InstancedStaticMeshComponent",      (archive, tableEntry) => new UInstancedStaticMeshComponent(archive, tableEntry) },
             { "Level",                             (archive, tableEntry) => new ULevel(archive, tableEntry) },

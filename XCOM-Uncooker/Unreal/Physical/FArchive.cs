@@ -55,6 +55,41 @@ namespace XCOM_Uncooker.Unreal.Physical
         StoreFullyCompressed = 0x04000000,
         ContainsInlinedShaders = 0x08000000,
         ContainsFaceFXData = 0x10000000,
+        NoExportAllowed = 0x20000000,
+        StrippedSource = 0x40000000,
+    }
+
+    public struct FCompressedChunk : IUnrealSerializable
+    {
+        #region Serialized data
+
+        public int UncompressedOffset;
+
+        public int UncompressedSize;
+
+        public int CompressedOffset;
+
+        public int CompressedSize;
+
+        #endregion
+
+        public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+            var other = (FCompressedChunk) sourceObj;
+
+            UncompressedOffset = other.UncompressedOffset;
+            UncompressedSize = other.UncompressedSize;
+            CompressedOffset = other.CompressedOffset;
+            CompressedSize = other.CompressedSize;
+        }
+
+        public void Serialize(IUnrealDataStream stream)
+        {
+            stream.Int32(ref UncompressedOffset);
+            stream.Int32(ref UncompressedSize);
+            stream.Int32(ref CompressedOffset);
+            stream.Int32(ref CompressedSize);
+        }
     }
 
     /// <summary>
@@ -105,7 +140,7 @@ namespace XCOM_Uncooker.Unreal.Physical
         #endregion
 
         /// <summary>
-        /// The name of this archive's file on disk.
+        /// The name of this archive's file on disk. Does not include the extension.
         /// </summary>
         public string FileName { get;  set; } = fileName;
 
@@ -138,6 +173,19 @@ namespace XCOM_Uncooker.Unreal.Physical
         public bool HasDependsMap => PackageFileSummary.DependsOffset > 0;
 
         /// <summary>
+        /// Whether this archive's body is stored compressed on disk. If so, the <see cref="FPackageFileSummary"/> will have
+        /// details on how many compressed chunks there are and how they map to uncompresesd offsets into the archive.
+        /// </summary>
+        public bool IsBodyCompressed => PackageFileSummary.PackageFlags.HasFlag(PackageFlag.StoreCompressed);
+        
+        /// <summary>
+        /// Whether this archive is fully compressed on disk; that is, the archive was written once to disk uncompressed,
+        /// and then the entire archive was compressed (as opposed to only the archive's body, which would leave the header
+        /// uncompressed and readable).
+        /// </summary>
+        public bool IsFullyCompressed => PackageFileSummary.PackageFlags.HasFlag(PackageFlag.StoreFullyCompressed);
+
+        /// <summary>
         /// Whether this is a map package. Map packages are seekfree.
         /// </summary>
         public bool IsMap => PackageFileSummary.PackageFlags.HasFlag(PackageFlag.ContainsMap);
@@ -154,13 +202,13 @@ namespace XCOM_Uncooker.Unreal.Physical
         private MultiValueDictionary<string, FExportTableEntry> ExportTableByObjectPath = new MultiValueDictionary<string, FExportTableEntry>();
         private IUnrealDataStream _stream;
 
-        public void BeginSerialization(IUnrealDataStream stream)
+        public void BeginSerialization(IUnrealDataStream stream, bool forcePreserveData = false)
         {
             _stream = stream;
             _stream.Archive = this;
 
             // When we're about to save a brand new archive, we need to set some values that normally the editor would set
-            if (IsSaving)
+            if (IsSaving && !forcePreserveData)
             {
                 var generation = new FGenerationInfo();
 
@@ -198,7 +246,15 @@ namespace XCOM_Uncooker.Unreal.Physical
             // on the first pass, but we know that the header size won't change. Accordingly, we write the header once with
             // bad values, serialize all objects (while updating their metadata), then overwrite the header later.
 
-            SerializeFileSummary();
+            _stream.Object(ref PackageFileSummary);
+
+            // Although we could technically do on-the-fly decompression, it sounds like a real pain, so we just stop archive
+            // deserialization if it's compressed, then later it'll get decompressed into a separate file and start over from there.
+            if (IsBodyCompressed || IsFullyCompressed)
+            {
+                return;
+            }
+
             SerializeNameTable();
             SerializeImportTable();
             SerializeExportTable();
@@ -249,6 +305,44 @@ namespace XCOM_Uncooker.Unreal.Physical
                 if (ExportTable[i].IsClass)
                 {
                     LoadExport(i);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reads this archive's contents, decompresses them, and writes them the
+        /// uncompressed version to a different stream.
+        /// </summary>
+        /// <param name="outStream"></param>
+        public void DecompressToStream(IUnrealDataStream outStream)
+        {
+            if (IsFullyCompressed)
+            {
+                // A fully compressed archive means everything is one giant compressed block,
+                // from the first byte of the archive
+                _stream.Seek(0, SeekOrigin.Begin);
+                byte[] uncompressedData = _stream.CompressedData(ECompressionMethod.LZO);
+                outStream.Bytes(ref uncompressedData, uncompressedData.Length);
+            }
+            else if (IsBodyCompressed)
+            {
+                var compressedChunks = PackageFileSummary.CompressedChunks;
+
+                // Copy the file summary and strip any compression flags/indicators from it
+                var newFileSummary = new FPackageFileSummary();
+                newFileSummary.CloneFromOtherArchive(PackageFileSummary, this, outStream.Archive!);
+                newFileSummary.CompressedChunks = [];
+                newFileSummary.CompressionFlags = CompressionFlag.None;
+                newFileSummary.PackageFlags &= ~(PackageFlag.StoreCompressed | PackageFlag.StoreFullyCompressed);
+                newFileSummary.IsCopyingForDecompression = true;
+
+                outStream.Object(ref newFileSummary);
+
+                for (int i = 0; i < PackageFileSummary.CompressedChunks.Length; i++)
+                {
+                    _stream.Seek(PackageFileSummary.CompressedChunks[i].CompressedOffset, SeekOrigin.Begin);
+                    byte[] uncompressedData = _stream.CompressedData(ECompressionMethod.LZO);
+                    outStream.Bytes(ref uncompressedData, uncompressedData.Length);
                 }
             }
         }
@@ -1027,7 +1121,6 @@ namespace XCOM_Uncooker.Unreal.Physical
                 catch
                 {
                     numFailed++;
-                    break; // TODO remove
                 }
             }
 
@@ -1081,6 +1174,31 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             _stream.UInt16(ref PackageFileSummary.FileVersion);
             _stream.UInt16(ref PackageFileSummary.LicenseeVersion);
+
+            // If the file version doesn't match, either the UPK isn't from XCOM, or it's actually a fully-compressed
+            // file and we're reading compression metadata rather than the summary data. Check for the latter.
+            if (IsLoading && PackageFileSummary.FileVersion != 845)
+            {
+                _stream.Seek(4, SeekOrigin.Begin);
+
+                int chunkSize = 0, compressedSize = 0, uncompressedSize = 0;
+                _stream.Int32(ref chunkSize);
+                _stream.Int32(ref compressedSize);
+                _stream.Int32(ref uncompressedSize);
+
+                // The right thing to do would be to compare the actual file size with the one we'd expect based on
+                // the compression metadata, but I'm lazy and this basic sanity check will suffice for XCOM
+                if (chunkSize == 131072 && compressedSize < uncompressedSize)
+                {
+                    PackageFileSummary.PackageFlags &= PackageFlag.StoreFullyCompressed;
+                    return;
+                }
+                else
+                {
+                    throw new Exception($"Archive {FileName} has an invalid file version: {PackageFileSummary.FileVersion}");
+                }
+            }
+
             _stream.Int32(ref PackageFileSummary.HeaderSize);
             _stream.String(ref PackageFileSummary.FolderName);
             _stream.Enum32(ref PackageFileSummary.PackageFlags);
@@ -1105,16 +1223,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             _stream.Int32(ref PackageFileSummary.EngineVersion);
             _stream.Int32(ref PackageFileSummary.CookerVersion);
             _stream.Enum32(ref PackageFileSummary.CompressionFlags);
-            _stream.Int32(ref PackageFileSummary.NumCompressedChunks);
-
-            // We aren't going to do decompression, so just bail
-            if (PackageFileSummary.NumCompressedChunks != 0)
-            {
-                Log.Warning($"Archive {FileName} is compressed!");
-                _stream.Dispose();
-                return;
-            }
-
+            _stream.Array(ref PackageFileSummary.CompressedChunks);
             _stream.UInt32(ref PackageFileSummary.PackageSource);
             _stream.StringArray(ref PackageFileSummary.AdditionalPackagesToCook);
             _stream.Object(ref PackageFileSummary.TextureAllocations);

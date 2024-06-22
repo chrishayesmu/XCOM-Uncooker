@@ -360,6 +360,22 @@ namespace XCOM_Uncooker.IO
             }
         }
 
+        public void Map(ref IDictionary<FName, Guid> map)
+        {
+            int numEntries = 0;
+            Int32(ref numEntries);
+
+            for (int i = 0; i < numEntries; i++)
+            {
+                var entry = map.ElementAt(i);
+                var key = entry.Key;
+                var value = entry.Value;
+
+                Name(ref key);
+                Guid(ref value);
+            }
+        }
+
         public void Map<T>(ref IDictionary<int, T[]> map) where T : IUnrealSerializable, new()
         {
             int numEntries = 0;

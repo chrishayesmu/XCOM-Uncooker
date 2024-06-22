@@ -2,7 +2,7 @@
   "profiles": {
     "XCOM-Uncooker": {
       "commandName": "Project",
-      "commandLineArgs": "\"F:\\Chris\\XCOM LW modding\\UPKUtils\\Enemy Within UPKs\""
+      "commandLineArgs": "\"D:\\SteamLibrary\\steamapps\\common\\XCom-Enemy-Unknown - EW\\XEW\\XComGame\\CookedPCConsole\""
     }
   }
 }
