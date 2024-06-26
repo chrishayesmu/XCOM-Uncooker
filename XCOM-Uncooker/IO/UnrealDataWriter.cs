@@ -79,7 +79,7 @@ namespace XCOM_Uncooker.IO
 
         public void Array<T>(ref T[] data, UObject owner = null) where T : IUnrealSerializable, new()
         {
-            int arraySize = data.Length;
+            int arraySize = data?.Length ?? 0;
             Int32(ref arraySize);
 
             for (int i = 0; i < arraySize; i++)

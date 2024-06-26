@@ -2,7 +2,7 @@
   "profiles": {
     "XCOM-Uncooker": {
       "commandName": "Project",
-      "commandLineArgs": "\"D:\\SteamLibrary\\steamapps\\common\\XCom-Enemy-Unknown - EW\\XEW\\XComGame\\CookedPCConsole\""
+      "commandLineArgs": "\"C:\\Users\\Chris\\AppData\\Local\\Temp\\XComUncooker_2qbxf3u4.k3n\""
     }
   }
 }

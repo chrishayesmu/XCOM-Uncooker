@@ -42,5 +42,17 @@ namespace XCOM_Uncooker.Utils
                 Add(key, values);
             }
         }
+
+        public int CountWhere(Func<V, bool> predicate)
+        {
+            int count = 0;
+
+            foreach (var valueList in Values)
+            {
+                count += valueList.Where(predicate).Count();
+            }
+
+            return count;
+        }
     }
 }

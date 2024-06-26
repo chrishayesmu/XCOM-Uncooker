@@ -22,7 +22,7 @@ namespace XCOM_Uncooker.Unreal
 
         public static readonly List<string> FilesToSkip = [];
 
-        public static readonly List<string> UncookOnly = [ "DLC1_3_Gangplank", "DLC1_3_Gangplank_Stream" ];
+        public static readonly List<string> UncookOnly = [];
 
         public static readonly List<string> NeverUncook = [ "Core", "Engine", "GameFramework", "GFxUI", "GFxUIEditor", "IpDrv", "OnlineSubsystemSteamworks", "XComGame", "XComStrategyGame", "XComUIShell" ];
 
@@ -123,11 +123,13 @@ namespace XCOM_Uncooker.Unreal
                 InputArchives.RemoveAll(archive => compressedArchives.Contains(archive));
                 InputArchives.AddRange(decompressedArchives);
 
-                // We don't need the compressed archives anymore, make them eligible for GC
-                compressedArchives = null;
 
                 decompressionProgressBar.Update("Files processed", compressedArchives.Count, compressedArchives.Count);
                 Log.RemoveProgressBar(decompressionProgressBar);
+
+                // We don't need the compressed archives anymore, make them eligible for GC
+                compressedArchives = null;
+
             }
 
             #endregion
@@ -481,7 +483,11 @@ namespace XCOM_Uncooker.Unreal
 
             OutputArchives = new FArchive[ObjectsByUncookedArchiveName.Count];
             int outArchiveIndex = 0;
+            int totalNumObjects = numObjects;
             numObjects = 0;
+
+            ProgressBar uncookProgressBar = new ProgressBar("Objects uncooked");
+            Log.DisplayProgressBar(uncookProgressBar);
 
             Parallel.ForEach(ObjectsByUncookedArchiveName, new ParallelOptions { MaxDegreeOfParallelism = 100 }, (entry) =>
             {
@@ -512,7 +518,9 @@ namespace XCOM_Uncooker.Unreal
                 }
 
                 // TODO: the archive should be managing this state internally
-                outArchive.ExportedObjects = new UObject[entry.Value.NumValues];
+                // TODO: the top level UPackage is in objectsByName and it's screwing up the count
+                int exportCount = objectsByName.CountWhere(obj => obj is not UPackage || obj.ObjectName != outArchive.FileName);
+                outArchive.ExportedObjects = new UObject[exportCount];
 
                 if (UncookOnly.Count > 0 && !UncookOnly.Contains(outArchive.FileName))
                 {
@@ -530,11 +538,14 @@ namespace XCOM_Uncooker.Unreal
 
                         if (numObjects % 10000 == 0)
                         {
-                            Log.Info($"{numObjects} export objects added to uncooked archives..");
+                            uncookProgressBar.Update("", numObjects, totalNumObjects);
                         }
                     }
                 }
             });
+
+            uncookProgressBar.Update("", numObjects, numObjects);
+            Log.RemoveProgressBar(uncookProgressBar);
 
             Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
 

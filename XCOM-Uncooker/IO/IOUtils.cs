@@ -40,6 +40,15 @@ namespace XCOM_Uncooker.IO
 
         public static void DecompressLZO(byte[] data, int uncompressedSize, byte[] destBuffer, ref int destOffset)
         {
+#if false
+            var iron = new Iron();
+            
+            using (IronCompressResult uncompressedData = iron.Decompress(Codec.LZO, data, uncompressedSize))
+            {
+                var destSpan = new Span<byte>(destBuffer, destOffset, uncompressedSize);
+                uncompressedData.AsSpan().CopyTo(destSpan);
+            }
+#else
             var dataStream = new MemoryStream(data);
             var lzoStream = new LzoStream(dataStream, CompressionMode.Decompress);
 
@@ -60,6 +69,7 @@ namespace XCOM_Uncooker.IO
                 destOffset += read;
                 uncompressedSize -= read;
             }
+#endif
         }
     }
 }
