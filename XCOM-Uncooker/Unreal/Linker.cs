@@ -549,7 +549,7 @@ namespace XCOM_Uncooker.Unreal
             }
 
             OutputArchives = OutputArchives.Where(ShouldUncook).ToArray();
-            Log.Info($"After filtering, will serialize {OutputArchives.Length} archives to disk");
+            Log.Info($"After filtering, will serialize {OutputArchives.Length} archives to disk at path {outputPath}");
 
             int numArchivesCompleted = 0;
             progressBar = new ProgressBar(PbStyle.DoubleLine, OutputArchives.Length);
@@ -615,19 +615,6 @@ namespace XCOM_Uncooker.Unreal
 
             progressBar = window != null ? new ProgressBar(window, PbStyle.SingleLine, max) : new ProgressBar(PbStyle.SingleLine, max);
             return progressBar;
-        }
-
-        private byte[] ReadStreamData(FileStream stream, int startPosition, int numBytes)
-        {
-            byte[] buffer = new byte[numBytes];
-
-            lock (stream)
-            {
-                stream.Seek(startPosition, SeekOrigin.Begin);
-                stream.Read(buffer, 0, numBytes);
-
-                return buffer;
-            }
         }
 
         private bool ShouldUncook(FArchive archive)

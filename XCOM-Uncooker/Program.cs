@@ -29,6 +29,18 @@ namespace XCOM_Uncooker
             {
                 gameFilesPath = args[0];
                 outputPath = args[1];
+
+                if (!Directory.Exists(gameFilesPath))
+                {
+                    Console.WriteLine($"Error: specified game directory does not exist: {gameFilesPath}");
+                    return -1;
+                }
+
+                if (!Directory.Exists(outputPath))
+                {
+                    Console.WriteLine($"Error: specified output directory does not exist: {outputPath}");
+                    return -1;
+                }
             }
             else
             {
@@ -78,6 +90,10 @@ namespace XCOM_Uncooker
             catch (Exception e)
             {
                 Log.Error($"Exception occurred while executing: ${e}");
+                Log.EmptyLine();
+                Log.EmptyLine();
+                Log.Warning("XCOM Uncooker will now close. Attempting to delete the following temp directory, but you should check manually also:");
+                Log.Warning($"        {TempDirectory.FullName}");
                 return -1;
             }
             finally
