@@ -14,21 +14,66 @@ namespace XCOM_Uncooker
         // The main Program.cs is responsible for deleting this when the process exits.
         public static readonly DirectoryInfo TempDirectory = Directory.CreateTempSubdirectory("XComUncooker_");
 
+        public static readonly string[] TextureFileCaches = [ "CharTextures", "Lighting", "Textures", "Textures_startup" ];
+
         static int Main(string[] args)
         {
             Logger.MinLevel = LogLevel.Info;
 
-            if (args.Length == 0)
+            Console.WriteLine("Starting up XCOM Uncooker..");
+            Console.WriteLine();
+
+            string gameFilesPath, outputPath;
+
+            if (args.Length == 2)
             {
-                Log.Info("Expected one or more arguments which are file paths to XCOM game packages.");
-                return -2;
+                gameFilesPath = args[0];
+                outputPath = args[1];
+            }
+            else
+            {
+                Console.CursorVisible = true;
+
+                do
+                {
+                    Console.Write("Enter path to XCOM EW's CookedPCConsole folder: ");
+                    gameFilesPath = Console.ReadLine();
+
+                    if (!Directory.Exists(gameFilesPath))
+                    {
+                        Console.WriteLine("Error: specified directory does not exist.");
+                        Console.WriteLine();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                while (true);
+
+                do
+                { 
+                    Console.Write("Enter path to save output in (this should probably be the UDK's Content folder): ");
+                    outputPath = Console.ReadLine();
+                    
+                    if (!Directory.Exists(outputPath))
+                    {
+                        Console.WriteLine("Error: specified directory does not exist.");
+                        Console.WriteLine();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                while (true);
             }
 
             Console.CursorVisible = false;
 
             try
             {
-                Execute(args);
+                Execute(gameFilesPath, outputPath);
             }
             catch (Exception e)
             {
@@ -45,32 +90,26 @@ namespace XCOM_Uncooker
             return 0;
         }
 
-        private static void Execute(string[] args) 
+        private static void Execute(string gameFilesPath, string outputPath) 
         {
             var filePaths = new List<string>();
 
-            foreach (string arg in args)
+            if (Directory.Exists(gameFilesPath))
             {
-                if (Directory.Exists(arg))
-                {
-                    var dirFiles = Directory.GetFiles(arg, "*.upk", SearchOption.AllDirectories);
-                    Log.Verbose($"Treating argument '{arg}' as a directory, containing {dirFiles.Count()} UPK files.");
+                var dirFiles = Directory.GetFiles(gameFilesPath, "*.upk", SearchOption.AllDirectories);
+                Log.Verbose($"Treating argument '{gameFilesPath}' as a directory, containing {dirFiles.Count()} UPK files.");
 
-                    filePaths.AddRange(dirFiles);
-                }
-                else if (File.Exists(arg))
-                {
-                    filePaths.Add(arg);
-                }
-                else
-                {
-                    Log.Error($"Argument '{arg}' does not appear to be a path to a file or directory!");
-                    return;
-                }
+                filePaths.AddRange(dirFiles);
             }
 
-            string folderPath = args[0];
             filePaths = filePaths.Where(IsSupportedFile).ToList();
+
+            if (filePaths.Count == 0)
+            {
+                Log.Error($"Couldn't find any usable UPK files under the path {gameFilesPath}");
+                Log.EmptyLine();
+                Log.Error("Uncooking failed. Aborting..");
+            }
 
 #if false
             Log.Info("Attempting to read global shader cache..");
@@ -98,12 +137,13 @@ namespace XCOM_Uncooker
 
             Log.Info("Attempting to recreate the uncooked archives..");
 
-            // TODO: decide what the arguments to this program are
-            linker.RegisterTextureFileCache("CharTextures", Path.Combine(folderPath, "CharTextures.tfc"));
-            linker.RegisterTextureFileCache("Lighting", Path.Combine(folderPath, "Lighting.tfc"));
-            linker.RegisterTextureFileCache("Textures", Path.Combine(folderPath, "Textures.tfc"));
-            linker.RegisterTextureFileCache("Textures_startup", Path.Combine(folderPath, "Textures_startup.tfc"));
-            linker.UncookArchives();
+            foreach (var tfcName in TextureFileCaches)
+            {
+                string tfcPath = Path.Combine(gameFilesPath, $"{tfcName}.tfc");
+                linker.RegisterTextureFileCache(tfcName, tfcPath);
+            }
+
+            linker.UncookArchives(outputPath);
 
             Log.EmptyLine();
             Log.Info("Uncooking process is complete!");

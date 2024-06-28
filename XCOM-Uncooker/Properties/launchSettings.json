@@ -1,8 +1,7 @@
 {
   "profiles": {
     "XCOM-Uncooker": {
-      "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\Chris\\AppData\\Local\\Temp\\XComUncooker_hhl1d2pe.gsq\""
+      "commandName": "Project"
     }
   }
 }

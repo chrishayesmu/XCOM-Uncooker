@@ -306,7 +306,7 @@ namespace XCOM_Uncooker.Unreal
             TextureFileCaches[textureFileName] = File.OpenRead(filePath);
         }
 
-        public void UncookArchives()
+        public void UncookArchives(string outputPath)
         {
             InputPackagesByGuid = new Dictionary<Guid, UPackage>();
 
@@ -582,7 +582,7 @@ namespace XCOM_Uncooker.Unreal
                 }
 
                 PackageOrganizer.TryMatchPackageToFolders(archive, out string archiveFolder);
-                string archiveFolderPath = Path.Combine("archives", archiveFolder);
+                string archiveFolderPath = Path.Combine(outputPath, archiveFolder);
                 string extension = archive.IsMap ? ".udk" : ".upk";
                 string archivePath = Path.Combine(archiveFolderPath, archive.FileName + extension);
 
