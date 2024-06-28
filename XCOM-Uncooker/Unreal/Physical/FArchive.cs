@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Konsole;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -1088,10 +1089,11 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             int numAlreadyLoaded = 0, numFailed = 0, numSucceeded = 0;
 
+            progressBar?.Refresh(0, FileName);
+            float refreshTarget = ExportTable.Count / 10.0f;
+
             for (int i = 0; i < ExportTable.Count; i++)
             {
-                progressBar?.Update("", i, ExportTable.Count);
-
                 // This export may have been preloaded by another one - skip it if so
                 if (IsLoading && ExportedObjects[i] != null)
                 {
@@ -1122,9 +1124,15 @@ namespace XCOM_Uncooker.Unreal.Physical
                 {
                     numFailed++;
                 }
+
+                if (i >= refreshTarget)
+                {
+                    progressBar?.Refresh(i, FileName);
+                    refreshTarget += ExportTable.Count / 10.0f;
+                }
             }
 
-            progressBar?.Update("complete", ExportTable.Count, ExportTable.Count);
+            progressBar?.Refresh(ExportTable.Count, FileName);
 
             if (numFailed > 0)
             {

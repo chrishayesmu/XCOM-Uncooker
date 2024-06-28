@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Konsole;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -48,9 +49,6 @@ namespace XCOM_Uncooker.Unreal
 
             Log.Info($"Attempting to read archive headers for {validPaths.Count} archives..");
 
-            ProgressBar headerProgressBar = new ProgressBar("Reading headers");
-            Log.DisplayProgressBar(headerProgressBar);
-
             // Create the archives before the parallelization, makes the parallel bit simpler
             for (int i = 0; i < validPaths.Count; i++) 
             {
@@ -61,6 +59,7 @@ namespace XCOM_Uncooker.Unreal
 
             numArchivesCompleted = 0;
             var compressedArchives = new ConcurrentQueue<FArchive>();
+            var progressBar = new ProgressBar(PbStyle.SingleLine, validPaths.Count);
 
             Parallel.ForEach(InputArchives, (archive) =>
             {
@@ -68,7 +67,6 @@ namespace XCOM_Uncooker.Unreal
                 {
                     archive.SerializeHeaderData();
                     Interlocked.Increment(ref numSucceeded);
-                    headerProgressBar.Update("", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Count);
 
                     if (archive.IsBodyCompressed || archive.IsFullyCompressed)
                     {
@@ -81,10 +79,13 @@ namespace XCOM_Uncooker.Unreal
                     Log.Info(ex.ToString());
                     Interlocked.Increment(ref numFailed);
                 }
+                finally
+                {
+                    progressBar.Refresh(Interlocked.Increment(ref numArchivesCompleted), archive.FileName);
+                }
             });
 
-            headerProgressBar.Update("complete", InputArchives.Count, InputArchives.Count);
-            Log.RemoveProgressBar(headerProgressBar);
+            Log.EmptyLine();
             Log.Info($"Done parsing archive headers. {numSucceeded} succeeded and {numFailed} failed.");
 
             if (!compressedArchives.IsEmpty)
@@ -92,8 +93,7 @@ namespace XCOM_Uncooker.Unreal
                 Log.Info($"{compressedArchives.Count} archives are compressed. Decompressed versions will be copied to a temporary directory:");
                 Log.Info($"        {Program.TempDirectory.FullName}");
 
-                ProgressBar decompressionProgressBar = new ProgressBar("Decompressing files");
-                Log.DisplayProgressBar(decompressionProgressBar);
+                progressBar = new ProgressBar(PbStyle.SingleLine, compressedArchives.Count);
 
                 numArchivesCompleted = 0;
                 var decompressedArchives = new ConcurrentQueue<FArchive>();
@@ -117,15 +117,11 @@ namespace XCOM_Uncooker.Unreal
 
                     decompressedArchives.Enqueue(decompressedArchive);
 
-                    decompressionProgressBar.Update("Files processed", Interlocked.Increment(ref numArchivesCompleted), compressedArchives.Count);
+                    progressBar.Refresh(Interlocked.Increment(ref numArchivesCompleted), archive.FileName);
                 });
 
                 InputArchives.RemoveAll(archive => compressedArchives.Contains(archive));
                 InputArchives.AddRange(decompressedArchives);
-
-
-                decompressionProgressBar.Update("Files processed", compressedArchives.Count, compressedArchives.Count);
-                Log.RemoveProgressBar(decompressionProgressBar);
 
                 // We don't need the compressed archives anymore, make them eligible for GC
                 compressedArchives = null;
@@ -138,8 +134,7 @@ namespace XCOM_Uncooker.Unreal
 
             Log.Info("Beginning deserialization of exported classes for archives..");
 
-            ProgressBar classDeserializationProgressBar = new ProgressBar("Deserializing classes");
-            Log.DisplayProgressBar(classDeserializationProgressBar);
+            progressBar = new ProgressBar(PbStyle.SingleLine, InputArchives.Count);
 
             numArchivesCompleted = 0;
 
@@ -152,11 +147,10 @@ namespace XCOM_Uncooker.Unreal
 
                 archive.SerializeClassExports();
 
-                classDeserializationProgressBar.Update(archive.FileName, Interlocked.Increment(ref numArchivesCompleted), InputArchives.Count);
+                progressBar.Refresh(Interlocked.Increment(ref numArchivesCompleted), archive.FileName);
             });
 
-            classDeserializationProgressBar.Update("complete", InputArchives.Count, InputArchives.Count);
-            Log.RemoveProgressBar(classDeserializationProgressBar);
+            Log.EmptyLine();
             Log.Info("Deserialization of exported classes is complete.");
 
             #endregion
@@ -165,15 +159,9 @@ namespace XCOM_Uncooker.Unreal
 
             Log.Info("Beginning deserialization of export objects for archives..");
 
-            ProgressBar exportDeserializationProgressBar = new ProgressBar("Deserializing main package data")
-            {
-                BackgroundColor = ConsoleColor.DarkBlue,
-                ForegroundColor = ConsoleColor.White
-            };
+            var progressBarWindow = new Window(Console.WindowWidth, 1);
+            progressBar = new ProgressBar(progressBarWindow, PbStyle.SingleLine, InputArchives.Count);
             
-            Log.DisplayProgressBar(exportDeserializationProgressBar);
-            exportDeserializationProgressBar.Update("Packages processed", 0, InputArchives.Count);
-
             numArchivesCompleted = 0;
 
             Parallel.ForEach(InputArchives, (archive) =>
@@ -183,11 +171,11 @@ namespace XCOM_Uncooker.Unreal
                     return; 
                 }
 
-                var progressBar = GetOrCreateParallelProgressBar(archive.FileName);
-                archive.SerializeBodyData(progressBar);
+                var localProgressBar = GetOrCreateProgressBar(archive.PackageFileSummary.ExportCount);
+                archive.SerializeBodyData(localProgressBar);
+                ParallelProgressBars.Enqueue(localProgressBar); // return to the pool
 
-                ParallelProgressBars.Enqueue(progressBar); // put the bar back in the pool for re-use
-                exportDeserializationProgressBar.Update("Packages processed", Interlocked.Increment(ref numArchivesCompleted), InputArchives.Count);
+                progressBar.Refresh(Interlocked.Increment(ref numArchivesCompleted), "Archives completed");
             });
 
             // End serialization after all archives are done, due to some threading issues I'm too lazy to fix
@@ -196,16 +184,9 @@ namespace XCOM_Uncooker.Unreal
                 archive.EndSerialization();
             }
 
-            exportDeserializationProgressBar.Update("Packages processed", InputArchives.Count, InputArchives.Count);
-
-            while (ParallelProgressBars.TryDequeue(out ProgressBar progressBar))
-            {
-                Log.RemoveProgressBar(progressBar);
-            }
-
             #endregion
 
-            Log.RemoveProgressBar(exportDeserializationProgressBar);
+            Log.EmptyLine();
             Log.Info("Deserialization of export objects is complete.");
         }
 
@@ -225,11 +206,6 @@ namespace XCOM_Uncooker.Unreal
         /// </remarks>
         public UObject GetCookedObjectByPath(string fullObjectPath, FObjectTableEntry tableEntry = null)
         {
-            if (fullObjectPath == "Engine.OnlineSubsystem.UniqueNetId.Uid")
-            {
-                Debugger.Break();
-            }
-
             foreach (var archive in InputArchives)
             {
                 var obj = archive.GetExportedObjectByPath(fullObjectPath, tableEntry);
@@ -257,15 +233,7 @@ namespace XCOM_Uncooker.Unreal
 
             if (outermost is FImportTableEntry importEntry)
             {
-                if (importEntry.IsPackage)
-                {
-                    return importEntry.ObjectName;
-                }
-                else
-                {
-                    // shouldn't be possible? can a top level import point to anything other than a package?
-                    Debugger.Break();
-                }
+                return importEntry.ObjectName;
             }
             else
             {
@@ -290,8 +258,6 @@ namespace XCOM_Uncooker.Unreal
                 // should only happen for maps, classes, and maybe weird situations in Core/Engine (I think?)
                 return exportEntry.Archive.NormalizedName;
             }
-
-            return "UNKNOWN";
         }
 
         /// <summary>
@@ -397,8 +363,6 @@ namespace XCOM_Uncooker.Unreal
             Log.Info($"Found {allPackages.Count} distinct top level packages.");
 
             // Initialize storage for each of these, arranged by package
-            // TODO: since the inner dictionary assumes each object name is unique, the size of ExportedObjects in the
-            // output archives is wrong, and uncooking errors when it gets overflowed
             ObjectsByUncookedArchiveName = new Dictionary<string, MultiValueDictionary<string, UObject>>();
             UncookedArchiveNameByObjectPath = new Dictionary<string, string>();
             
@@ -480,14 +444,19 @@ namespace XCOM_Uncooker.Unreal
             Log.Info($"Skipped {skippedArchives} archives, {skippedObjects} export objects, and {repeatObjects} seemingly-repeated objects.");
 
             Log.Info("Copying data into uncooked archives..");
+            Log.EmptyLine();
 
             OutputArchives = new FArchive[ObjectsByUncookedArchiveName.Count];
             int outArchiveIndex = 0;
             int totalNumObjects = numObjects;
             numObjects = 0;
 
-            ProgressBar uncookProgressBar = new ProgressBar("Objects uncooked");
-            Log.DisplayProgressBar(uncookProgressBar);
+            Window progressBarWindow = new Window(Console.WindowWidth, 1);
+            ProgressBar progressBar = new ProgressBar(progressBarWindow, PbStyle.SingleLine, ObjectsByUncookedArchiveName.Count);
+
+            // Get rid of any stored progress bars because they won't be scoped to our local window
+            Window localProgressBarWindow = new Window(Console.WindowWidth, 10, Console.ForegroundColor, Console.BackgroundColor);
+            ParallelProgressBars.Clear();
 
             Parallel.ForEach(ObjectsByUncookedArchiveName, new ParallelOptions { MaxDegreeOfParallelism = 100 }, (entry) =>
             {
@@ -514,11 +483,10 @@ namespace XCOM_Uncooker.Unreal
                 lock (this)
                 {
                     OutputArchives[outArchiveIndex] = outArchive;
-                    Interlocked.Increment(ref outArchiveIndex);
+                    progressBar.Refresh(Interlocked.Increment(ref outArchiveIndex), "Archives uncooking");
                 }
 
                 // TODO: the archive should be managing this state internally
-                // TODO: the top level UPackage is in objectsByName and it's screwing up the count
                 int exportCount = objectsByName.CountWhere(obj => obj is not UPackage || obj.ObjectName != outArchive.FileName);
                 outArchive.ExportedObjects = new UObject[exportCount];
 
@@ -527,26 +495,33 @@ namespace XCOM_Uncooker.Unreal
                     return;
                 }
 
+                var localProgressBar = GetOrCreateProgressBar(exportCount, localProgressBarWindow);
+                int numObjectsExported = 0;
+                float refreshTarget = exportCount / 10.0f;
+
                 foreach (var subentry in objectsByName)
                 {
                     List<UObject> objects = subentry.Value;
 
                     foreach (var obj in objects)
                     {
-                        outArchive.AddExportObject(obj);
-                        Interlocked.Increment(ref numObjects);
+                        numObjectsExported++;
 
-                        if (numObjects % 10000 == 0)
-                        {
-                            uncookProgressBar.Update("", numObjects, totalNumObjects);
-                        }
+                        outArchive.AddExportObject(obj);
+                    }
+
+                    if (numObjectsExported >= refreshTarget)
+                    {
+                        localProgressBar.Refresh(numObjectsExported, outArchive.FileName);
+                        refreshTarget += exportCount / 10.0f;
                     }
                 }
+
+                localProgressBar.Refresh(exportCount, outArchive.FileName);
+                ParallelProgressBars.Enqueue(localProgressBar); // return to the pool
             });
 
-            uncookProgressBar.Update("", numObjects, numObjects);
-            Log.RemoveProgressBar(uncookProgressBar);
-
+            progressBar.Refresh(ObjectsByUncookedArchiveName.Count, "Archives uncooking");
             Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
 
             // Give objects in the output archives a chance to post-process if needed
@@ -573,33 +548,15 @@ namespace XCOM_Uncooker.Unreal
                 }
             }
 
+            OutputArchives = OutputArchives.Where(ShouldUncook).ToArray();
+            Log.Info($"After filtering, will serialize {OutputArchives.Length} archives to disk");
+
+            int numArchivesCompleted = 0;
+            progressBar = new ProgressBar(PbStyle.DoubleLine, OutputArchives.Length);
+
             foreach (var archive in OutputArchives)
             {
-                // Some archives may be null because they're in the NeverUncook set; just skip
-                if (archive == null)
-                {
-                    continue;
-                }
-
-                // Occasionally an uncooked archive is empty, because it only consisted of things which don't exist in an uncooked
-                // archive - for example, if its name was used as a package grouping but never contained anything except for
-                // other packages. Just skip those archives.
-                if (archive.ExportedObjects.Length == 0)
-                {
-                    continue;
-                }
-
-                // There's a few archives that we do not want to uncook, because they'll conflict with their
-                // compiled-script equivalents. Uncooked, they shouldn't contain anything but class data anyway
-                if (NeverUncook.Contains(archive.FileName))
-                {
-                    continue;
-                }
-
-                if (UncookOnly.Count > 0 && !UncookOnly.Contains(archive.FileName))
-                {
-                    continue;
-                }
+                progressBar.Refresh(Interlocked.Increment(ref numArchivesCompleted), archive.FileName);
 
                 // Some archives cause issues in the UDK; still uncook them, but remap their names so they don't get loaded.
                 // This has to be done after adding their export objects, or they won't be found in the export object
@@ -631,13 +588,11 @@ namespace XCOM_Uncooker.Unreal
 
                 Directory.CreateDirectory(archiveFolderPath);
 
-                Log.Info($"Attempting to write archive file {archivePath}");
                 var stream = new UnrealDataWriter(File.Open(archivePath, FileMode.Create));
 
                 archive.BeginSerialization(stream);
                 archive.SerializeHeaderData();
 
-                var progressBar = GetOrCreateParallelProgressBar(archive.FileName);
                 archive.SerializeBodyData(progressBar);
 
                 // The first time we serialize the header, we don't know all of the sizes/offsets that we need;
@@ -646,30 +601,22 @@ namespace XCOM_Uncooker.Unreal
                 archive.SerializeHeaderData();
 
                 archive.EndSerialization();
-
-                ParallelProgressBars.Enqueue(progressBar); // put the bar back in the pool for re-use
-            }
-
-            while (ParallelProgressBars.TryDequeue(out ProgressBar progressBar))
-            {
-                Log.RemoveProgressBar(progressBar);
             }
         }
 
-        private ProgressBar GetOrCreateParallelProgressBar(string title)
+        private ProgressBar GetOrCreateProgressBar(int max, Window window = null)
         {
-            if (ParallelProgressBars.TryDequeue(out ProgressBar progressBar))
+            if (ParallelProgressBars.TryDequeue(out var progressBar))
             {
-                progressBar.Title = title;
+                progressBar.Max = max;
+                progressBar.Refresh(0, "");
                 return progressBar;
             }
 
-            progressBar = new ProgressBar(title);
-            Log.DisplayProgressBar(progressBar);
-
+            progressBar = window != null ? new ProgressBar(window, PbStyle.SingleLine, max) : new ProgressBar(PbStyle.SingleLine, max);
             return progressBar;
         }
-    
+
         private byte[] ReadStreamData(FileStream stream, int startPosition, int numBytes)
         {
             byte[] buffer = new byte[numBytes];
@@ -681,6 +628,37 @@ namespace XCOM_Uncooker.Unreal
 
                 return buffer;
             }
+        }
+
+        private bool ShouldUncook(FArchive archive)
+        {
+            // Some archives may be null because they're in the NeverUncook set; just skip
+            if (archive == null)
+            {
+                return false;
+            }
+
+            // Occasionally an uncooked archive is empty, because it only consisted of things which don't exist in an uncooked
+            // archive - for example, if its name was used as a package grouping but never contained anything except for
+            // other packages. Just skip those archives.
+            if (archive.ExportedObjects.Length == 0)
+            {
+                return false;
+            }
+
+            // There's a few archives that we do not want to uncook, because they'll conflict with their
+            // compiled-script equivalents. Uncooked, they shouldn't contain anything but class data anyway
+            if (NeverUncook.Contains(archive.FileName))
+            {
+                return false;
+            }
+
+            if (UncookOnly.Count > 0 && !UncookOnly.Contains(archive.FileName))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

@@ -17,7 +17,6 @@ namespace XCOM_Uncooker
         static int Main(string[] args)
         {
             Logger.MinLevel = LogLevel.Info;
-            Logger.StartBackgroundThread();
 
             if (args.Length == 0)
             {
@@ -105,7 +104,9 @@ namespace XCOM_Uncooker
             linker.RegisterTextureFileCache("Textures", Path.Combine(folderPath, "Textures.tfc"));
             linker.RegisterTextureFileCache("Textures_startup", Path.Combine(folderPath, "Textures_startup.tfc"));
             linker.UncookArchives();
-            Log.Info("Uncooking process is complete.");
+
+            Log.EmptyLine();
+            Log.Info("Uncooking process is complete!");
         }
 
         private static bool IsSupportedFile(string path)
