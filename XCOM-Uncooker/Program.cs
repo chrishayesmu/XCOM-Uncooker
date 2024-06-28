@@ -79,6 +79,8 @@ namespace XCOM_Uncooker
                     }
                 }
                 while (true);
+
+                Console.WriteLine();
             }
 
             Console.CursorVisible = false;
@@ -163,6 +165,8 @@ namespace XCOM_Uncooker
 
             Log.EmptyLine();
             Log.Info("Uncooking process is complete!");
+            Log.EmptyLine();
+            Log.Info("You're almost done - be sure to continue following the installation instructions.");
         }
 
         private static bool IsSupportedFile(string path)

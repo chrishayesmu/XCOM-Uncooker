@@ -498,6 +498,7 @@ namespace XCOM_Uncooker.Unreal
                 var localProgressBar = GetOrCreateProgressBar(exportCount, localProgressBarWindow);
                 int numObjectsExported = 0;
                 float refreshTarget = exportCount / 10.0f;
+                localProgressBar.Refresh(0, outArchive.FileName); // get the new name showing up right away
 
                 foreach (var subentry in objectsByName)
                 {
@@ -522,6 +523,7 @@ namespace XCOM_Uncooker.Unreal
             });
 
             progressBar.Refresh(ObjectsByUncookedArchiveName.Count, "Archives uncooking");
+            Log.EmptyLine();
             Log.Info($"Done creating uncooked archives in memory. Created {OutputArchives.Length} archives, with a total of {numObjects} objects exported from them.");
 
             // Give objects in the output archives a chance to post-process if needed
@@ -593,7 +595,7 @@ namespace XCOM_Uncooker.Unreal
                 archive.BeginSerialization(stream);
                 archive.SerializeHeaderData();
 
-                archive.SerializeBodyData(progressBar);
+                archive.SerializeBodyData(null);
 
                 // The first time we serialize the header, we don't know all of the sizes/offsets that we need;
                 // so once the body is serialized, we go back and do the header again.
@@ -602,6 +604,8 @@ namespace XCOM_Uncooker.Unreal
 
                 archive.EndSerialization();
             }
+
+            progressBar.Refresh(OutputArchives.Length, "All output files written to disk");
         }
 
         private ProgressBar GetOrCreateProgressBar(int max, Window window = null)
