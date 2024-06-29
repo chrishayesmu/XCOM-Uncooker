@@ -576,9 +576,6 @@ namespace XCOM_Uncooker.Unreal
                     case "EngineVolumetrics":
                     case "Engine_MaterialFunctions02":
                     case "Engine_MI_Shaders":
-
-                    // UPKs with known issues that prevent loading
-                    case "PhysicalMaterials":
                         archive.FileName += "_disabled_by_uncooker";
                         break;
                 }
