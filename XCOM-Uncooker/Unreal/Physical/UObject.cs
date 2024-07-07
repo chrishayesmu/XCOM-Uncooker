@@ -17,6 +17,7 @@ using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Flash;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Particles;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences;
 using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures;
@@ -81,6 +82,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "MaterialInstanceTimeVarying",       (archive, tableEntry) => new UMaterialInstance(archive, tableEntry) },
             { "Model",                             (archive, tableEntry) => new UModel(archive, tableEntry) },
             { "ModelComponent",                    (archive, tableEntry) => new UModelComponent(archive, tableEntry) },
+            { "ParticleEmitter",                   (archive, tableEntry) => new UParticleEmitter(archive, tableEntry) },
             { "Polys",                             (archive, tableEntry) => new UPolys(archive, tableEntry) },
             { "PhysicsAssetInstance",              (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
             { "PrefabInstance",                    (archive, tableEntry) => new APrefabInstance(archive, tableEntry) },
