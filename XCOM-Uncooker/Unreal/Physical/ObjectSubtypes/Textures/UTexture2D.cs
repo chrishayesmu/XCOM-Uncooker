@@ -104,6 +104,41 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
             var nameProp = GetSerializedProperty("TextureFileCacheName") as USerializedNameProperty;
             string? tfcName = nameProp?.Value?.ToString();
 
+            // Strip out any mipmaps which the cooker has marked as unused. This avoids the following UDK crash:
+            //
+            //     1. The uncooked package is fully loaded in the UDK. One or more mips is marked as unused.
+            //     2. The package is saved in the UDK (e.g. to persist thumbnails). The previously-unused mips have their
+            //        "Unused" flag removed, but they still have -1 bytes and no data available to read.
+            //     3. The package is fully loaded again. The UDK crashes because it's trying to read -1 bytes.
+            //
+            // Simply removing the unused mips doesn't seem to have any adverse effects.
+            var mipTailBaseIdxProp = GetSerializedProperty("MipTailBaseIdx") as USerializedIntProperty;
+            var firstResourceMemMipProp = GetSerializedProperty("FirstResourceMemMip") as USerializedIntProperty;
+            var mipsToKeep = Mips.ToList();
+            
+            for (int i = mipsToKeep.Count - 1; i >= 0; i--)
+            {
+                // Skip over any valid mips
+                if (mipsToKeep[i].Data.SizeOnDisk > 0 && mipsToKeep[i].Data.NumElements > 0 && !mipsToKeep[i].Data.BulkDataFlags.HasFlag(EBulkDataFlags.Unused))
+                {
+                    continue;
+                }
+
+                mipsToKeep.RemoveAt(i);
+
+                if (mipTailBaseIdxProp != null && i <= mipTailBaseIdxProp.Value)
+                {
+                    mipTailBaseIdxProp.Value--;
+                }
+
+                if (firstResourceMemMipProp != null && i <= firstResourceMemMipProp.Value)
+                {
+                    firstResourceMemMipProp.Value--;
+                }
+            }
+
+            Mips = mipsToKeep.ToArray();
+
             // Uncooked mipmaps need to be uncompressed in the UPK
             for (int i = 0; i < Mips.Length; i++)
             {
