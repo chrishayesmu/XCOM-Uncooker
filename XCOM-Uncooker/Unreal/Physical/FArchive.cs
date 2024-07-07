@@ -103,6 +103,9 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         private static readonly Logger Log = new Logger(nameof(FArchive));
 
+        // Not readonly so it can be used with an UnrealDataWriter
+        private static ulong NameTableFlag = (ulong) (ObjectFlag.TagExp | ObjectFlag.LoadForClient | ObjectFlag.LoadForEdit | ObjectFlag.LoadForServer);
+
         #region Serialized data
 
         // -----------------------------------------------------
@@ -1150,7 +1153,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             {
                 // Remap the net indices of objects so they're contiguous; this doesn't really matter, but it does make
                 // the UDK spit out a lot less warning logs, which is nice
-                int lastNetIndex = 0;
+                int nextNetIndex = 0;
 
                 for (int i = 0; i < ExportedObjects.Length; i++)
                 {
@@ -1162,7 +1165,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                     if (ExportedObjects[i].NetIndex != 0)
                     {
-                        ExportedObjects[i].NetIndex = lastNetIndex++;
+                        ExportedObjects[i].NetIndex = nextNetIndex++;
                     }
                 }
 
@@ -1170,7 +1173,7 @@ namespace XCOM_Uncooker.Unreal.Physical
                 // We always have a single generation.
                 PackageFileSummary.Generations[0].ExportCount = ExportTable.Count;
                 PackageFileSummary.Generations[0].NameCount = NameTable.Count;
-                PackageFileSummary.Generations[0].NetObjectCount = lastNetIndex;
+                PackageFileSummary.Generations[0].NetObjectCount = nextNetIndex;
             }
 
             _stream.UInt32(ref PackageFileSummary.Signature);
@@ -1327,8 +1330,17 @@ namespace XCOM_Uncooker.Unreal.Physical
                 _stream.String(ref name);
                 NameTable[i] = name;
 
-                // Every name has a 64-bit object flag field, but we don't care about them
-                _stream.SkipBytes(8);
+                // Every name has a 64-bit object flag field, but we don't care about them when reading,
+                // so save some memory when uncooking. When saving, give every name the same flags, which
+                // seems to be the case anyway.
+                if (IsLoading)
+                {
+                    _stream.SkipBytes(8);
+                }
+                else
+                {
+                    _stream.UInt64(ref NameTableFlag);
+                }
             }
         }
      
