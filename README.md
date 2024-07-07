@@ -22,14 +22,72 @@ Follow these steps to uncook and view the game assets. Note that some warnings d
 
 At this point, you should be able to browse the game assets in the UDK!
 
+# How's it work?
+
+## The cooking process
+
+Cooking a game's assets in UE3 has three main effects that we're interested in:
+
+1. Editor-only data (e.g. source data for textures and models) is removed.
+2. Copies of assets are created in every seekfree package where they are needed, usually resulting in the asset's original UPK file not being present in the cooked game.
+3. The cooked packages are compressed on disk.
+
+There are some other effects, but they aren't important for our purposes.
+
+## Uncooking process
+
+Theoretically, uncooking is simple:
+
+1. Parse the cooked files and all of the objects they contain.
+2. Reconstruct the uncooked asset paths based on the asset packages, which remain intact within the cooked files.
+3. Copy each cooked object into its uncooked package equivalent, adjusting any references to other objects so that they remain valid in their new location.
+4. Serialize the uncooked packages to disk, updating their metadata to match their contents.
+
+The devil is in the details, of course, which is why this simple process took 6 months to work through.
+
+## XCOM-specific handling
+
+As UE3 licensees, Firaxis had access to the C++ source of the engine, and could make modifications to it. With our publicly-available UDK installation, we do not have the same capability. Therefore, part of this project is discovering those Firaxis-specific changes and making them compatible with the public UDK. Without doing this, loading any modified or Firaxis-added native type would crash the editor.
+
+A few Firaxis types have no equivalent in the public UDK, and are completely stripped out of the uncooked files. The most important of these is a native class called `XComWorldData`, which is in every map file, presumably containing navigation/visibility data and similar. Their format is not yet decoded, but it will have to be if we want to support fully custom maps in the future.
+
 # Known issues
 
 ## Shaders/textures are missing, objects render as all black
 
+Shaders are very tricky to uncook, and for this project, they largely aren't. The problem is that UE Materials have all of their non-parameter expressions removed in the cooking process. This is because the shader is shipped pre-compiled in the various shader cache packages, so the expressions aren't needed at runtime. (Parameter expressions remain, presumably for use in some form of runtime binding.)
+
+Because the expressions are removed, a lot of the uncooked materials have nothing attached to their outputs; thus, they're fully black. The uncooker makes some efforts to help with this, automatically connecting certain parameters to their corresponding outputs if nothing is already hooked up, but this is a stopgap at best. Many materials have to be fixed by hand.
+
+## Packages/maps are taking a long time to load
+
+You don't have any cached shaders, so they're being compiled whenever you encounter them. As you use the UDK more, your shader cache will grow and load times will get much quicker.
+
 ## Objects don't have thumbnails in the editor until double clicking or their containing UPK is fully loaded
+
+This is expected, unfortunately. The UPKs shipped with the game don't have editor thumbnails, and there's no way to generate them via a commandlet like we can do for the asset database. The only way to generate the thumbnails is by having the UDK open.
+
+If you fully load a package, all of its assets will have thumbnails generated. You can theoretically do this for every package and save them back to disk. Unfortunately, something about saving a lot of the uncooked packages will cause them to crash the editor if you reopen them. I'm still working through what causes this.
 
 ## Node-based editor (Kismet, AnimTrees) have their nodes in the wrong spots
 
+The data on where to place these nodes is removed during the cooking process, so they're mostly in the default (0, 0) position.
+
+For Kismet nodes, there is some supplementary data which isn't cooked out, that provides hints as to where the node should be. XCOM Uncooker tries to use this to place some nodes, but it isn't perfect.
+
+There's probably more that can be done in this regard (for Kismet and other types), and future versions of the uncooker may do a better job placing these nodes.
+
 # Credits
 
-TBD
+This specific project is by me (usually known as SwfDelicious). But it builds on an enormous body of work by others in the community, without which it would not be possible. My thanks to, in no particular order:
+
+* [EliotVU](https://eliotvu.com/), author of [UE Explorer](https://github.com/UE-Explorer/UE-Explorer). This tool was invaluable for digging into the structure of UPK files.
+* [Gildor](https://www.gildor.org/smf/index.php/board,3.0.html), author of [UE Viewer](https://github.com/gildor2/UEViewer) (also known as "umodel"). Similar to UE Explorer, UE Viewer was very helpful when investigating the package structure.
+* wghost, or Wasteland Ghost, author of [UPKUtils](https://github.com/wghost/UPKUtils). These tools were necessary to decompress the game files for UE Explorer (before XCOM Uncooker gained decompression support at the very end of the project).
+* robojumper, whose [UE3 posts](https://robojumper.github.io/) were very helpful for understanding high-level engine internals.
+* ruderubik, for her general knowledge and advice of UE3 and reverse engineering, and her unwavering support.
+* [ImHex](https://github.com/WerWolv/ImHex), a very neat hex editor whose pattern language was quite helpful for figuring out some XCOM-specific data formats.
+* [Inno Setup](https://jrsoftware.org/isinfo.php), which is used for the UDK setup installer within the uncooker.
+* Lots of miscellaneous people who have done research and shared their findings online over the years.
+* [Epic Games](https://epicgames.com/), for creating Unreal Engine and leaving [UE3's documentation](https://docs.unrealengine.com/udk/Three/WebHome.html) online to this day, including detailed information on how cooking assets works.
+* And lastly, [Firaxis Games](https://firaxis.com/), for making a game worthy of all this effort.
