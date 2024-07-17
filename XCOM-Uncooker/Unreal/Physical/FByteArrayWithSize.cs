@@ -44,5 +44,9 @@ namespace XCOM_Uncooker.Unreal.Physical
             NumElements = other.NumElements;
             Data = other.Data;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 }

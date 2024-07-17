@@ -63,6 +63,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             }
         }
 
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            MaterialResource_MSP_SM3.PopulateDependencies(dependencyIndices);
+        }
+
         public override void PostArchiveCloneComplete()
         {
             // When the same input is used multiple times, we're just using the first one that matches

@@ -50,5 +50,9 @@ namespace XCOM_Uncooker.Unreal.Physical
             Port = other.Port;
             Valid = other.Valid;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 }

@@ -32,6 +32,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Anims
             stream.BulkArray(ref PosKeys, 12);
             stream.BulkArray(ref RotKeys, 16);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public class UAnimSequence(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -83,32 +87,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Anims
                 // Go find the data in the AnimSet and copy it into this object. Use the source object's Outer,
                 // because the cloned-into object may not have its Outer set up yet.
                 var animSet = sourceObj.Outer;
-
-#if DEBUG
-                if (animSet.TableEntry.ClassName != "AnimSet")
-                {
-                    Debugger.Break();
-                }
-#endif
-
                 var sequencesProp = animSet.GetSerializedProperty("Sequences") as USerializedArrayProperty;
-
-#if DEBUG
-                if (sequencesProp == null || sequencesProp.NumElements < indexProp.Value)
-                {
-                    Debugger.Break();
-                }
-#endif
 
                 var sourceAnimSequenceProp = sequencesProp.Data[indexProp.Value] as USerializedObjectProperty;
                 var sourceAnimSequence = sourceAnimSequenceProp.Archive.GetObjectByIndex(sourceAnimSequenceProp.ObjectIndex) as UAnimSequence;
-
-#if DEBUG
-                if (sourceAnimSequence == null)
-                {
-                    Debugger.Break();
-                }
-#endif
 
                 SerializedData = sourceAnimSequence.SerializedData;
             }

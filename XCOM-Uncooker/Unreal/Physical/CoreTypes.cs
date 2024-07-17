@@ -36,6 +36,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             Max = other.Max;
             IsValid = other.IsValid;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FCompressedChunkInfo : IUnrealSerializable
@@ -61,6 +65,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             CompressedSize = other.CompressedSize;
             UncompressedSize = other.UncompressedSize;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(4)]
@@ -85,6 +93,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             B = other.B;
             A = other.A;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(12)]
@@ -108,6 +120,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             ExportCount = other.ExportCount;
             NameCount = other.NameCount;
             NetObjectCount = other.NetObjectCount;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
 
         public override string ToString()
@@ -146,6 +162,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             ClassName = other.ObjectPathWithoutPackageName;
             FileOffset = other.FileOffset;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(4)]
@@ -169,6 +189,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             Y = other.Y;
             Z = other.Z;
             W = other.W;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -194,6 +218,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             Z = other.Z;
             W = other.W;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(16)]
@@ -218,6 +246,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             Z = other.Z;
             W = other.W;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(12)]
@@ -240,6 +272,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             Yaw = other.Yaw;
             Roll = other.Roll;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(16)]
@@ -260,6 +296,10 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             Center = other.Center;
             W = other.W;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -283,6 +323,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             Y = other.Y;
             Z = other.Z;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(8)]
@@ -303,6 +347,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             X = other.X;
             Y = other.Y;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(4)]
@@ -322,6 +370,10 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             X = other.X;
             Y = other.Y;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 }

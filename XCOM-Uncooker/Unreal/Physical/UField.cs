@@ -34,5 +34,12 @@ namespace XCOM_Uncooker.Unreal.Physical
 
             Next = Archive.MapIndexFromSourceArchive(other.Next, other.Archive);
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(Next);
+        }
     }
 }

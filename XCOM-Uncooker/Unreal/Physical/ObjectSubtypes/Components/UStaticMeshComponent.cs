@@ -41,6 +41,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             NumVertices = other.NumVertices;
             VertexData = other.VertexData;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FStaticMeshComponentLODInfo : IUnrealSerializable
@@ -91,6 +95,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             OverrideVertexColors.CloneFromOtherArchive(other.OverrideVertexColors, sourceArchive, destArchive);
             VertexColorPositions = IUnrealSerializable.Clone(other.VertexColorPositions, sourceArchive, destArchive);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.AddRange(ShadowMaps);
+            dependencyIndices.AddRange(ShadowVertexBuffers);
+            LightMap.PopulateDependencies(dependencyIndices);
+        }
     }
 
     public class UStaticMeshComponent(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -131,6 +142,23 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
 
             SwapMeshData = IUnrealSerializable.Clone(other.SwapMeshData, other.Archive, Archive);
             SwapStaticMeshes = Archive.MapIndicesFromSourceArchive(other.SwapStaticMeshes, other.Archive);
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            foreach (var lod in LODData)
+            {
+                lod.PopulateDependencies(dependencyIndices);
+            }
+
+            foreach (var swapMesh in SwapMeshData)
+            {
+                swapMesh.PopulateDependencies(dependencyIndices);
+            }
+
+            dependencyIndices.AddRange(SwapStaticMeshes);
         }
     }
 }

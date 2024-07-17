@@ -52,6 +52,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             UScale = other.UScale;
             VScale = other.VScale;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public class FMaterial : IUnrealSerializable
@@ -129,6 +133,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             UsingTransforms = other.UsingTransforms;
             TextureLookups = other.TextureLookups;
             DroppedFallbackComponents = other.DroppedFallbackComponents;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.AddRange(TextureDependencyLengthMap.Keys);
+
+            if (UniformExpressionTextures != null)
+            {
+                dependencyIndices.AddRange(UniformExpressionTextures);
+            }
         }
     }
 }

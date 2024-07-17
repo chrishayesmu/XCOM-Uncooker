@@ -34,5 +34,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             LightMap = new FLightMap();
             LightMap.CloneFromOtherArchive(other.LightMap, other.Archive, Archive);
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            LightMap.PopulateDependencies(dependencyIndices);
+        }
     }
 }

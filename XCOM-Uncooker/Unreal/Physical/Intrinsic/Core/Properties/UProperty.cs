@@ -138,6 +138,13 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
             ReplicationOffset = other.ReplicationOffset;
         }
 
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(ArraySizeEnum);
+        }
+
         protected override void SerializeScriptProperties(List<USerializedProperty> props, IUnrealDataStream stream)
         {
             // Properties never have their own properties, they just immediately terminate

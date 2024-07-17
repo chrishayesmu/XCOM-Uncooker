@@ -37,6 +37,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
             ChildGroups = other.ChildGroups;
             PackedBools = other.PackedBools;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.AddRange(Actors);
+        }
     }
 
     public class XComVisGroupData(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

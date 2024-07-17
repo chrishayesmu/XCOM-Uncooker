@@ -36,5 +36,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
 
             // Don't try to map the WorldDataPtr; it can't exist in an uncooked archive
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(WorldDataPtr);
+        }
     }
 }

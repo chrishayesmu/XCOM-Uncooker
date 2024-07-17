@@ -32,6 +32,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
             ColumnIdx = other.ColumnIdx;
             MeshComponent = destArchive.MapIndexFromSourceArchive(other.MeshComponent, sourceArchive);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(MeshComponent);
+        }
     }
 
     public class XComDestructionInstData(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -98,6 +103,24 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
                 var value = IUnrealSerializable.Clone(entry.Value, other.Archive, Archive);
 
                 DecoFracToDebrisStaticMeshInfos[key] = value;
+            }
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.AddRange(DecoFracToDecoComponents.Keys);
+            dependencyIndices.AddRange(DecoFracToDecoComponents.Values.SelectMany(x => x));
+
+            dependencyIndices.AddRange(DecoFracToDebrisComponents.Keys);
+            dependencyIndices.AddRange(DecoFracToDebrisComponents.Values.SelectMany(x => x));
+
+            dependencyIndices.AddRange(DecoFracToDebrisStaticMeshInfos.Keys);
+
+            foreach (var obj in DecoFracToDebrisStaticMeshInfos.Values.SelectMany(x => x))
+            {
+                obj.PopulateDependencies(dependencyIndices);
             }
         }
     }

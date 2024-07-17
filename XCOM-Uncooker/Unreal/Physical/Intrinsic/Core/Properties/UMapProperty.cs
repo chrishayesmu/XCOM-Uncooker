@@ -45,6 +45,14 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
             ValueProperty = Archive.MapIndexFromSourceArchive(other.ValueProperty, other.Archive);
         }
 
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(KeyProperty);
+            dependencyIndices.Add(ValueProperty);
+        }
+
         public override USerializedProperty CreateSerializedProperty(FArchive archive, FPropertyTag? tag)
         {
             throw new NotImplementedException();

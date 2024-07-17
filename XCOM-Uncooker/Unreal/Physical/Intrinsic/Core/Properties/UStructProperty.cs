@@ -52,6 +52,13 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
             ScriptStruct = Archive.MapIndexFromSourceArchive(other.ScriptStruct, other.Archive);
         }
 
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(ScriptStruct);
+        }
+
         public override USerializedProperty CreateSerializedProperty(FArchive archive, FPropertyTag? tag)
         {
             string structName = tag?.StructName ?? StructDefinition.ObjectName;

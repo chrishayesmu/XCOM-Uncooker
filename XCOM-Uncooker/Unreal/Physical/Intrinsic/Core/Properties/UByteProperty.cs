@@ -38,6 +38,13 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
             EnumIndex = Archive.MapIndexFromSourceArchive(other.EnumIndex, other.Archive);
         }
 
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(EnumIndex);
+        }
+
         public override USerializedProperty CreateSerializedProperty(FArchive archive, FPropertyTag? tag)
         {
             return new USerializedByteProperty(archive, this, tag);

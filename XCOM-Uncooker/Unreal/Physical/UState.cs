@@ -55,5 +55,12 @@ namespace XCOM_Uncooker.Unreal.Physical
                 FuncMap.Add(destKey, destValue);
             }
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.AddRange(FuncMap.Values);
+        }
     }
 }

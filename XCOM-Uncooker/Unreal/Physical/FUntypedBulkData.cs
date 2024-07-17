@@ -64,6 +64,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             }
         }
 
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
+
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
         {
             var other = (FUntypedBulkData) sourceObj;

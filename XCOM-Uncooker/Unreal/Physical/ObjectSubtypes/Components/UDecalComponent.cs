@@ -39,6 +39,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             TangentZ = other.TangentZ;
             LightMapCoordinate = other.LightMapCoordinate;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FStaticReceiverData : IUnrealSerializable
@@ -91,6 +95,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             Data = other.Data;
             InstanceIndex = other.InstanceIndex;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Component);
+            dependencyIndices.Add(LightMap1D);
+            dependencyIndices.Add(ShadowMap1D);
+        }
     }
 
     public class UDecalComponent(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -115,6 +126,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             var other = (UDecalComponent) sourceObj;
 
             StaticReceivers = IUnrealSerializable.Clone(other.StaticReceivers, other.Archive, Archive);
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            foreach (var receiver in StaticReceivers)
+            {
+                receiver.PopulateDependencies(dependencyIndices);
+            }
         }
     }
 }

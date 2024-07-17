@@ -31,6 +31,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
             NodePosX = other.NodePosX;
             NodePosY = other.NodePosY;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public class USoundClass(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -64,6 +68,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
 
                 EditorData.Add(key, value);
             }
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.AddRange(EditorData.Keys);
         }
     }
 }

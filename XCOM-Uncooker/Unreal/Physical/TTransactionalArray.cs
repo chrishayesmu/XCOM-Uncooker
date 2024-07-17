@@ -31,5 +31,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             Owner = destArchive.MapIndexFromSourceArchive(other.Owner, sourceArchive);
             Data = IUnrealSerializable.Clone(other.Data, sourceArchive, destArchive);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Owner);
+        }
     }
 }

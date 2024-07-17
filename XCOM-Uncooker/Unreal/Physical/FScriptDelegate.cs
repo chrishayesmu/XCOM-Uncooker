@@ -32,5 +32,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             ObjectIndex = Archive.MapIndexFromSourceArchive(other.ObjectIndex, other.Archive);
             FunctionName = Archive.MapNameFromSourceArchive(other.FunctionName);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(ObjectIndex);
+        }
     }
 }

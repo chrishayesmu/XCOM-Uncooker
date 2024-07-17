@@ -37,6 +37,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             BoxExtent = other.BoxExtent;
             SphereRadius = other.SphereRadius;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(64)]
@@ -58,6 +62,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             var other = (FBspNode) sourceObj;
 
             Data = other.Data;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -127,6 +135,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             LightingChannels = other.LightingChannels;
             iLightmassIndex = other.iLightmassIndex;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Material);
+            dependencyIndices.Add(Actor);
+        }
     }
 
     public struct FKCachedConvexDataElement : IUnrealSerializable
@@ -147,6 +161,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             var other = (FKCachedConvexDataElement) sourceObj;
 
             Data = other.Data;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -169,6 +187,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
 
             CachedConvexElements = other.CachedConvexElements;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FKCachedPerTriData : IUnrealSerializable
@@ -189,6 +211,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             var other = (FKCachedPerTriData) sourceObj;
 
             CachedPerTriData = other.CachedPerTriData;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -244,6 +270,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             DiffuseBoost = other.DiffuseBoost;
             SpecularBoost = other.SpecularBoost;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(36)]
@@ -282,6 +312,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             TexCoord = other.TexCoord;
             ShadowTexCoord = other.ShadowTexCoord;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FModelVertexBuffer : IUnrealSerializable
@@ -302,6 +336,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             var other = (FModelVertexBuffer) sourceObj;
 
             Vertices = other.Vertices;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -336,6 +374,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Physics
             iSide = other.iSide;
             ShadowTexCoord = other.ShadowTexCoord;
             BackfaceShadowTexCoord = other.BackfaceShadowTexCoord;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 }

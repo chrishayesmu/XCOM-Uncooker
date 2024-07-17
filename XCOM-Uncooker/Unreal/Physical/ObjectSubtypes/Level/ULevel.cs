@@ -36,6 +36,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             Scale3D = other.Scale3D;
             CachedDataIndex = other.CachedDataIndex;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(16)]
@@ -62,6 +66,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             Scale3D = other.Scale3D;
             CachedDataIndex = other.CachedDataIndex;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(5)]
@@ -87,6 +95,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
             ActorRefItem = other.ActorRefItem;
             SlotIdx = other.SlotIdx;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -127,6 +139,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             bAttached = other.bAttached;
             OriginalRadius = other.OriginalRadius;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Texture);
+        }
     }
 
     [FixedSize(20)]
@@ -152,6 +169,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
             Guid = other.Guid;
             RefId = other.RefId;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -190,6 +211,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             SampleSpacing = other.SampleSpacing;
             Samples = IUnrealSerializable.Clone(other.Samples, sourceArchive, destArchive);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FPrecomputedVisibilityBucket : IUnrealSerializable
@@ -218,6 +243,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             CellDataSize = other.CellDataSize;
             Cells = IUnrealSerializable.Clone(other.Cells, sourceArchive, destArchive);
             CellDataChunks = IUnrealSerializable.Clone(other.CellDataChunks, sourceArchive, destArchive);
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -248,6 +277,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             ChunkIndex = other.ChunkIndex;
             DataOffset = other.DataOffset;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FCompressedVisibilityChunk : IUnrealSerializable
@@ -276,6 +309,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             bCompressed = other.bCompressed;
             UncompressedSize = other.UncompressedSize;
             Data = other.Data;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -318,6 +355,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             PrecomputedVisibilityNumCellBuckets = other.PrecomputedVisibilityNumCellBuckets;
             PrecomputedVisibilityCellBuckets = IUnrealSerializable.Clone(other.PrecomputedVisibilityCellBuckets, sourceArchive, destArchive);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FPrecomputedVolumeDistanceField : IUnrealSerializable
@@ -359,6 +400,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             VolumeSizeZ = other.VolumeSizeZ;
             Data = other.Data;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     [FixedSize(20)]
@@ -384,6 +429,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
             BoundingSphere = other.BoundingSphere;
             TexelFactor = other.TexelFactor;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -442,6 +491,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             EnvironmentRadiance = other.EnvironmentRadiance;
             AmbientRadiance = other.AmbientRadiance;
             bShadowedFromDominantLights = other.bShadowedFromDominantLights;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -644,6 +697,28 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             PrecomputedLightVolume = other.PrecomputedLightVolume;
             PrecomputedVisibilityHandler = other.PrecomputedVisibilityHandler;
             PrecomputedVolumeDistanceField = other.PrecomputedVolumeDistanceField;
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(Model);
+            dependencyIndices.AddRange(ModelComponents);
+            dependencyIndices.AddRange(GameSequences);
+            dependencyIndices.AddRange(TextureToInstancesMap.Keys);
+            dependencyIndices.AddRange(DynamicTextureInstances.Keys);
+            dependencyIndices.AddRange(CachedPhysSMDataMap.Keys);
+            dependencyIndices.AddRange(CachedPhysPerTriSMDataMap.Keys);
+            dependencyIndices.AddRange(ForceStreamTextures.Keys);
+            dependencyIndices.Add(NavListStart); 
+            dependencyIndices.Add(NavListEnd);
+            dependencyIndices.Add(CoverListStart);
+            dependencyIndices.Add(CoverListEnd);
+            dependencyIndices.Add(PylonListStart);
+            dependencyIndices.Add(PylonListEnd);
+            dependencyIndices.AddRange(CoverLinkRefs);
+            dependencyIndices.AddRange(CrossLevelActors);
         }
     }
 }

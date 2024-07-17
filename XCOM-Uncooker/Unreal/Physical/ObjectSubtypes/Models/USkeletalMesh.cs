@@ -44,6 +44,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             Min = other.Min;
             Max = other.Max;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct TKDOPTree : IUnrealSerializable
@@ -77,6 +81,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             Nodes = other.Nodes;
             Triangles = other.Triangles;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct VJointPos : IUnrealSerializable
@@ -100,6 +108,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             Orientation = other.Orientation;
             Position = other.Position;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -137,6 +149,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             ParentIndex = other.ParentIndex;
             BoneColor = other.BoneColor;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FMultiSizeIndexContainer : IUnrealSerializable
@@ -166,6 +182,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             DataTypeSize = other.DataTypeSize;
             IndexBuffer = other.IndexBuffer;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FPerPolyBoneCollisionData : IUnrealSerializable
@@ -190,6 +210,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             KDOPTree = other.KDOPTree;
             CollisionVerts = other.CollisionVerts;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -240,6 +264,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             UVs = other.UVs;
             Color = other.Color;
             Bone = other.Bone;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -293,6 +321,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             InfluenceBones = other.InfluenceBones;
             InfluenceWeights = other.InfluenceWeights;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FSkelMeshChunk : IUnrealSerializable
@@ -338,6 +370,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             NumSoftVertices = other.NumSoftVertices;
             MaxBoneInfluences = other.MaxBoneInfluences;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FSkelMeshSection : IUnrealSerializable
@@ -370,6 +406,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             BaseIndex = other.BaseIndex;
             NumTriangles = other.NumTriangles;
             TriangleSorting = other.TriangleSorting;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -406,6 +446,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
                 LODModel = new FStaticLODModel();
                 LODModel.CloneFromOtherArchive(other.LODModel, sourceArchive, destArchive);
             }
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -449,6 +493,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             MeshExtension = other.MeshExtension;
             MeshOrigin = other.MeshOrigin;
             VertexData = other.VertexData;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
 
         private void CreateVertexDataBuffer()
@@ -501,6 +549,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             Data = other.Data;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FSkeletalMeshVertexInfluences : IUnrealSerializable
@@ -542,6 +594,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             Chunks = other.Chunks;
             RequiredBones = other.RequiredBones;
             Usage = other.Usage;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -646,6 +702,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             VertexInfluences = other.VertexInfluences;
             AdjacencyMultiSizeIndexContainer = other.AdjacencyMultiSizeIndexContainer;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FVertexInfluence : IUnrealSerializable
@@ -669,6 +729,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             Weights = other.Weights;
             Bones = other.Bones;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -760,6 +824,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
 
             SkelSourceData = new FSkeletalMeshSourceData();
             SkelSourceData.CloneFromOtherArchive(other.SkelSourceData, other.Archive, Archive);
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.AddRange(Materials);
+            dependencyIndices.AddRange(ClothingAssets);
         }
     }
 }

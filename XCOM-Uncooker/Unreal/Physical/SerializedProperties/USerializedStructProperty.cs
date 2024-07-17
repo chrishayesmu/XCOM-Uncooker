@@ -41,6 +41,14 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             return other;
         }
 
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            foreach (var prop in TaggedProperties)
+            {
+                prop.PopulateDependencies(dependencyIndices);
+            }
+        }
+
         public USerializedProperty GetSerializedProperty(string propName)
         {
             foreach (var prop in TaggedProperties)

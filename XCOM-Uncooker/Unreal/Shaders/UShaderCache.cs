@@ -35,6 +35,11 @@ namespace XCOM_Uncooker.Unreal.Shaders
         {
             throw new NotImplementedException();
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class UShaderCache(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)

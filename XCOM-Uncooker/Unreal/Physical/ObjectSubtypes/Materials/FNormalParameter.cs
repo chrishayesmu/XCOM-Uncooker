@@ -38,5 +38,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             Override = other.Override;
             ExpressionGuid = other.ExpressionGuid;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 }

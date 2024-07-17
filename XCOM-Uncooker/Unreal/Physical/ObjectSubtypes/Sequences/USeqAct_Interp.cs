@@ -31,6 +31,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences
             Location = other.Location;
             Rotation = other.Rotation;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public class USeqAct_Interp(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -64,6 +68,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Sequences
 
                 SavedActorTransforms[key] = value;
             }
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.AddRange(SavedActorTransforms.Keys);
         }
     }
 }

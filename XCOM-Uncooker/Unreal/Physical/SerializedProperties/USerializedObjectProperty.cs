@@ -34,5 +34,10 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
 
             return other;
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(ObjectIndex);
+        }
     }
 }

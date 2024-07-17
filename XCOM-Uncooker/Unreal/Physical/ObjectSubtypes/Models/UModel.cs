@@ -44,6 +44,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             Visibility = other.Visibility;
             LastRenderTime = other.LastRenderTime;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(ZoneActor);
+        }
     }
 
     public class UModel(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -140,6 +145,20 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             VertexBuffer = other.VertexBuffer;
             LightingGuid = other.LightingGuid;
             LightmassSettings = other.LightmassSettings;
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            Surfs.PopulateDependencies(dependencyIndices);
+            
+            foreach (var zone in Zones)
+            {
+                zone.PopulateDependencies(dependencyIndices);
+            }
+            
+            dependencyIndices.Add(Polys);
         }
     }
 }

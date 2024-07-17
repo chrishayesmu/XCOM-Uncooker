@@ -69,6 +69,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             other.UnknownBody = UnknownBody;
             other.UnknownSuffix = UnknownSuffix;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public class UMaterialInstance(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -114,6 +118,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
                 UnknownData.CloneFromOtherArchive(other.UnknownData, other.Archive, Archive);
                 StaticParameters_MSP_SM3.CloneFromOtherArchive(other.StaticParameters_MSP_SM3, other.Archive, Archive);
             }
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            MaterialResource_MSP_SM3.PopulateDependencies(dependencyIndices);
         }
     }
 }

@@ -36,6 +36,12 @@ namespace XCOM_Uncooker.Unreal.Physical
             Node = destArchive.MapIndexFromSourceArchive(other.Node, sourceArchive);
             Offset = other.Offset;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(State);
+            dependencyIndices.Add(Node);
+        }
     }
 
     public class FStateFrame : IUnrealSerializable
@@ -94,6 +100,20 @@ namespace XCOM_Uncooker.Unreal.Physical
                         Node = destArchive.MapIndexFromSourceArchive(other.StateStack[i].Node, sourceArchive),
                         Offset = other.StateStack[i].Offset
                     };
+                }
+            }
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Node);
+            dependencyIndices.Add(StateNode);
+
+            if (StateStack != null)
+            {
+                foreach (var state in StateStack)
+                {
+                    state.PopulateDependencies(dependencyIndices);
                 }
             }
         }

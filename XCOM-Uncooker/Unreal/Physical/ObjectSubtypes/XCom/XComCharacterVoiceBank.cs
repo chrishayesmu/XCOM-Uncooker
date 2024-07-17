@@ -50,5 +50,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
                 EventToPropertyMap[key] = value;
             }
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.AddRange(EventToPropertyMap.Values);
+        }
     }
 }

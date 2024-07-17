@@ -191,6 +191,16 @@ namespace XCOM_Uncooker.Unreal.Physical
             DataScriptSize = other.DataScriptSize;
         }
 
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(Super);
+            dependencyIndices.Add(ScriptText);
+            dependencyIndices.Add(CppText);
+            dependencyIndices.Add(Children);
+        }
+
         public UProperty GetPropertyByName(string name)
         {
             UField current = FirstChild;

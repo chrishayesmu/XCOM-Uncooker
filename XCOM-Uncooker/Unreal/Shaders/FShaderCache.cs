@@ -39,6 +39,10 @@ namespace XCOM_Uncooker.Unreal.Shaders
                 stream.Name(ref Name);
             }
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FShaderPtr : IUnrealSerializable
@@ -65,6 +69,10 @@ namespace XCOM_Uncooker.Unreal.Shaders
         {
             stream.Guid(ref ShaderId);
             stream.Object(ref ShaderType);
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -116,6 +124,10 @@ namespace XCOM_Uncooker.Unreal.Shaders
                 stream.Bytes(ref ShaderData, ShaderData.Length);
             }
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public class FShaderCache : IUnrealSerializable
@@ -158,6 +170,10 @@ namespace XCOM_Uncooker.Unreal.Shaders
 #endif
 
             stream.Array(ref CacheEntries);
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 }

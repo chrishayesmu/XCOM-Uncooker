@@ -54,6 +54,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             ShadowMaps = destArchive.MapIndicesFromSourceArchive(other.ShadowMaps, sourceArchive);
             IrrelevantLights = other.IrrelevantLights;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            LightMap.PopulateDependencies(dependencyIndices);
+            dependencyIndices.Add(Component);
+            dependencyIndices.Add(Material);
+            dependencyIndices.AddRange(ShadowMaps);
+        }
     }
 
     public class UModelComponent(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -95,6 +103,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Components
             Elements = IUnrealSerializable.Clone(other.Elements, other.Archive, Archive);
             ComponentIndex = other.ComponentIndex;
             Nodes = other.Nodes;
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(Model);
+
+            foreach (var elem in Elements)
+            {
+                elem.PopulateDependencies(dependencyIndices);
+            }
         }
     }
 }

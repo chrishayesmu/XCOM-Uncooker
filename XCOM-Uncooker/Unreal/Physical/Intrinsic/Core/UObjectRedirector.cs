@@ -31,5 +31,12 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core
 
             DestinationObject = Archive.MapIndexFromSourceArchive(other.DestinationObject, other.Archive);
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(DestinationObject);
+        }
     }
 }

@@ -54,5 +54,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Actor
                 PI_ObjectMap.Add(key, value);
             }
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.AddRange(ArchetypeToInstanceMap.Keys);
+            dependencyIndices.AddRange(ArchetypeToInstanceMap.Values);
+            dependencyIndices.AddRange(PI_ObjectMap.Keys);
+        }
     }
 }

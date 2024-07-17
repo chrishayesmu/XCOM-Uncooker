@@ -70,6 +70,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.XCom
             UnknownValue3 = other.UnknownValue3;
         }
 
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(ClassIndex1);
+            dependencyIndices.Add(ClassIndex2);
+        }
+
         protected override USerializedProperty ChooseSerializedPropertyBasedOnTag(FPropertyTag tag, FArchive inArchive)
         {
             // For this property:

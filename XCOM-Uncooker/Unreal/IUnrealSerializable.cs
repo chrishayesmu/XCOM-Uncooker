@@ -57,5 +57,12 @@ namespace XCOM_Uncooker.Unreal
         /// <param name="sourceArchive"></param>
         /// <param name="destArchive"></param>
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive);
+
+        /// <summary>
+        /// Populates the given list with any object indices (both exports and imports) which this object is
+        /// dependent upon.
+        /// </summary>
+        /// <param name="dependencyIndices">A list of dependencies to add to.</param>
+        public void PopulateDependencies(List<int> dependencyIndices);
     }
 }

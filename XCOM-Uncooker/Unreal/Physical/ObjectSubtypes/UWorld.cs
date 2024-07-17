@@ -34,6 +34,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
             CamRotation = other.CamRotation;
             CamOrthoZoom = other.CamOrthoZoom;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public class UWorld(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -83,6 +87,16 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes
             EditorViews = other.EditorViews;
             SaveGameSummary = Archive.MapIndexFromSourceArchive(other.SaveGameSummary, other.Archive);
             ExtraReferencedObjects = Archive.MapIndicesFromSourceArchive(other.ExtraReferencedObjects, other.Archive);
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(PersistentLevel);
+            dependencyIndices.Add(PersistentFaceFXAnimSet);
+            dependencyIndices.Add(SaveGameSummary);
+            dependencyIndices.AddRange(ExtraReferencedObjects);
         }
     }
 }

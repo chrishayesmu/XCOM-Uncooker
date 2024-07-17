@@ -240,6 +240,22 @@ namespace XCOM_Uncooker.Unreal.Physical
         }
 
         /// <summary>
+        /// Populates the given list with any object indices (both exports and imports) which this object is
+        /// dependent upon.
+        /// </summary>
+        /// <param name="dependencyIndices">A list of dependencies to add to.</param>
+        public virtual void PopulateDependencies(List<int> dependencyIndices)
+        {
+            StateFrame.PopulateDependencies(dependencyIndices);
+            dependencyIndices.Add(TemplateOwnerClass);
+
+            foreach (var prop in SerializedProperties)
+            {
+                prop.PopulateDependencies(dependencyIndices);
+            }
+        }
+
+        /// <summary>
         /// Called after an entire archive has been cloned. This is called on objects in the newly cloned archive,
         /// not the source archive. Objects can use this if they need to do any post-processing before the archive
         /// is serialized back to disk.

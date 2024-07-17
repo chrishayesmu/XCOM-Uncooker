@@ -154,5 +154,9 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties.ImmutableWhenCooked
 
             return other;
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 }

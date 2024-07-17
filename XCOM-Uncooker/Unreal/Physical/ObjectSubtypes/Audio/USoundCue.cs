@@ -25,6 +25,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Audio
             NodePosX = other.NodePosX;
             NodePosY = other.NodePosY;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     /// <summary>

@@ -39,5 +39,9 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Materials
             NormalParameters = IUnrealSerializable.Clone(other.NormalParameters, sourceArchive, destArchive);
             TerrainLayerWeightParameters = IUnrealSerializable.Clone(other.TerrainLayerWeightParameters, sourceArchive, destArchive);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 }

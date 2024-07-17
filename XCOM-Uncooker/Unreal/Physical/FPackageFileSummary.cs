@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using XCOM_Uncooker.IO;
+using XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures;
 
 namespace XCOM_Uncooker.Unreal.Physical
 {
@@ -31,6 +32,14 @@ namespace XCOM_Uncooker.Unreal.Physical
         {
             stream.Array(ref TextureTypes);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            foreach (var textureType in TextureTypes)
+            {
+                textureType.PopulateDependencies(dependencyIndices);
+            }
+        }
     }
 
     public struct FTextureType : IUnrealSerializable
@@ -47,7 +56,7 @@ namespace XCOM_Uncooker.Unreal.Physical
 
         public uint TexCreateFlags;
 
-        // TODO: this may be export table indices, which would need to be fixed up
+        [Index(typeof(UTexture))]
         public int[] ExportIndices;
 
         #endregion
@@ -61,6 +70,11 @@ namespace XCOM_Uncooker.Unreal.Physical
             NumMips = other.NumMips;
             Format = other.Format;
             TexCreateFlags = other.TexCreateFlags;
+
+            // These indices should theoretically be adjusted on clone; actually, all of the texture types should be
+            // discarded and calculated from scratch for each archive, since they depend on which textures make it into
+            // the uncooked archive. That's not happening yet, and in fact these aren't even used when uncooking, so
+            // we're just copying the indices over out of sheer laziness.
             ExportIndices = other.ExportIndices;
         }
 
@@ -72,6 +86,11 @@ namespace XCOM_Uncooker.Unreal.Physical
             stream.UInt32(ref Format);
             stream.UInt32(ref TexCreateFlags);
             stream.Int32Array(ref ExportIndices);
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.AddRange(ExportIndices);
         }
     }
 
@@ -251,6 +270,11 @@ namespace XCOM_Uncooker.Unreal.Physical
             // UPKUtils doesn't remove the StoreFullyCompressed flag from packages it decompresses, which doesn't seem to
             // have any runtime impact on the game, but it messes us up. Clear it out or uncooking modded games will fail
             PackageFlags &= ~PackageFlag.StoreFullyCompressed;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            TextureAllocations.PopulateDependencies(dependencyIndices);
         }
     }
 }

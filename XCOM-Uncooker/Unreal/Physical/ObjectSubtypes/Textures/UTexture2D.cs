@@ -42,6 +42,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Textures
             SizeX = other.SizeX;
             SizeY = other.SizeY;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public class UTexture2D(FArchive archive, FObjectTableEntry tableEntry) : UTexture(archive, tableEntry)

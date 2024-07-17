@@ -76,6 +76,12 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             LightmassSettings = other.LightmassSettings;
             RulesetVariation = destArchive.MapNameFromSourceArchive(other.RulesetVariation);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Actor);
+            dependencyIndices.Add(Material);
+        }
     }
 
     public class UPolys(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -121,6 +127,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             DbNum = other.DbNum;
             DbMax = other.DbMax;
             Elements.CloneFromOtherArchive(other.Elements, other.Archive, Archive);
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            Elements.PopulateDependencies(dependencyIndices);
+
+            foreach (var elem in Elements.Data)
+            {
+                elem.PopulateDependencies(dependencyIndices);
+            }
         }
     }
 }

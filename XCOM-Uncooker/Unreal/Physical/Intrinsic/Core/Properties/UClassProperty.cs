@@ -45,5 +45,12 @@ namespace XCOM_Uncooker.Unreal.Physical.Intrinsic.Core.Properties
 
             ClassBound = Archive.MapIndexFromSourceArchive(other.ClassBound, other.Archive);
         }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(ClassBound);
+        }
     }
 }

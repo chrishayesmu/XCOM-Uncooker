@@ -84,6 +84,10 @@ namespace XCOM_Uncooker.Unreal.Physical
             CompressedSize = other.CompressedSize;
         }
 
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
+
         public void Serialize(IUnrealDataStream stream)
         {
             stream.Int32(ref UncompressedOffset);
@@ -1079,7 +1083,11 @@ namespace XCOM_Uncooker.Unreal.Physical
 
                 for (int i = 0; i < ExportTable.Count; i++)
                 {
-                    int[] dependsArray = DependsMap[i];
+                    var dependsList = new List<int>();
+                    ExportedObjects[i].PopulateDependencies(dependsList);
+
+                    // Filter out 0 entries here so every single object doesn't have to check its indices
+                    var dependsArray = dependsList.Where(index => index != 0).Distinct().ToArray();
                     _stream.Int32Array(ref dependsArray);
                 }
             }

@@ -31,6 +31,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
 
             Index = destArchive.MapIndexFromSourceArchive(other.Index, sourceArchive);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Index);
+        }
     }
 
     public class ULevelBase(FArchive archive, FObjectTableEntry tableEntry) : UObject(archive, tableEntry)
@@ -62,6 +67,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Level
             Actors.CloneFromOtherArchive(other.Actors, other.Archive, Archive);
 
             Url = other.Url;
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            Actors.PopulateDependencies(dependencyIndices);
+
+            foreach (var actor in Actors.Data)
+            {
+                actor.PopulateDependencies(dependencyIndices);
+            }
         }
     }
 }

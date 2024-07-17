@@ -97,6 +97,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             NeighbourDims = other.NeighbourDims;
             UnknownValue = other.UnknownValue;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FKConvexElem : IUnrealSerializable
@@ -141,6 +145,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             FaceNormalDirections = other.FaceNormalDirections;
             FacePlaneData = other.FacePlaneData;
             ElemBox = other.ElemBox;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -203,6 +211,13 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             PlaneBias = other.PlaneBias;
             NonCriticalBuildVersion = other.NonCriticalBuildVersion;
             LicenseeNonCriticalBuildVersion = other.LicenseeNonCriticalBuildVersion;
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(SourceStaticMesh);
         }
     }
 }

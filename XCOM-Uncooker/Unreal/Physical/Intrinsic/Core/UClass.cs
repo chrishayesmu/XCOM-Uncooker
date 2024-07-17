@@ -75,12 +75,6 @@ namespace XCOM_Uncooker.Unreal.Physical
         UComponent = 0x01000000
     }
 
-    public struct FReplicationRecord
-    {
-        public int Property; // TODO probably not an int
-        public int Index;
-    }
-
     public class UClass(FArchive archive, FObjectTableEntry tableEntry) : UState(archive, tableEntry)
     {
         public ClassFlag ClassFlags;
@@ -89,8 +83,15 @@ namespace XCOM_Uncooker.Unreal.Physical
         public int Within;
 
         public FName ConfigName;
+
+        // Value is an object index
+        [Index(typeof(UObject))]
         public IDictionary<FName, int> ComponentNameToDefaultObjectMap;
-        public IDictionary<int, int> Interfaces; // first int: index to interface class's definition; second int: UProperty which is some kind of vtable pointer
+
+        // Key: index to interface class's definition; value: UProperty which is some kind of vtable pointer
+        [Index(typeof(UObject))]
+        public IDictionary<int, int> Interfaces;
+
         public FName[] DontSortCategories;
         public FName[] HideCategories;
         public FName[] AutoExpandCategories;
@@ -162,6 +163,17 @@ namespace XCOM_Uncooker.Unreal.Physical
             NativeClassName = other.NativeClassName;
             DllBindName = Archive.MapNameFromSourceArchive(other.DllBindName);
             ClassDefaultObject = Archive.MapIndexFromSourceArchive(other.ClassDefaultObject, other.Archive);
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(Within);
+            dependencyIndices.AddRange(ComponentNameToDefaultObjectMap.Values);
+            dependencyIndices.AddRange(Interfaces.Keys);
+            dependencyIndices.AddRange(Interfaces.Values);
+            dependencyIndices.Add(ClassDefaultObject);
         }
 
         /// <summary>

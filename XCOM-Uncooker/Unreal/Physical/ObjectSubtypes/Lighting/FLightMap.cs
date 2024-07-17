@@ -56,6 +56,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
             ScaleVectors = other.ScaleVectors;
             SimpleSamples.CloneFromOtherArchive(other.SimpleSamples, sourceArchive, destArchive);
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Owner);
+        }
     }
 
     public class FLightMapData_2D : IUnrealSerializable
@@ -98,6 +103,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
             ScaleVectors = other.ScaleVectors;
             CoordinateScale = other.CoordinateScale;
             CoordinateBias = other.CoordinateBias;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.AddRange(Textures);
         }
     }
 
@@ -148,6 +158,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Lighting
             }
 
             Data?.CloneFromOtherArchive(other.Data, sourceArchive, destArchive);
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            Data?.PopulateDependencies(dependencyIndices);
         }
     }
 }

@@ -34,6 +34,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             BaseIndex = other.BaseIndex;
             NumPrimitives = other.NumPrimitives;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     public struct FPositionVertexBuffer : IUnrealSerializable
@@ -62,6 +66,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             Stride = other.Stride;
             NumVertices = other.NumVertices;
             VertexData = other.VertexData;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -135,6 +143,11 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             Fragments = other.Fragments;
             LoadPlatformData = other.LoadPlatformData;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            dependencyIndices.Add(Material);
+        }
     }
 
     public struct FStaticMeshLODInfo : IUnrealSerializable
@@ -146,6 +159,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
         }
 
         public void CloneFromOtherArchive(IUnrealSerializable sourceObj, FArchive sourceArchive, FArchive destArchive)
+        {
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
         {
         }
     }
@@ -180,6 +197,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             SilhouetteImportance = other.SilhouetteImportance;
             TextureImportance = other.TextureImportance;
             NormalMode = other.NormalMode;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -236,6 +257,14 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             WireframeIndexBuffer = other.WireframeIndexBuffer;
             AdjacencyIndexBuffer = other.AdjacencyIndexBuffer;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+            foreach (var elem in Elements)
+            {
+                elem.PopulateDependencies(dependencyIndices);
+            }
+        }
     }
 
     public struct FStaticMeshVertexBuffer : IUnrealSerializable
@@ -272,6 +301,10 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             NumVertices = other.NumVertices;
             bUseFullPrecisionUVs = other.bUseFullPrecisionUVs;
             VertexData = other.VertexData;
+        }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
         }
     }
 
@@ -373,6 +406,18 @@ namespace XCOM_Uncooker.Unreal.Physical.ObjectSubtypes.Models
             VertexPositionVersionNumber = other.VertexPositionVersionNumber;
             CachedStreamingTextureFactors = other.CachedStreamingTextureFactors;
             bRemoveDegenerates = other.bRemoveDegenerates;
+        }
+
+        public override void PopulateDependencies(List<int> dependencyIndices)
+        {
+            base.PopulateDependencies(dependencyIndices);
+
+            dependencyIndices.Add(BodySetup);
+
+            foreach (var lodModel in LODModels)
+            {
+                lodModel.PopulateDependencies(dependencyIndices);
+            }
         }
     }
 }

@@ -96,6 +96,10 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
             StructName = destArchive.MapNameFromSourceArchive(other.StructName);
             BoolVal = other.BoolVal;
         }
+
+        public void PopulateDependencies(List<int> dependencyIndices)
+        {
+        }
     }
 
     /// <summary>
@@ -147,6 +151,8 @@ namespace XCOM_Uncooker.Unreal.Physical.SerializedProperties
         #endregion
 
         public abstract void Serialize(IUnrealDataStream stream);
+
+        public abstract void PopulateDependencies(List<int> dependencyIndices);
 
         public abstract USerializedProperty CloneToOtherArchive(FArchive destArchive);
 
