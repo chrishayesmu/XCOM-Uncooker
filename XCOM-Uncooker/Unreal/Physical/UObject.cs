@@ -82,7 +82,7 @@ namespace XCOM_Uncooker.Unreal.Physical
             { "MaterialInstanceTimeVarying",       (archive, tableEntry) => new UMaterialInstance(archive, tableEntry) },
             { "Model",                             (archive, tableEntry) => new UModel(archive, tableEntry) },
             { "ModelComponent",                    (archive, tableEntry) => new UModelComponent(archive, tableEntry) },
-            { "ParticleEmitter",                   (archive, tableEntry) => new UParticleEmitter(archive, tableEntry) },
+            { "ParticleSystem",                    (archive, tableEntry) => new UParticleSystem(archive, tableEntry) },
             { "Polys",                             (archive, tableEntry) => new UPolys(archive, tableEntry) },
             { "PhysicsAssetInstance",              (archive, tableEntry) => new UAppendedBinaryDataObject(archive, tableEntry) },
             { "PrefabInstance",                    (archive, tableEntry) => new APrefabInstance(archive, tableEntry) },
