@@ -1,6 +1,17 @@
 # XCOM Uncooker
 
-The **XCOM Uncooker** is a project for XCOM: Enemy Within that allows you to (mostly) reverse the game's cooking process, making its assets openable in the Unreal Development Kit.
+The **XCOM Uncooker** is a project for XCOM: Enemy Within that allows you to (mostly) reverse the game's cooking process, making its assets openable in the Unreal Development Kit. This means you can use it to look at meshes and textures, fly around maps, view the Kismet scripts that power specific missions, etc.
+
+![Screenshot of the UDK showing the Alien Base map](img/udk-alien-base.jpg)
+
+![Screenshot of the UDK showing the Animset editor with a Cyberdisc in the middle of its firing animation](img/udk-cyberdisc-firing.jpg)
+
+This does not enable the following:
+
+1. Viewing the game's source code. You can use [UE Explorer](https://github.com/UE-Explorer/UE-Explorer) to decompile the game code.
+   * Kismet is UE3's visual scripting system, which is tied to an individual map. It controls activity such as "when a soldier enters this trigger volume, spawn more drop-in aliens" on council missions. Since this is part of the map, the Kismet is viewable in the UDK using the uncooker.
+2. Creating new assets and importing them into the game (yet).
+3. Creating new maps and loading them in the game (..yet?). Same issue as other assets, with some additional work needed on top.
 
 # First time setup
 
@@ -8,17 +19,20 @@ Follow these steps to uncook and view the game assets. Note that some warnings d
 
 0. You must own XCOM: Enemy Within and have it installed. I have only tried this with [the Steam version](https://store.steampowered.com/app/225340/XCOM_Enemy_Within/), and only with the Enemy Within DLC.
 1. Create a **clean and unused** installation of the September 2011 UDK release. You can get it [on this GitHub](https://github.com/chrishayesmu/XCOM-Uncooker/releases/tag/udk-installer) or from [Nexus Mods](https://www.nexusmods.com/xcom/mods/485?tab=description). This absolutely **MUST** be a new install which you aren't using for anything else. It will **not** be able to compile scripts, so if you want to create code mods for XCOM, you need two separate installations of the UDK. The installer is going to delete a bunch of stuff from the UDK folder, so please follow this instruction.
-2. Download the latest [XCOM Uncooker release](https://github.com/chrishayesmu/XCOM-Uncooker/releases) and unzip it. It should contain a folder called `xcom-uncooker` and a file called `xcom-uncooker-udk-setup.exe`.
+2. Download the latest [XCOM Uncooker release](https://github.com/chrishayesmu/XCOM-Uncooker/releases) and unzip it. It should contain folders called `xcom-uncooker` and `replacement-packages`, and a file called `xcom-uncooker-udk-setup.exe`.
 3. Run `xcom-uncooker-udk-setup.exe` and follow the installer's directions. This will modify your brand new UDK install so it can handle XCOM's assets.
 4. **Warning: this next step will take a while and bog down your computer while it's running.** The uncooking process is resource intensive and usually takes about 20 minutes on my machine.
    1. Once the UDK setup installer is done, run `xcom-uncooker\XCOM-Uncooker.exe`.
    2. When the uncooker asks for XCOM's `CookedPCConsole` folder, make sure to use the one under the `XEW` folder (e.g. `C:\Steam\steamapps\common\XCom-Enemy-Unknown\XEW\XComGame\CookedPCConsole`).
    3. When the uncooker asks for an output path, use `<UDK install path>\UDKGame\Content`. In my install, this is `C:\UDK\UDKGame\Content`.
    4. Let the uncooker run. It may appear to get stuck now and again due to particularly large or complex files.
-5. When the uncooker is complete, go to your UDK installation folder (e.g. `C:\UDK`) and run the "Update Asset Database" shortcut. It should ask if you want to compile scripts; say yes, wait for compilation to finish, then run the shortcut again.
-   * Updating the asset database lets you see all of the game assets in the editor, without having to load each individual UPK file.
+5. Optional, but recommended: inside the `replacement-packages` folder is an `XComGame` folder. Copy `XComGame` on top of `<UDK install path>\UDKGame\Content\XComGame`, replacing existing files when prompted.
+   * This will give you a bunch of UPK files that have been manually adjusted/corrected. This is mainly to make materials render correctly, as they can't be fully uncooked automatically.
+   * If you aren't prompted to replace anything, you probably pasted `XComGame` into the wrong spot. Remove the copy and try again.
+6. When the uncooker is complete, go to your UDK installation folder (e.g. `C:\UDK`) and run the "Update Asset Database" shortcut. It should ask if you want to compile scripts; say yes, wait for compilation to finish, then run the shortcut again.
+   * Updating the asset database lets you see all of the game assets in the editor at the same time, without having to load each individual UPK file.
    * This is optional but highly recommended. It may take a minute or two.
-6. When the asset database update is complete, you can close its window and click the other shortcut, "Open UDK Editor".
+7. When the asset database update is complete, you can close its window and click the other shortcut, "Open UDK Editor".
 
 At this point, you should be able to browse the game assets in the UDK!
 
@@ -53,7 +67,13 @@ A few Firaxis types have no equivalent in the public UDK, and are completely str
 
 # Known issues
 
+## Some assets are organized into folders, but most are not
+
+Sorry, figuring out where all the assets should go is pretty tedious and I haven't finished it yet. Future versions of the uncooker will likely do a better job organizing the UPK files.
+
 ## Shaders/textures are missing, objects render as all black
+
+> If you didn't copy the contents of the `replacement-packages` folder as mentioned in the installation steps, close the UDK and do so. It will help with a lot of these missing shaders.
 
 Shaders are very tricky to uncook, and for this project, they largely aren't. The problem is that UE Materials have all of their non-parameter expressions removed in the cooking process. This is because the shader is shipped pre-compiled in the various shader cache packages, so the expressions aren't needed at runtime. (Parameter expressions remain, presumably for use in some form of runtime binding.)
 
@@ -67,15 +87,31 @@ You don't have any cached shaders, so they're being compiled whenever you encoun
 
 This is expected, unfortunately. The UPKs shipped with the game don't have editor thumbnails, and there's no way to generate them via a commandlet like we can do for the asset database. The only way to generate the thumbnails is by having the UDK open.
 
-If you fully load a package, all of its assets will have thumbnails generated. You can theoretically do this for every package and save them back to disk. Unfortunately, something about saving a lot of the uncooked packages will cause them to crash the editor if you reopen them. I'm still working through what causes this.
+If you fully load a package, all of its assets will have thumbnails generated. You can theoretically do this for every package and save them back to disk, though obviously it'll be slow.
 
-## Node-based editor (Kismet, AnimTrees) have their nodes in the wrong spots
+Note that for particle systems, you have to manually create a thumbnail in the particle system editor. This isn't an uncooking limitation, it seems like this is just how the UDK works.
+
+## Node-based editors (Kismet, AnimTrees) have their nodes in the wrong spots
 
 The data on where to place these nodes is removed during the cooking process, so they're mostly in the default (0, 0) position.
 
 For Kismet nodes, there is some supplementary data which isn't cooked out, that provides hints as to where the node should be. XCOM Uncooker tries to use this to place some nodes, but it isn't perfect.
 
 There's probably more that can be done in this regard (for Kismet and other types), and future versions of the uncooker may do a better job placing these nodes.
+
+# FAQs
+
+## Why can't I make new game assets?
+
+Technically you can make them, but you can't get the game to load or compile their materials. Runtime compilation of materials is disabled in XCOM: EW, and there's not currently a way to precompile them and make them available to the game.
+
+[Long War: Community Edition](https://github.com/chrishayesmu/XCOM-LW-CommunityEdition) uses executable patching to re-enable runtime compilation of materials, but it causes very noticeable hitches the first time any new material is encountered and compiled. Precompilation of materials (i.e. cooking asset packages) should be doable before LWCE is released.
+
+## Why can't I make new maps?
+
+First, the same issue as assets. The materials we're using in our UDK are viewed as distinct from the game's own materials, so they have to be recompiled, even if we're using assets already in use in other maps.
+
+In addition, XCOM: EW's map files contain some extra data that our UDK can't provide. This hasn't been fully reverse engineered yet, but likely includes navigational data for which tiles are pathable, where cover exists, etc. In Firaxis's UDK, this would all have been calculated automatically when cooking the map. Before we can support fully custom maps, we will probably need to reverse engineer the data format, write a utility to do the same calculations, and append it to the cooked map file.
 
 # Credits
 
