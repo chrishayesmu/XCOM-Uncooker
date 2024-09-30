@@ -1,8 +1,7 @@
-﻿using System.IO;
-using XCOM_Uncooker.IO;
-using XCOM_Uncooker.Unreal;
-using XCOM_Uncooker.Unreal.Physical;
-using XCOM_Uncooker.Unreal.Shaders;
+﻿using Microsoft.Extensions.Logging;
+using System.IO;
+using UnrealArchiveLibrary.Unreal;
+using UnrealPackageLibrary;
 
 namespace XCOM_Uncooker
 {
@@ -110,24 +109,31 @@ namespace XCOM_Uncooker
 
         private static void Execute(string gameFilesPath, string outputPath) 
         {
-            var filePaths = new List<string>();
-
-            if (Directory.Exists(gameFilesPath))
+            var loggerFactory = LoggerFactory.Create(builder =>
             {
-                var dirFiles = Directory.GetFiles(gameFilesPath, "*.upk", SearchOption.AllDirectories);
-                Log.Verbose($"Treating argument '{gameFilesPath}' as a directory, containing {dirFiles.Count()} UPK files.");
+                builder.AddConsole();
+            });
 
-                filePaths.AddRange(dirFiles);
-            }
-
-            filePaths = filePaths.Where(IsSupportedFile).ToList();
-
-            if (filePaths.Count == 0)
+            using (IUnrealArchiveManager archiveManager = new UnrealArchiveManager(loggerFactory))
             {
-                Log.Error($"Couldn't find any usable UPK files under the path {gameFilesPath}");
-                Log.EmptyLine();
-                Log.Error("Uncooking failed. Aborting..");
-            }
+                var filePaths = new List<string>();
+
+                if (Directory.Exists(gameFilesPath))
+                {
+                    var dirFiles = Directory.GetFiles(gameFilesPath, "*.upk", SearchOption.AllDirectories);
+                    Log.Verbose($"Treating argument '{gameFilesPath}' as a directory, containing {dirFiles.Count()} UPK files.");
+
+                    filePaths.AddRange(dirFiles);
+                }
+
+                filePaths = filePaths.Where(IsSupportedFile).ToList();
+
+                if (filePaths.Count == 0)
+                {
+                    Log.Error($"Couldn't find any usable UPK files under the path {gameFilesPath}");
+                    Log.EmptyLine();
+                    Log.Error("Uncooking failed. Aborting..");
+                }
 
 #if false
             Log.Info("Attempting to read global shader cache..");
@@ -148,25 +154,29 @@ namespace XCOM_Uncooker
             localShaderArchive.EndSerialization();
 #endif
 
-            Log.Info("Attempting to load game archives..");
-            var linker = new Linker();
-            linker.LoadArchives(filePaths);
-            Log.Info("Archive loading is complete.");
+                Log.Info("Attempting to load game archives..");
+                archiveManager.LoadInputArchives(filePaths);
 
-            Log.Info("Attempting to recreate the uncooked archives..");
+                Log.Info("Attempting to recreate the uncooked archives..");
 
-            foreach (var tfcName in TextureFileCaches)
-            {
-                string tfcPath = Path.Combine(gameFilesPath, $"{tfcName}.tfc");
-                linker.RegisterTextureFileCache(tfcName, tfcPath);
+                var tfcEntries = new List<TextureFileCacheEntry>();
+                foreach (var tfcName in TextureFileCaches)
+                {
+                    string tfcPath = Path.Combine(gameFilesPath, $"{tfcName}.tfc");
+                    tfcEntries.Add(new TextureFileCacheEntry()
+                    {
+                        FilePath = tfcPath,
+                        TextureFileName = tfcName
+                    });
+                }
+
+                Linker uncookingLinker = archiveManager.UncookArchives(tfcEntries);
+
+                Log.EmptyLine();
+                Log.Info("Uncooking process is complete!");
+                Log.EmptyLine();
+                Log.Info("You're almost done - be sure to continue following the installation instructions.");
             }
-
-            linker.UncookArchives(outputPath);
-
-            Log.EmptyLine();
-            Log.Info("Uncooking process is complete!");
-            Log.EmptyLine();
-            Log.Info("You're almost done - be sure to continue following the installation instructions.");
         }
 
         private static bool IsSupportedFile(string path)
