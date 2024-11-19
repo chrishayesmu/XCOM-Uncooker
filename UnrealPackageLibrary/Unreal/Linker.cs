@@ -26,14 +26,18 @@ namespace UnrealArchiveLibrary.Unreal
 
         private IDictionary<string, FileStream> TextureFileCaches = new Dictionary<string, FileStream>();
 
-        public bool HasArchiveWithFileName(string name)
+        public bool TryGetArchiveWithFileName(string name, out FArchive? archive)
         {
-            return Archives.Any(ar => ar.FileName == name);
+            archive = Archives.SingleOrDefault(ar => ar.FileName == name);
+
+            return archive != null;
         }
 
-        public bool HasArchiveWithNormalizedName(string name)
+        public bool TryGetArchiveWithNormalizedName(string name, out FArchive? archive)
         {
-            return Archives.Any(ar => ar.NormalizedName == name);
+            archive = Archives.SingleOrDefault(ar => ar.NormalizedName == name);
+
+            return archive != null;
         }
 
         /// <summary>

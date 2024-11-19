@@ -3,9 +3,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
+using UnrealArchiveLibrary.Graph;
 using UnrealArchiveLibrary.IO;
 using UnrealArchiveLibrary.Unreal;
 using UnrealArchiveLibrary.Unreal.Intrinsic.Core;
@@ -29,6 +32,33 @@ namespace UnrealPackageLibrary
         {
             _logger = loggerFactory?.CreateLogger("UnrealArchiveLibrary") ?? NullLoggerFactory.Instance.CreateLogger("UnrealArchiveLibrary");
             _inputLinker = new Linker(_logger);
+
+            // Create decompressed copies on disk in a temp location
+            tempDecompressionDirectory = Directory.CreateTempSubdirectory("XComUncooker_");
+            _logger.LogInformation("Temp directory: {TempDirectory}", tempDecompressionDirectory);
+        }
+
+        public void Dispose()
+        {
+            InputLinker?.Dispose();
+
+            // Try to clean up the temp directory, because it's probably full of decompressed
+            // versions of UPK files, meaning it's several gigabytes in size
+            if (tempDecompressionDirectory != null)
+            {
+                _logger.LogInformation("Deleting temp directory {TempDirectory}..", tempDecompressionDirectory);
+
+                try
+                {
+                    Directory.Delete(tempDecompressionDirectory.FullName, true);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error occurred while deleting temp directory. Manual cleanup will be required.");
+                }
+
+                tempDecompressionDirectory = null;
+            }
         }
 
         public Linker CloneArchives(IEnumerable<FArchive> archives, Linker? linkerToUse = null)
@@ -99,8 +129,8 @@ namespace UnrealPackageLibrary
             #endregion
 
             var allAddedArchives = new List<FArchive>(); // everything loaded successfully during this function
-            var latestAddedArchives = new ConcurrentQueue<FArchive>(); // everything just loaded in the latest iteration of dependency management
-            var pendingArchives = new List<FArchive>(); // everything that hasn't been deserialized at all yet
+            var latestAddedArchives = new List<FArchive>(); // everything just loaded in the latest iteration of dependency management
+            var headersLoadedArchives = new List<FArchive>(); // everything that hasn't been deserialized at all yet
 
             #region Initialize archives
 
@@ -108,121 +138,110 @@ namespace UnrealPackageLibrary
             {
                 string archiveName = Path.GetFileNameWithoutExtension(path);
 
-                if (InputLinker.HasArchiveWithFileName(archiveName))
+                if (InputLinker.TryGetArchiveWithFileName(archiveName, out _))
                 {
                     _logger.LogWarning("The archive {archiveName} has already been loaded and will be skipped", archiveName);
                     continue;
                 }
 
-                var archive = OpenArchiveForRead(path, archiveName);
-                pendingArchives.Add(archive);
+                var archive = LoadSingleArchiveUpToHeaders(path);
+                InputLinker.Archives.Add(archive);
+                headersLoadedArchives.Add(archive);
             }
 
             #endregion
 
-            // Loop through the archives, adding their dependencies (if requested) and decompressing any which need it
-            while (pendingArchives.Count > 0)
+            if (dependencyMode != DependencyLoadingMode.None)
             {
-                var compressedArchives = new ConcurrentQueue<FArchive>();
+                var unsatisfiableDependencies = new HashSet<string>(); // dependencies which were identified but could not be loaded
+                var mostRecentDependencies = new HashSet<string>(); // dependencies identified in the latest iteration of dependency checking
+                var mostRecentArchives = new List<FArchive>(headersLoadedArchives); // tracks only the archives loaded since the last iteration of dependency checking
 
-                #region Read archive headers
-
-                Parallel.ForEach(pendingArchives, (archive) =>
+                do
                 {
-                    try
+                    // Identify the packages we depend on
+                    foreach (var archive in mostRecentArchives)
                     {
-                        archive.SerializeHeaderData();
-
-                        if (archive.IsBodyCompressed || archive.IsFullyCompressed)
-                        {
-                            compressedArchives.Enqueue(archive);
-                        }
-                        else
-                        {
-                            latestAddedArchives.Enqueue(archive);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Could not initialize archive {fileName} - it will be skipped.", archive.FileName);
-                    }
-                });
-
-                #endregion
-
-                allAddedArchives.AddRange(latestAddedArchives);
-                InputLinker.Archives.AddRange(latestAddedArchives);
-                latestAddedArchives.Clear();
-                pendingArchives.Clear();
-
-                #region Handle compressed files
-
-                if (!compressedArchives.IsEmpty)
-                {
-                    _logger.LogInformation("There are {numCompressedArchives} compressed archives in the active set. Decompressing them to a temporary location.", compressedArchives.Count);
-
-                    var decompressedArchives = DecompressArchives(compressedArchives);
-
-                    // Put these in pending so they can have their headers read
-                    pendingArchives.AddRange(decompressedArchives);
-                }
-
-                #endregion
-
-                #region Add unloaded dependencies if needed
-
-                if (dependencyMode != DependencyLoadingMode.None)
-                {
-                    var allDependencies = new HashSet<string>();
-                    var typeDependencies = new HashSet<string>();
-
-                    foreach (var newArchive in latestAddedArchives)
-                    {
-                        foreach (var importEntry in newArchive.ImportTable)
+                        foreach (var importEntry in archive.ImportTable)
                         {
                             // Top-level packages should always map to an archive file
                             if (importEntry.IsPackage && importEntry.OuterIndex == 0)
                             {
-                                allDependencies.Add(importEntry.ObjectName);
+                                mostRecentDependencies.Add(importEntry.ObjectName);
                             }
 
-                            // TODO: whenever there's a class import, track its outermost index and resolve it to a package later
                             // TODO: check dependencyMode in here
                         }
                     }
 
-                    // Go through and strip out any that are already loaded in
-                    allDependencies.RemoveWhere(dep => InputLinker.HasArchiveWithNormalizedName(dep));
+                    mostRecentArchives.Clear();
 
-                    _logger.LogInformation("Found {numDependencies} archives to load as dependencies", allDependencies.Count);
-
-                    // Check if any of the dependencies couldn't be located
-                    var missingDependencies = allDependencies.Where(archiveName => !archiveToPathMap.ContainsKey(archiveName));
-
-                    foreach (var missingEntry in missingDependencies)
+                    // Load as many of those packages as we can (that aren't already loaded)
+                    foreach (var dep in mostRecentDependencies)
                     {
-                        _logger.LogWarning("Archive '{archiveName}' is a dependency, but it couldn't be located", missingEntry);
-                    }
-
-                    // For archives that do have corresponding files, load them into archives
-                    foreach (var dep in allDependencies)
-                    {
-                        if (!archiveToPathMap.ContainsKey(dep))
+                        if (InputLinker.TryGetArchiveWithNormalizedName(dep, out _))
                         {
                             continue;
                         }
 
-                        var archive = OpenArchiveForRead(archiveToPathMap[dep], dep);
-                        pendingArchives.Add(archive);
+                        if (archiveToPathMap.TryGetValue(dep, out string? depPath))
+                        {
+                            var archive = LoadSingleArchiveUpToHeaders(depPath);
+                            headersLoadedArchives.Add(archive);
+                            mostRecentArchives.Add(archive);
+                            InputLinker.Archives.Add(archive);
+                        }
+                        else
+                        {
+                            unsatisfiableDependencies.Add(dep);
+                        }
+                    }
+
+                    mostRecentDependencies.Clear();
+                } while (mostRecentArchives.Count > 0);
+
+                foreach (var dep in unsatisfiableDependencies)
+                {
+                    _logger.LogWarning("Couldn't load dependent archive {archiveName}", dep);
+                }
+            }
+
+            // Build a dependency tree so we can operate on it breadth-first
+            var dependencyTree = new DirectedAcyclicGraph<FArchive>();
+
+            foreach (var archive in headersLoadedArchives)
+            {
+                // AddEdge below will add both the source and target archive to the tree if needed. However,
+                // if an archive doesn't have any dependencies (or they couldn't be loaded), that AddEdge call will
+                // never happen. To make sure every archive ends up in the tree, we explicitly add them here first.
+                dependencyTree.AddNode(archive);
+
+                // TODO don't repeat this work
+                foreach (var importEntry in archive.ImportTable)
+                {
+                    if (importEntry.IsPackage && importEntry.OuterIndex == 0 && importEntry.ObjectName != archive.NormalizedName)
+                    {
+                        if (InputLinker.TryGetArchiveWithNormalizedName(importEntry.ObjectName, out FArchive? depArchive))
+                        {
+                            dependencyTree.AddEdge(archive, depArchive!);
+                        }
                     }
                 }
-
-                #endregion
             }
 
             // All dependencies are now loaded (or can't be found); deserialize each archive's class data next,
             // so it's available for other archives to access in the next phase
 
+            dependencyTree.TraverseBreadthFirstMultiple((archivesAtDepth, depth) =>
+            {
+                _logger.LogInformation("Processing {numArchives} at depth {depth}", archivesAtDepth.Count(), depth);
+
+                Parallel.ForEach(archivesAtDepth, new ParallelOptions() { MaxDegreeOfParallelism = Settings.MaxParallelismForSerialization }, (archive) =>
+                {
+                    archive.SerializeBodyData();
+                });
+            });
+            /*
             #region Deserialize exported classes
 
             _logger.LogInformation("Beginning deserialization of exported classes for {numArchives} archives..", allAddedArchives.Count);
@@ -241,6 +260,7 @@ namespace UnrealPackageLibrary
             {
                 archive.SerializeBodyData();
             });
+            */
 
             foreach (var archive in allAddedArchives)
             {
@@ -432,6 +452,40 @@ namespace UnrealPackageLibrary
             return uncookedLinker;
         }
 
+        /// <summary>
+        /// Makes a decompressed copy of the input archive, closing the original. If the original archive is not compressed,
+        /// just returns it instead. Note that the input archive's header data must have been read before this is called, or
+        /// it will be assumed to not be compressed.
+        /// </summary>
+        /// <param name="inputArchive"></param>
+        /// <returns></returns>
+        private FArchive DecompressArchiveIfNeeded(FArchive inputArchive)
+        {
+            if (!inputArchive.IsBodyCompressed && !inputArchive.IsFullyCompressed)
+            {
+                return inputArchive;
+            }
+
+            // TODO: instead of .upk, this should use the original extension
+            string archivePath = Path.Combine(tempDecompressionDirectory!.FullName, inputArchive.FileName + ".upk");
+
+            using (UnrealDataWriter tempFileStream = new UnrealDataWriter(File.Open(archivePath, FileMode.Create)))
+            {
+                inputArchive.DecompressToStream(tempFileStream);
+                inputArchive.EndSerialization();
+            }
+
+            // Create a new archive, replacing the previous temp file stream with a read-only one,
+            // because having a write stream open will interfere with cleaning up the temp directory.
+            var decompressedArchive = OpenArchiveForRead(archivePath, inputArchive.FileName);
+
+            // Since the input archive had its header data read already, this one should too
+            decompressedArchive.SerializeHeaderData();
+
+            return decompressedArchive;
+        }
+
+        // TODO delete this
         private IEnumerable<FArchive> DecompressArchives(IEnumerable<FArchive> archivesToDecompress)
         {
             var decompressedArchives = new ConcurrentQueue<FArchive>();
@@ -460,6 +514,46 @@ namespace UnrealPackageLibrary
             return decompressedArchives;
         }
 
+        private FArchive LoadSingleArchiveUpToHeaders(string archivePath)
+        {
+            if (!File.Exists(archivePath))
+            {
+                throw new FileNotFoundException($"Input file {archivePath} could not be found");
+            }
+
+            string archiveName = Path.GetFileNameWithoutExtension(archivePath);
+
+            if (InputLinker.TryGetArchiveWithFileName(archiveName, out FArchive? existingArchive))
+            {
+                _logger.LogWarning("The archive {archiveName} has already been loaded and will be skipped", archiveName);
+                return existingArchive!;
+            }
+
+            var archive = OpenArchiveForRead(archivePath, archiveName);
+
+            try
+            {
+                archive.SerializeHeaderData();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not initialize archive {fileName} - it will be skipped.", archive.FileName);
+            }
+
+            return DecompressArchiveIfNeeded(archive);
+        }
+
+        private bool IsDependencyAvailableButUnloaded(string dependency, IDictionary<string, string> archiveToPathMap)
+        {
+            // Check if the dependency's already loaded
+            if (InputLinker.TryGetArchiveWithNormalizedName(dependency, out _))
+            {
+                return false;
+            }
+
+            return archiveToPathMap.ContainsKey(dependency);
+        }
+
         private FArchive OpenArchiveForRead(string archivePath, string archiveName)
         {
             var fileStream = File.Open(archivePath, FileMode.Open, FileAccess.Read);
@@ -467,29 +561,6 @@ namespace UnrealPackageLibrary
             archive.BeginSerialization(new UnrealDataReader(fileStream));
 
             return archive;
-        }
-
-        public void Dispose()
-        {
-            InputLinker?.Dispose();
-
-            // Try to clean up the temp directory, because it's probably full of decompressed
-            // versions of UPK files, meaning it's several gigabytes in size
-            if (tempDecompressionDirectory != null)
-            {
-                _logger.LogInformation("Deleting temp directory {TempDirectory}..", tempDecompressionDirectory);
-
-                try
-                {
-                    Directory.Delete(tempDecompressionDirectory.FullName, true);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error occurred while deleting temp directory. Manual cleanup will be required.");
-                }
-
-                tempDecompressionDirectory = null;
-            }
         }
     }
 }

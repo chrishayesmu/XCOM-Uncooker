@@ -101,6 +101,7 @@ namespace UnrealArchiveLibrary.Unreal
     /// An FArchive represents a physical file on disk. It is associated with a top-level Unreal package,
     /// as described in the PackageFileSummary, but can also contain other packages as exports or imports.
     /// </summary>
+    [DebuggerDisplay("{DebuggerDisplay}")]
     public class FArchive(string fileName, Linker linker, ILogger logger)
     {
         public const uint UNREAL_SIGNATURE = 0x9E2A83C1;
@@ -210,6 +211,14 @@ namespace UnrealArchiveLibrary.Unreal
 
         private MultiValueDictionary<string, FExportTableEntry> ExportTableByObjectPath = new MultiValueDictionary<string, FExportTableEntry>();
         private IUnrealDataStream? _stream;
+
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return NormalizedName;
+            }
+        }
 
         public void BeginSerialization(IUnrealDataStream stream, bool forcePreserveData = false)
         {

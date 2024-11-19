@@ -77,7 +77,10 @@ namespace UnrealArchiveLibrary.Unreal.ObjectSubtypes.Audio
                     stream.Int32(ref key);
                     stream.Object(ref data);
 
-                    EditorData.Add(key, data);
+                    if (!EditorData.ContainsKey(key))
+                    {
+                        EditorData.Add(key, data);
+                    }
                 }
             }
             else
