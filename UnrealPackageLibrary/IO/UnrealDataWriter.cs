@@ -65,6 +65,11 @@ namespace UnrealArchiveLibrary.IO
             _stream.Write(buffer);
         }
 
+        public ValueTask WriteAsync(Memory<byte> buffer)
+        {
+            return _stream.WriteAsync(buffer);
+        }
+
         public void Write(byte[] buffer, int offset, int count)
         {
             _stream.Write(buffer, offset, count);

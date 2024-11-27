@@ -30,6 +30,26 @@ namespace UnrealPackageLibrary
         XCom2
     }
 
+    public enum ProgressEvent
+    {
+        ArchiveHeaderLoaded,
+        ArchiveBodyLoaded,
+        ArchiveUncookedInMemory,
+        ArchivePostUncookFixup, // After initial uncooking, some things are fixed up that can only be handled once all objects are available.
+        ArchiveWrittenToDisk,
+        DependencyLoaded, // An archive which is a dependency of another archive has been loaded (up to its headers).
+        LoadComplete,
+        UncookComplete
+    }
+
+    /// <summary>
+    /// Used for reporting progress on various archive tasks.
+    /// </summary>
+    /// <param name="e">What type of event is being reported on.</param>
+    /// <param name="numCompleted">How many of this type of event are complete.</param>
+    /// <param name="numTotal">How many total of this type of event are anticipated.</param>
+    public delegate void ProgressHandler(ProgressEvent e, int numCompleted, int numTotal);
+
     public struct ArchiveManagerSettings
     {
         public ArchiveFormat OutputFormat = ArchiveFormat.XComEW;
@@ -130,7 +150,7 @@ namespace UnrealPackageLibrary
         /// <see cref="LoadInputArchives(string, IEnumerable{string}, DependencyLoadingMode)"/>
         /// </summary>
         /// <param name="inputArchivePaths">Paths to the archive files to load</param>
-        public void LoadInputArchives(IEnumerable<string> inputArchivePaths);
+        public void LoadInputArchives(IEnumerable<string> inputArchivePaths, ProgressHandler? progressHandler = null);
 
         /// <summary>
         /// Loads all archives from the paths provided. Each path should be to a file; directories will
@@ -142,12 +162,15 @@ namespace UnrealPackageLibrary
         /// in this directory. Subdirectories will be included in the search.</param>
         /// <param name="inputArchivePaths">Paths to the archive files to load</param>
         /// <param name="dependencyMode">How to handle missing dependencies during loading</param>
-        public void LoadInputArchives(string baseDirectory, IEnumerable<string> inputArchivePaths, DependencyLoadingMode dependencyMode = DependencyLoadingMode.All);
+        public void LoadInputArchives(string baseDirectory, IEnumerable<string> inputArchivePaths, ProgressHandler? progressHandler = null, DependencyLoadingMode dependencyMode = DependencyLoadingMode.All);
 
         /// <summary>
         /// Creates uncooked archives based on the contents of the currently loaded input archives.  Uncooked archives
         /// exist only in memory and are not automatically serialized to disk.
         /// </summary>
+        /// <param name="textureFileCacheEntries">
+        /// If set, texture data will be pulled from the given files.
+        /// </param>
         /// <param name="inputArchivesOverride">
         /// If set, then instead of using all currently loaded input archives, uncooking will be based on the set of archives provided.
         /// </param>
@@ -155,6 +178,13 @@ namespace UnrealPackageLibrary
         /// If set, then only archives matching these names will be kept in the uncooked output.
         /// </param>
         /// <returns></returns>
-        public Linker UncookArchives(IEnumerable<TextureFileCacheEntry>? textureFileCacheEntries = null, IEnumerable<FArchive>? inputArchivesOverride = null, IEnumerable<string>? outputArchivesOverride = null);
+        public Linker UncookArchives(IEnumerable<TextureFileCacheEntry>? textureFileCacheEntries = null, ProgressHandler? progressHandler = null, IEnumerable<FArchive>? inputArchivesOverride = null, ISet<string>? outputArchivesOverride = null);
+
+        /// <summary>
+        /// Writes the given archive to a file on disk.
+        /// </summary>
+        /// <param name="archive">The archive to write.</param>
+        /// <param name="containingFolderPath">The folder path the file will be at, not including the filename. Any existing file will be overwritten.</param>
+        public void WriteArchiveToDisk(FArchive archive, string containingFolderPath);
     }
 }

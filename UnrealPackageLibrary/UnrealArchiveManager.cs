@@ -86,12 +86,12 @@ namespace UnrealPackageLibrary
             return logicalArchives;
         }
 
-        public void LoadInputArchives(IEnumerable<string> inputPackagePaths)
+        public void LoadInputArchives(IEnumerable<string> inputPackagePaths, ProgressHandler? progressHandler = null)
         {
-            LoadInputArchives("", inputPackagePaths, DependencyLoadingMode.None);
+            LoadInputArchives("", inputPackagePaths, progressHandler, DependencyLoadingMode.None);
         }
 
-        public void LoadInputArchives(string baseDirectory, IEnumerable<string> inputPackagePaths, DependencyLoadingMode dependencyMode = DependencyLoadingMode.All)
+        public void LoadInputArchives(string baseDirectory, IEnumerable<string> inputPackagePaths, ProgressHandler? progressHandler = null, DependencyLoadingMode dependencyMode = DependencyLoadingMode.All)
         {
             _logger.LogDebug("LoadInputArchives: inputPackagePaths.Count = {numInputPackagePaths}, dependencyMode = {dependencyMode},  baseDirectory = {baseDirectory}", inputPackagePaths.Count(), dependencyMode, baseDirectory);
 
@@ -128,11 +128,13 @@ namespace UnrealPackageLibrary
 
             #endregion
 
-            var allAddedArchives = new List<FArchive>(); // everything loaded successfully during this function
-            var latestAddedArchives = new List<FArchive>(); // everything just loaded in the latest iteration of dependency management
-            var headersLoadedArchives = new List<FArchive>(); // everything that hasn't been deserialized at all yet
+            var headersLoadedArchives = new List<FArchive>();
 
             #region Initialize archives
+
+            int numRequestedArchives = inputPackagePaths.Count();
+            int numLoadedArchives = 0;
+            progressHandler?.Invoke(ProgressEvent.ArchiveHeaderLoaded, 0, numRequestedArchives);
 
             foreach (string path in inputPackagePaths)
             {
@@ -141,12 +143,14 @@ namespace UnrealPackageLibrary
                 if (InputLinker.TryGetArchiveWithFileName(archiveName, out _))
                 {
                     _logger.LogWarning("The archive {archiveName} has already been loaded and will be skipped", archiveName);
+                    progressHandler?.Invoke(ProgressEvent.ArchiveHeaderLoaded, ++numLoadedArchives, numRequestedArchives);
                     continue;
                 }
 
                 var archive = LoadSingleArchiveUpToHeaders(path);
                 InputLinker.Archives.Add(archive);
                 headersLoadedArchives.Add(archive);
+                progressHandler?.Invoke(ProgressEvent.ArchiveHeaderLoaded, ++numLoadedArchives, numRequestedArchives);
             }
 
             #endregion
@@ -154,8 +158,12 @@ namespace UnrealPackageLibrary
             if (dependencyMode != DependencyLoadingMode.None)
             {
                 var unsatisfiableDependencies = new HashSet<string>(); // dependencies which were identified but could not be loaded
+                var handledDependencies = new HashSet<string>(); // every dependency which is processed, either loaded or unsatisfiable
+                var allDependencies = new HashSet<string>(); // every dependency identified
                 var mostRecentDependencies = new HashSet<string>(); // dependencies identified in the latest iteration of dependency checking
                 var mostRecentArchives = new List<FArchive>(headersLoadedArchives); // tracks only the archives loaded since the last iteration of dependency checking
+
+                numLoadedArchives = 0;
 
                 do
                 {
@@ -174,13 +182,17 @@ namespace UnrealPackageLibrary
                         }
                     }
 
+                    allDependencies.UnionWith(mostRecentDependencies);
                     mostRecentArchives.Clear();
 
                     // Load as many of those packages as we can (that aren't already loaded)
                     foreach (var dep in mostRecentDependencies)
                     {
+                        progressHandler?.Invoke(ProgressEvent.DependencyLoaded, handledDependencies.Count, allDependencies.Count);
+
                         if (InputLinker.TryGetArchiveWithNormalizedName(dep, out _))
                         {
+                            handledDependencies.Add(dep);
                             continue;
                         }
 
@@ -195,6 +207,8 @@ namespace UnrealPackageLibrary
                         {
                             unsatisfiableDependencies.Add(dep);
                         }
+
+                        handledDependencies.Add(dep);
                     }
 
                     mostRecentDependencies.Clear();
@@ -207,68 +221,33 @@ namespace UnrealPackageLibrary
             }
 
             // Build a dependency tree so we can operate on it breadth-first
-            var dependencyTree = new DirectedAcyclicGraph<FArchive>();
+            var dependencyTree = BuildDependencyTree(headersLoadedArchives);
 
-            foreach (var archive in headersLoadedArchives)
-            {
-                // AddEdge below will add both the source and target archive to the tree if needed. However,
-                // if an archive doesn't have any dependencies (or they couldn't be loaded), that AddEdge call will
-                // never happen. To make sure every archive ends up in the tree, we explicitly add them here first.
-                dependencyTree.AddNode(archive);
-
-                // TODO don't repeat this work
-                foreach (var importEntry in archive.ImportTable)
-                {
-                    if (importEntry.IsPackage && importEntry.OuterIndex == 0 && importEntry.ObjectName != archive.NormalizedName)
-                    {
-                        if (InputLinker.TryGetArchiveWithNormalizedName(importEntry.ObjectName, out FArchive? depArchive))
-                        {
-                            dependencyTree.AddEdge(archive, depArchive!);
-                        }
-                    }
-                }
-            }
-
-            // All dependencies are now loaded (or can't be found); deserialize each archive's class data next,
-            // so it's available for other archives to access in the next phase
-
+            // All dependencies are now loaded (or can't be found); deserialize them in dependency order
             dependencyTree.TraverseBreadthFirstMultiple((archivesAtDepth, depth) =>
             {
                 _logger.LogInformation("Processing {numArchives} at depth {depth}", archivesAtDepth.Count(), depth);
 
                 Parallel.ForEach(archivesAtDepth, new ParallelOptions() { MaxDegreeOfParallelism = Settings.MaxParallelismForSerialization }, (archive) =>
                 {
-                    archive.SerializeBodyData();
+                    // Make sure the archive's open, in case we're carrying over previously-loaded archives
+                    if (archive.IsOpen)
+                    {
+                        archive.SerializeBodyData();
+                    }
                 });
             });
-            /*
-            #region Deserialize exported classes
 
-            _logger.LogInformation("Beginning deserialization of exported classes for {numArchives} archives..", allAddedArchives.Count);
-            int serializedArchives = 0;
-
-            Parallel.ForEach(allAddedArchives, new ParallelOptions() { MaxDegreeOfParallelism = Settings.MaxParallelismForSerialization },(archive) =>
-            {
-                _logger.LogDebug("Serializing exports for archive {Index}", Interlocked.Increment(ref serializedArchives));
-                archive.SerializeClassExports();
-            });
-
-            #endregion
-
-            // With the class data available, we can move on to deserializing all export objects
-            Parallel.ForEach(allAddedArchives, (archive) =>
-            {
-                archive.SerializeBodyData();
-            });
-            */
-
-            foreach (var archive in allAddedArchives)
+            // Close all our file streams
+            foreach (var archive in headersLoadedArchives)
             {
                 archive.EndSerialization();
             }
+
+            progressHandler?.Invoke(ProgressEvent.LoadComplete, headersLoadedArchives.Count, InputLinker.Archives.Count);
         }
 
-        public Linker UncookArchives(IEnumerable<TextureFileCacheEntry>? textureFileCacheEntries = null, IEnumerable<FArchive>? inputArchivesOverride = null, IEnumerable<string>? outputArchivesOverride = null)
+        public Linker UncookArchives(IEnumerable<TextureFileCacheEntry>? textureFileCacheEntries = null, ProgressHandler? progressHandler = null, IEnumerable<FArchive>? inputArchivesOverride = null, ISet<string>? outputArchivesOverride = null)
         {
             var uncookedLinker = new Linker(_logger);
             var inputArchives = inputArchivesOverride ?? InputLinker.Archives;
@@ -320,6 +299,11 @@ namespace UnrealPackageLibrary
 
             foreach (var package in allPackages)
             {
+                if (outputArchivesOverride != null && !outputArchivesOverride.Contains(package))
+                {
+                    continue;
+                }
+
                 objectsByUncookedArchiveName.Add(package, new MultiValueDictionary<string, UObject>());
             }
 
@@ -334,10 +318,15 @@ namespace UnrealPackageLibrary
 
                 foreach (var exportObj in archive.ExportedObjects)
                 {
+                    if (exportObj is UPackage && exportObj.ObjectName == archive.FileName)
+                    {
+                        continue;
+                    }
+
                     string fullObjectPath = exportObj.FullObjectPath;
                     string topPackage = fullObjectPath.Split(".")[0];
 
-                    if (exportObj is UPackage && exportObj.ObjectName == archive.FileName)
+                    if (outputArchivesOverride != null && !outputArchivesOverride.Contains(topPackage))
                     {
                         continue;
                     }
@@ -393,19 +382,15 @@ namespace UnrealPackageLibrary
             }
 
             var outputArchives = new FArchive[objectsByUncookedArchiveName.Count];
-            int outArchiveIndex = 0;
+            int outArchiveIndex = -1;
             int totalNumObjects = numObjects;
+            int numArchivesProcessed = 0;
             numObjects = 0;
 
             Parallel.ForEach(objectsByUncookedArchiveName, new ParallelOptions { MaxDegreeOfParallelism = Settings.MaxParallelismForUncooking }, (entry) =>
             {
                 string fileName = entry.Key;
                 MultiValueDictionary<string, UObject> objectsByName = entry.Value;
-
-                if (outputArchivesOverride != null && !outputArchivesOverride.Contains(fileName))
-                {
-                    return;
-                }
 
                 FArchive outArchive = new FArchive(entry.Key, uncookedLinker, _logger);
 
@@ -419,11 +404,7 @@ namespace UnrealPackageLibrary
                 // disk, causing None to be unfindable when loading the UPK later. So we just manually kickstart it here
                 outArchive.GetOrCreateName("None");
 
-                lock (this)
-                {
-                    outputArchives[outArchiveIndex] = outArchive;
-                    Interlocked.Increment(ref outArchiveIndex);
-                }
+                outputArchives[Interlocked.Increment(ref outArchiveIndex)] = outArchive;
 
                 // TODO: the archive should be managing this state internally
                 int exportCount = objectsByName.CountWhere(obj => obj is not UPackage || obj.ObjectName != outArchive.FileName);
@@ -438,18 +419,54 @@ namespace UnrealPackageLibrary
                         outArchive.AddExportObject(obj);
                     }
                 }
+
+                progressHandler?.Invoke(ProgressEvent.ArchiveUncookedInMemory, Interlocked.Increment(ref numArchivesProcessed), outputArchives.Length);
             });
 
+            uncookedLinker.Archives = outputArchives.ToList();
+
             // Give objects in the output archives a chance to post-process if needed
-            foreach (var archive in outputArchives)
+            numArchivesProcessed = 0;
+            foreach (var archive in uncookedLinker.Archives)
             {
                 foreach (var obj in archive.ExportedObjects)
                 {
                     obj.PostArchiveCloneComplete();
                 }
+
+                progressHandler?.Invoke(ProgressEvent.ArchivePostUncookFixup, ++numArchivesProcessed, uncookedLinker.Archives.Count);
             }
 
+            progressHandler?.Invoke(ProgressEvent.UncookComplete, uncookedLinker.Archives.Count, uncookedLinker.Archives.Count);
+
             return uncookedLinker;
+        }
+
+        private DirectedAcyclicGraph<FArchive> BuildDependencyTree(IEnumerable<FArchive> archives)
+        {
+            var dependencyTree = new DirectedAcyclicGraph<FArchive>();
+
+            foreach (var archive in archives)
+            {
+                // AddEdge below will add both the source and target archive to the tree if needed. However,
+                // if an archive doesn't have any dependencies (or they couldn't be loaded), that AddEdge call will
+                // never happen. To make sure every archive ends up in the tree, we explicitly add them here first.
+                dependencyTree.AddNode(archive);
+
+                // TODO don't repeat this work
+                foreach (var importEntry in archive.ImportTable)
+                {
+                    if (importEntry.IsPackage && importEntry.OuterIndex == 0 && importEntry.ObjectName != archive.NormalizedName)
+                    {
+                        if (InputLinker.TryGetArchiveWithNormalizedName(importEntry.ObjectName, out FArchive? depArchive))
+                        {
+                            dependencyTree.AddEdge(archive, depArchive!);
+                        }
+                    }
+                }
+            }
+
+            return dependencyTree;
         }
 
         /// <summary>
@@ -485,35 +502,6 @@ namespace UnrealPackageLibrary
             return decompressedArchive;
         }
 
-        // TODO delete this
-        private IEnumerable<FArchive> DecompressArchives(IEnumerable<FArchive> archivesToDecompress)
-        {
-            var decompressedArchives = new ConcurrentQueue<FArchive>();
-
-            // Create decompressed copies on disk in a temp location
-            tempDecompressionDirectory = Directory.CreateTempSubdirectory("XComUncooker_");
-            _logger.LogInformation("Temp directory: {TempDirectory}", tempDecompressionDirectory);
-
-            Parallel.ForEach(archivesToDecompress, new ParallelOptions() { MaxDegreeOfParallelism = Settings.MaxParallelismForDecompression }, (compressedArchive) =>
-            {
-                // TODO: instead of .upk, this should use the original extension
-                string archivePath = Path.Combine(tempDecompressionDirectory.FullName, compressedArchive.FileName + ".upk");
-
-                using (UnrealDataWriter tempFileStream = new UnrealDataWriter(File.Open(archivePath, FileMode.Create)))
-                {
-                    compressedArchive.DecompressToStream(tempFileStream);
-                    compressedArchive.EndSerialization();
-                }
-
-                // Create a new archive and catch it up to where any previous archives are. Replace the previous stream
-                // with a read-only one, because having a write stream open will interfere with cleaning up the temp directory.
-                var decompressedArchive = OpenArchiveForRead(archivePath, compressedArchive.FileName);
-                decompressedArchives.Enqueue(decompressedArchive);
-            });
-
-            return decompressedArchives;
-        }
-
         private FArchive LoadSingleArchiveUpToHeaders(string archivePath)
         {
             if (!File.Exists(archivePath))
@@ -543,17 +531,6 @@ namespace UnrealPackageLibrary
             return DecompressArchiveIfNeeded(archive);
         }
 
-        private bool IsDependencyAvailableButUnloaded(string dependency, IDictionary<string, string> archiveToPathMap)
-        {
-            // Check if the dependency's already loaded
-            if (InputLinker.TryGetArchiveWithNormalizedName(dependency, out _))
-            {
-                return false;
-            }
-
-            return archiveToPathMap.ContainsKey(dependency);
-        }
-
         private FArchive OpenArchiveForRead(string archivePath, string archiveName)
         {
             var fileStream = File.Open(archivePath, FileMode.Open, FileAccess.Read);
@@ -561,6 +538,28 @@ namespace UnrealPackageLibrary
             archive.BeginSerialization(new UnrealDataReader(fileStream));
 
             return archive;
+        }
+
+        public void WriteArchiveToDisk(FArchive archive, string containingFolderPath)
+        {
+            string extension = archive.IsMap ? ".udk" : ".upk";
+            string archivePath = Path.Combine(containingFolderPath, archive.FileName + extension);
+
+            // Create any missing parts of the folder path, if needed
+            Directory.CreateDirectory(containingFolderPath);
+
+            var outStream = new UnrealDataWriter(File.Open(archivePath, FileMode.Create));
+
+            archive.BeginSerialization(outStream);
+            archive.SerializeHeaderData();
+            archive.SerializeBodyData();
+
+            // The first time we serialize the header, we don't know all of the sizes/offsets that we need;
+            // so once the body is serialized, we go back and do the header again.
+            outStream.Seek(0, SeekOrigin.Begin);
+            archive.SerializeHeaderData();
+
+            archive.EndSerialization(); // closes the stream
         }
     }
 }

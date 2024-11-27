@@ -206,6 +206,7 @@ namespace UnrealArchiveLibrary.Unreal
         public List<UPackage> TopLevelPackages { get; private set; } = [];
 
         public bool IsCooked => PackageFileSummary.PackageFlags.HasFlag(PackageFlag.Cooked);
+        public bool IsOpen => _stream != null;
         public bool IsLoading => _stream!.IsRead;
         public bool IsSaving => _stream!.IsWrite;
 
@@ -345,8 +346,6 @@ namespace UnrealArchiveLibrary.Unreal
             }
             else if (IsBodyCompressed)
             {
-                var compressedChunks = PackageFileSummary.CompressedChunks;
-
                 // Copy the file summary and strip any compression flags/indicators from it
                 var newFileSummary = new FPackageFileSummary();
                 newFileSummary.CloneFromOtherArchive(PackageFileSummary, this, outStream.Archive!);
@@ -375,7 +374,7 @@ namespace UnrealArchiveLibrary.Unreal
         /// <param name="sourceObj">The object being added in this archive; must be an export from another archive. It will not be modified.</param>
         public void AddExportObject(UObject sourceObj)
         {
-            FExportTableEntry sourceExportTable = sourceObj.ExportTableEntry;
+            FExportTableEntry sourceExportTable = sourceObj.ExportTableEntry!;
             string fullObjectPath = sourceExportTable.FullObjectPath;
 
             // Packages don't really exist in individual uncooked archives; they're more of a divider for

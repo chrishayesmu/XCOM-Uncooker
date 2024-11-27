@@ -16,8 +16,6 @@ namespace UnrealArchiveLibrary.Unreal
 {
     public class Linker(ILogger logger) : IDisposable
     {
-        public static readonly List<string> NeverUncook = [ "Core", "Engine", "GameFramework", "GFxUI", "GFxUIEditor", "IpDrv", "OnlineSubsystemSteamworks", "XComGame", "XComStrategyGame", "XComUIShell" ];
-
         public List<FArchive> Archives = [];
 
         public IDictionary<string, MultiValueDictionary<string, UObject>> ObjectsByUncookedArchiveName = new Dictionary<string, MultiValueDictionary<string, UObject>>();
