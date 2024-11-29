@@ -14,6 +14,8 @@ namespace UnrealArchiveLibrary.Graph
     /// <typeparam name="T"></typeparam>
     public class DirectedAcyclicGraph<T>
     {
+        public int NodeCount => EdgesByNodes.Count;
+
         private IDictionary<T, ISet<T>> EdgesByNodes = new Dictionary<T, ISet<T>>();
 
         public void AddEdge(T from, T to)

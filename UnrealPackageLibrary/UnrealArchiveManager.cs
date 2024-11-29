@@ -177,6 +177,15 @@ namespace UnrealPackageLibrary
                             {
                                 mostRecentDependencies.Add(importEntry.ObjectName);
                             }
+                            else if (archive.IsMap && importEntry.IsClass && importEntry.OuterIndex > 0)
+                            {
+                                // Maps have a very weird behavior where they can have a cooked copy of a class in their exports, but at the same
+                                // time, the class is still listed as an import. For our purposes, we need to load the original archive if we can
+                                if (importEntry.OuterTable.IsPackage)
+                                {
+                                    mostRecentDependencies.Add(importEntry.OuterTable.ObjectName);
+                                }
+                            }
 
                             // TODO: check dependencyMode in here
                         }
@@ -224,6 +233,8 @@ namespace UnrealPackageLibrary
             var dependencyTree = BuildDependencyTree(headersLoadedArchives);
 
             // All dependencies are now loaded (or can't be found); deserialize them in dependency order
+            numLoadedArchives = 0;
+
             dependencyTree.TraverseBreadthFirstMultiple((archivesAtDepth, depth) =>
             {
                 _logger.LogInformation("Processing {numArchives} at depth {depth}", archivesAtDepth.Count(), depth);
@@ -235,6 +246,8 @@ namespace UnrealPackageLibrary
                     {
                         archive.SerializeBodyData();
                     }
+
+                    progressHandler?.Invoke(ProgressEvent.ArchiveBodyLoaded, Interlocked.Increment(ref numLoadedArchives), dependencyTree.NodeCount);
                 });
             });
 
@@ -251,8 +264,6 @@ namespace UnrealPackageLibrary
         {
             var uncookedLinker = new Linker(_logger);
             var inputArchives = inputArchivesOverride ?? InputLinker.Archives;
-
-            var inputPackagesByGuid = new Dictionary<Guid, UPackage>();
 
             if (textureFileCacheEntries != null)
             {
@@ -281,7 +292,7 @@ namespace UnrealPackageLibrary
 
                     if (p.ExportTableEntry.PackageGuid != Guid.Empty)
                     {
-                        inputPackagesByGuid[p.ExportTableEntry.PackageGuid] = p;
+                        uncookedLinker.InputPackagesByGuid[p.ExportTableEntry.PackageGuid] = p;
                     }
 
                     if (!packageGuids.ContainsKey(p.ExportTableEntry.PackageGuid))
@@ -294,9 +305,6 @@ namespace UnrealPackageLibrary
             }
 
             // Initialize storage for each of these, arranged by package
-            var objectsByUncookedArchiveName = new Dictionary<string, MultiValueDictionary<string, UObject>>();
-            var uncookedArchiveNameByObjectPath = new Dictionary<string, string>();
-
             foreach (var package in allPackages)
             {
                 if (outputArchivesOverride != null && !outputArchivesOverride.Contains(package))
@@ -304,7 +312,7 @@ namespace UnrealPackageLibrary
                     continue;
                 }
 
-                objectsByUncookedArchiveName.Add(package, new MultiValueDictionary<string, UObject>());
+                uncookedLinker.ObjectsByUncookedArchiveName.Add(package, new MultiValueDictionary<string, UObject>());
             }
 
             // Now iterate every package's exports, assigning them to their original source archive
@@ -347,7 +355,7 @@ namespace UnrealPackageLibrary
 
                     // If an object's top level package doesn't exist in the map, and we add it here instead of skipping the object,
                     // things start crashing in the UDK. A lot. Unfortunately I kinda forgot why so we're just skipping those objects
-                    if (!objectsByUncookedArchiveName.ContainsKey(topPackage))
+                    if (!uncookedLinker.ObjectsByUncookedArchiveName.ContainsKey(topPackage))
                     {
                         skippedObjects++;
                         continue;
@@ -355,7 +363,7 @@ namespace UnrealPackageLibrary
 
                     // If this object already exists, it must've been exported by another archive also, in which
                     // case we assume the objects are identical and just use whichever one got there first
-                    if (objectsByUncookedArchiveName[topPackage].TryGetValue(fullObjectPath, out var objectsWithSamePath))
+                    if (uncookedLinker.ObjectsByUncookedArchiveName[topPackage].TryGetValue(fullObjectPath, out var objectsWithSamePath))
                     {
                         bool isRepeat = false;
 
@@ -376,18 +384,18 @@ namespace UnrealPackageLibrary
                     }
 
                     numObjects++;
-                    objectsByUncookedArchiveName[topPackage].Add(fullObjectPath, exportObj);
-                    uncookedArchiveNameByObjectPath[fullObjectPath] = topPackage;
+                    uncookedLinker.ObjectsByUncookedArchiveName[topPackage].Add(fullObjectPath, exportObj);
+                    uncookedLinker.UncookedArchiveNameByObjectPath[fullObjectPath] = topPackage;
                 }
             }
 
-            var outputArchives = new FArchive[objectsByUncookedArchiveName.Count];
+            var outputArchives = new FArchive[uncookedLinker.ObjectsByUncookedArchiveName.Count];
             int outArchiveIndex = -1;
             int totalNumObjects = numObjects;
             int numArchivesProcessed = 0;
             numObjects = 0;
 
-            Parallel.ForEach(objectsByUncookedArchiveName, new ParallelOptions { MaxDegreeOfParallelism = Settings.MaxParallelismForUncooking }, (entry) =>
+            Parallel.ForEach(uncookedLinker.ObjectsByUncookedArchiveName, new ParallelOptions { MaxDegreeOfParallelism = Settings.MaxParallelismForUncooking }, (entry) =>
             {
                 string fileName = entry.Key;
                 MultiValueDictionary<string, UObject> objectsByName = entry.Value;

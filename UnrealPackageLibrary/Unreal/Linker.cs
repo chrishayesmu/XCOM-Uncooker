@@ -128,6 +128,11 @@ namespace UnrealArchiveLibrary.Unreal
                 }
             }
 
+            if (fullObjectPath.Contains('.'))
+            {
+                return fullObjectPath.Split('.')[0];
+            }
+
             return "";
         }
 

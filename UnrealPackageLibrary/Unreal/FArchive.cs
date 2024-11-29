@@ -400,7 +400,8 @@ namespace UnrealArchiveLibrary.Unreal
             // then we'll want to make a new one.
             lock (this)
             {
-                FExportTableEntry destTableEntry = GetExportTableEntry(fullObjectPath, sourceObj.TableEntry);
+                FExportTableEntry? destTableEntry = GetExportTableEntry(fullObjectPath, sourceObj.TableEntry);
+
                 if (destTableEntry == null)
                 {
                     bool outerIsThisPackage = (sourceObj.Outer?.ObjectName ?? "") == FileName;
@@ -585,14 +586,17 @@ namespace UnrealArchiveLibrary.Unreal
 
                 // Get a cooked version of the object we're going to be exporting, and use that to determine
                 // our export table properties
-                UObject sourceExportObject = ParentLinker.GetCookedObjectByPath(sourceTableEntry.FullObjectPath, sourceTableEntry);
+                UObject sourceExportObject = source.ParentLinker.GetCookedObjectByPath(sourceTableEntry.FullObjectPath, sourceTableEntry);
+
+                // If only some of a game's archives are loaded, then we may be aware of export objects for a package, but not actually
+                // have a copy of them to create an export from. For example, a cooked package C may import a startup object from package S.
+                // If package S isn't loaded, then C will know about the object, but we have no way to uncook it.
+                if (sourceExportObject == null)
+                {
+                    return 0;
+                }
 
                 FExportTableEntry sourceExportTable = sourceExportObject.ExportTableEntry;
-
-                if (sourceExportObject.ObjectName.ToString().StartsWith("WP_"))
-                {
-                    // Debugger.Break();
-                }
 
                 lock (this)
                 {
@@ -752,7 +756,7 @@ namespace UnrealArchiveLibrary.Unreal
         /// Retrieves an exported object by its path, if it is in this archive. For archives which are being
         /// deserialized from disk, this shouldn't be called until after <see cref="SerializeBodyData"/> is called.
         /// </summary>
-        public UObject GetExportedObjectByPath(string path, FObjectTableEntry tableEntry)
+        public UObject? GetExportedObjectByPath(string path, FObjectTableEntry tableEntry)
         {
             // Look for top level objects matching the first part of the path
             if (ExportTableByObjectPath.TryGetValue(path, out var exportTableEntries))
@@ -792,13 +796,8 @@ namespace UnrealArchiveLibrary.Unreal
         /// </summary>
         /// <param name="fullObjectPath"></param>
         /// <returns>The table entry if found, or null otherwise.</returns>
-        public FExportTableEntry GetExportTableEntry(string fullObjectPath, FObjectTableEntry tableEntry)
+        public FExportTableEntry? GetExportTableEntry(string fullObjectPath, FObjectTableEntry tableEntry)
         {
-            if (fullObjectPath.StartsWith("Command1.TheWorld.PersistentLevel.XComFacilityVolume"))
-            {
-                // Debugger.Break();
-            }
-
             if (ExportTableByObjectPath.TryGetValue(fullObjectPath, out var exportEntries))
             {
                 for (int i = 0; i < exportEntries.Count; i++)
@@ -859,7 +858,7 @@ namespace UnrealArchiveLibrary.Unreal
         /// </summary>
         /// <param name="index">The object index to retrieve. Can be an import or an export index.</param>
         /// <returns>The requested object. If not found, or if index is 0, returns null.</returns>
-        public UObject GetObjectByIndex(int index)
+        public UObject? GetObjectByIndex(int index)
         {
             if (index == 0)
             {

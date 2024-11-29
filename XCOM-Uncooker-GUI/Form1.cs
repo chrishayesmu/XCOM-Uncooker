@@ -8,6 +8,30 @@ namespace XCOM_Uncooker_GUI
 {
     public partial class Form1 : Form
     {
+        // These archives will cause problems in the UDK if our uncooked version is loaded, so we
+        // don't output them at all to avoid that.
+        public static readonly List<string> ArchivesToNotUncook = [ 
+            "Core", 
+            "Engine", 
+            "EngineDebugMaterials", 
+            "EngineFonts", 
+            "EngineMaterials", 
+            "EngineMeshes", 
+            "EngineResources", 
+            "EngineSounds", 
+            "EngineVolumetrics", 
+            "Engine_MaterialFunctions02", 
+            "Engine_MI_Shaders", 
+            "GameFramework", 
+            "GFxUI", 
+            "GFxUIEditor", 
+            "IpDrv", 
+            "OnlineSubsystemSteamworks", 
+            "XComGame", 
+            "XComStrategyGame", 
+            "XComUIShell" 
+        ];
+
         private IUnrealArchiveManager? archiveManager;
 
         private string inputArchivesSourceFolder = "";
@@ -95,12 +119,17 @@ namespace XCOM_Uncooker_GUI
                 btnSelectAllInputArchives.Enabled = true;
                 btnSelectNoInputArchives.Enabled = true;
 
-                inputArchivePaths = filePaths.Select(path => new ArchivePath()
-                {
-                    FilePath = path,
-                    FileName = Path.GetFileName(path),
-                    Archive = null
-                }).ToList();
+                // Don't allow archives starting with "patch_" because Long War ships some map patches in this way,
+                // and the archive library doesn't understand that they don't use the XCOM-specific data formats yet
+                inputArchivePaths = filePaths
+                    .Where(path => !Path.GetFileName(path).StartsWith("patch_"))
+                    .Select(path => new ArchivePath()
+                        {
+                            FilePath = path,
+                            FileName = Path.GetFileName(path),
+                            Archive = null
+                        })
+                    .ToList();
 
                 inputArchivePaths.Sort((a, b) => a.FileName.CompareTo(b.FileName));
 
@@ -161,6 +190,11 @@ namespace XCOM_Uncooker_GUI
 
                     foreach (var archive in outputLinker.Archives)
                     {
+                        if (ArchivesToNotUncook.Contains(archive.FileName))
+                        {
+                            continue;
+                        }
+
                         PackageOrganizer.TryMatchPackageToFolders(archive, out string folderPath);
                         folderPath = Path.Combine(uncookForm.OutputDirectory, folderPath);
 

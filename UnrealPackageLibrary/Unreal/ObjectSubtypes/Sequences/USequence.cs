@@ -48,6 +48,14 @@ namespace UnrealArchiveLibrary.Unreal.ObjectSubtypes.Sequences
                     }
 #endif
 
+                    var classObj = sequenceObject.TableEntry.ClassObj;
+
+                    // If the object's class isn't available, just don't process this object 
+                    if (classObj == null)
+                    {
+                        continue;
+                    }
+
                     if (sequenceObject.TableEntry.ClassObj.IsChildClassOf("SequenceVariable"))
                     {
                         sequenceVariables.Add(sequenceObject);

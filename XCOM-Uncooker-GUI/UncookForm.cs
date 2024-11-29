@@ -13,9 +13,6 @@ namespace XCOM_Uncooker_GUI
 {
     public partial class UncookForm : Form
     {
-        // TODO validate this list
-        public static readonly List<string> NeverUncook = [ "Core", "Engine", "EngineDebugMaterials", "EngineFonts", "EngineMaterials", "EngineMeshes", "EngineResources", "EngineSounds", "EngineVolumetrics", "Engine_MaterialFunctions02", "Engine_MI_Shaders", "GameFramework", "GFxUI", "GFxUIEditor", "IpDrv", "OnlineSubsystemSteamworks", "XComGame", "XComStrategyGame", "XComUIShell" ];
-
         public ISet<string> SelectedOutputArchives = new HashSet<string>();
 
         public string OutputDirectory = "";
@@ -45,8 +42,6 @@ namespace XCOM_Uncooker_GUI
             {
                 uncookedArchives.UnionWith(archive.TopLevelPackages.Select(p => p.NormalizedName));
             }
-
-            uncookedArchives.ExceptWith(NeverUncook);
 
             lstOutputArchivesUnselected.Items.AddRange(uncookedArchives.ToArray());
 
