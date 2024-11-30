@@ -11,7 +11,7 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
 {
     /// <summary>
     /// Represents an opaque container of data from an immutable struct. Since immutable structs use binary serialization,
-    /// and they're represented the same way in both cooked and uncooked packages, we don't actually have to care abref their
+    /// and they're represented the same way in both cooked and uncooked packages, we don't actually have to care about their
     /// content. The only thing we need to know is how many bytes they are.
     /// </summary>
     public class USerializedImmutableStructProperty(FArchive archive, UProperty prop, FPropertyTag? tag) : USerializedProperty(archive, prop, tag)
@@ -44,6 +44,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
         }
 
         public override string TagType => "StructProperty";
+
+        public override bool HasDefaultValueForType => false; // TODO? could look up the struct definition here, probably not necessary
 
         public byte[] Data;
 

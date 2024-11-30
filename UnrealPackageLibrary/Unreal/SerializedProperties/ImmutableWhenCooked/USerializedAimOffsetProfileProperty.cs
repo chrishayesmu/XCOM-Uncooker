@@ -15,6 +15,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties.ImmutableWhenCooked
     {
         public override string TagType => "StructProperty";
 
+        public override bool HasDefaultValueForType => false; // doesn't matter; just let it get serialized every time
+
         #region Serialized data
 
         public FName ProfileName;

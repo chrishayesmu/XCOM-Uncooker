@@ -13,6 +13,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "FloatProperty";
 
+        public override bool HasDefaultValueForType => Value == 0.0f;
+
         #region Serialized data
 
         public float Value;

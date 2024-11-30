@@ -12,6 +12,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties.ImmutableWhenCooked
     {
         public override string TagType => "StructProperty";
 
+        public override bool HasDefaultValueForType => Nav == 0;
+
         #region Serialized data
 
         [Index(typeof(UObject))]

@@ -13,6 +13,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "BoolProperty";
 
+        public override bool HasDefaultValueForType => BoolValue == false;
+
         public bool BoolValue => Tag != null ? Tag.Value.BoolVal : Value;
 
         #region Serialized data

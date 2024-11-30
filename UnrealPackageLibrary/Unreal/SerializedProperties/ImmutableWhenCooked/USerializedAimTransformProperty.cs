@@ -12,6 +12,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties.ImmutableWhenCooked
     {
         public override string TagType => "StructProperty";
 
+        public override bool HasDefaultValueForType => false; // doesn't matter; just let it get serialized every time
+
         // 28 bytes of binary data; 32 bytes for each of the two property tags we apply; 8 bytes to add NAME_None
         // to the end of the property block
         public const int TaggedPropertiesSize = 28 + 32 * 2 + 8;

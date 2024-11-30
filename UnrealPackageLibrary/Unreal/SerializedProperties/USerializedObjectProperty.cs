@@ -13,6 +13,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "ObjectProperty";
 
+        public override bool HasDefaultValueForType => ObjectIndex == 0;
+
         #region Serialized data
 
         [Index(typeof(UObject))]

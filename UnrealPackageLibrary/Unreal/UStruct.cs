@@ -61,7 +61,6 @@ namespace UnrealArchiveLibrary.Unreal
             stream.Int32(ref DataScriptSize);
 
             // We aren't interested in script data, just skip it
-            // TODO we'll need them eventually
             stream.SkipBytes(DataScriptSize);
 
             hasDeserializedStructData = true;

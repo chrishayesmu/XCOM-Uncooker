@@ -12,8 +12,10 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "StructProperty";
 
+        public override bool HasDefaultValueForType => TaggedProperties.All(prop => prop.HasDefaultValueForType);
+
         #region Serialized data
-        
+
         public List<USerializedProperty> TaggedProperties = [];
         
         #endregion
@@ -36,6 +38,17 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
             {
                 var clonedProp = TaggedProperties[i].CloneToOtherArchive(destArchive);
                 other.TaggedProperties.Add(clonedProp);
+            }
+
+            // Clone needed default values; see UObject.CloneFromOtherArchive for explanation
+            var structProp = (UStructProperty) BackingProperty;
+            foreach (var defaultProp in structProp.StructDefinition.StructDefaultProperties)
+            {
+                if (!defaultProp.HasDefaultValueForType && !other.TaggedProperties.Any(p => p.Tag?.Name == defaultProp.Tag?.Name))
+                {
+                    var clonedProp = defaultProp.CloneToOtherArchive(destArchive);
+                    other.TaggedProperties.Add(clonedProp);
+                }
             }
 
             return other;

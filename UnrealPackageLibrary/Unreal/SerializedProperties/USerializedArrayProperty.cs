@@ -13,8 +13,10 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "ArrayProperty";
 
+        public override bool HasDefaultValueForType => NumElements == 0;
+
         #region Serialized data
-        
+
         public int NumElements;
 
         public USerializedProperty[] Data;

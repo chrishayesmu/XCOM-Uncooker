@@ -235,6 +235,27 @@ namespace UnrealArchiveLibrary.Unreal
                 var propCopy = sourceObj.SerializedProperties[i].CloneToOtherArchive(Archive);
                 SerializedProperties.Add(propCopy);
             }
+
+            // XCOM appears to omit serialized properties which match the CDO, but the UDK only omits them if they match
+            // the default value for their data type. Because of this, when uncooking, we need to add the CDO's properties
+            // if they aren't the data type default, and if the individual object doesn't have something else set already.
+            // This has to occur while we still have access to the original cooked linker; the class definition and CDO may not
+            // be available in the uncooked linker, if the packages containing them weren't selected for uncooking.
+            var cdo = sourceObj.TableEntry.ClassObj?.ClassDefaultObject;
+
+            if (cdo == null)
+            {
+                return;
+            }
+
+            foreach (var prop in cdo.SerializedProperties)
+            {
+                if (!prop.HasDefaultValueForType && !SerializedProperties.Any(p => p.Tag?.Name == prop.Tag?.Name))
+                {
+                    var clonedProp = prop.CloneToOtherArchive(Archive);
+                    SerializedProperties.Add(clonedProp);
+                }
+            }
         }
 
         /// <summary>

@@ -13,6 +13,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties.ImmutableWhenCooked
     {
         public override string TagType => "StructProperty";
 
+        public override bool HasDefaultValueForType => false; // doesn't matter; just let it get serialized every time
+
         public const int TaggedPropertiesSize = 8 + 24 // BoneName + its property tag
                                               + 9 * 32 // Property tags for each of the 9 USerializedAimTransformProperty instances
                                               + 9 * USerializedAimTransformProperty.TaggedPropertiesSize

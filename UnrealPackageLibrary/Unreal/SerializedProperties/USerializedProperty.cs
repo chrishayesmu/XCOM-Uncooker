@@ -139,6 +139,11 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
         /// </summary>
         public bool HasData => !Tag?.Name.IsNone() ?? true;
 
+        /// <summary>
+        /// Whether this property is set to the default for its data type (e.g. 0 for int, false for bool, etc).
+        /// </summary>
+        public abstract bool HasDefaultValueForType { get; }
+
         #region Serialized data
 
         /// <summary>

@@ -13,6 +13,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "DelegateProperty";
 
+        public override bool HasDefaultValueForType => Value.ObjectIndex == 0;
+
         #region Serialized data
 
         public FScriptDelegate Value = new FScriptDelegate(archive);

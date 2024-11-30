@@ -18,6 +18,11 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "ByteProperty";
 
+        // TODO: for enum types, we'd need to look up the backing property and check which name is at the 0 index.
+        // That sounds cumbersome and slow, so just return false for now, which will sometimes force tag serialization
+        // when it's not necessary (but is better than the reverse: skipping necessarily serialization).
+        public override bool HasDefaultValueForType => IsEnumType ? false : ByteValue == 0;
+
         private bool IsEnumType => (BackingProperty as UByteProperty)?.EnumIndex != 0 || (!Tag?.EnumName.IsNone() ?? false);
 
         #region Serialized data

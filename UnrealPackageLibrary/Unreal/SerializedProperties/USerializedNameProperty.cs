@@ -13,6 +13,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "NameProperty";
 
+        public override bool HasDefaultValueForType => Value.IsNone();
+
         #region Serialized data
 
         public FName Value;

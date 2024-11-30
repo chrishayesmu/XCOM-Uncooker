@@ -79,6 +79,8 @@ namespace UnrealArchiveLibrary.Unreal
     {
         public ClassFlag ClassFlags;
 
+        public UObject? ClassDefaultObject => Archive.GetObjectByIndex(ClassDefaultObjectIndex);
+
         [Index(typeof(UClass))]
         public int Within;
 
@@ -102,7 +104,7 @@ namespace UnrealArchiveLibrary.Unreal
         public FName DllBindName;
         
         [Index(typeof(UObject))]
-        public int ClassDefaultObject;
+        public int ClassDefaultObjectIndex;
 
         public override void Serialize(IUnrealDataStream stream)
         {
@@ -121,7 +123,7 @@ namespace UnrealArchiveLibrary.Unreal
             stream.NameArray(ref ClassGroups);
             stream.String(ref NativeClassName);
             stream.Name(ref DllBindName);
-            stream.Int32(ref ClassDefaultObject);
+            stream.Int32(ref ClassDefaultObjectIndex);
         }
 
         public override void CloneFromOtherArchive(UObject sourceObj)
@@ -162,7 +164,7 @@ namespace UnrealArchiveLibrary.Unreal
             ClassGroups = CloneNameArrayFromArchive(other.ClassGroups);
             NativeClassName = other.NativeClassName;
             DllBindName = Archive.MapNameFromSourceArchive(other.DllBindName);
-            ClassDefaultObject = Archive.MapIndexFromSourceArchive(other.ClassDefaultObject, other.Archive);
+            ClassDefaultObjectIndex = Archive.MapIndexFromSourceArchive(other.ClassDefaultObjectIndex, other.Archive);
         }
 
         public override void PopulateDependencies(List<int> dependencyIndices)
@@ -173,7 +175,7 @@ namespace UnrealArchiveLibrary.Unreal
             dependencyIndices.AddRange(ComponentNameToDefaultObjectMap.Values);
             dependencyIndices.AddRange(Interfaces.Keys);
             dependencyIndices.AddRange(Interfaces.Values);
-            dependencyIndices.Add(ClassDefaultObject);
+            dependencyIndices.Add(ClassDefaultObjectIndex);
         }
 
         /// <summary>

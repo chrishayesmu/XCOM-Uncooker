@@ -13,6 +13,8 @@ namespace UnrealArchiveLibrary.Unreal.SerializedProperties
     {
         public override string TagType => "StrProperty";
 
+        public override bool HasDefaultValueForType => Value.Length == 0;
+
         #region Serialized data
 
         public string Value;

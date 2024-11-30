@@ -72,6 +72,8 @@ namespace UnrealArchiveLibrary.Unreal.ObjectSubtypes.Materials
 
         public override void PostArchiveCloneComplete()
         {
+            base.PostArchiveCloneComplete();
+
             // When the same input is used multiple times, we're just using the first one that matches
             TryPopulateInputIfNeeded("DiffuseColor", "Diffuse");
             TryPopulateInputIfNeeded("DiffuseColor", "Diffuse_Base");
