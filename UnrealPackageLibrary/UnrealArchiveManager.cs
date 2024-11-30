@@ -470,6 +470,16 @@ namespace UnrealPackageLibrary
                         {
                             dependencyTree.AddEdge(archive, depArchive!);
                         }
+
+                    }
+                    else if (archive.IsMap && importEntry.IsClass && importEntry.OuterIndex > 0)
+                    {
+                        // Maps have a very weird behavior where they can have a cooked copy of a class in their exports, but at the same
+                        // time, the class is still listed as an import. For our purposes, we need to load the original archive if we can
+                        if (importEntry.OuterTable.IsPackage && InputLinker.TryGetArchiveWithNormalizedName(importEntry.OuterTable.ObjectName, out FArchive? depArchive))
+                        {
+                            dependencyTree.AddEdge(archive, depArchive!);
+                        }
                     }
                 }
             }
