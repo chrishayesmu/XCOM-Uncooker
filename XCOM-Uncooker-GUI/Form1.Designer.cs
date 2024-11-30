@@ -29,6 +29,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             txtSourcePath = new TextBox();
             label1 = new Label();
             btnOpenSourceFolder = new Button();
@@ -46,6 +47,8 @@
             toolStripProgressBar = new ToolStripProgressBar();
             toolStripStatusLabel = new ToolStripStatusLabel();
             dlgChooseUncookDestination = new FolderBrowserDialog();
+            toolStripTimer = new ToolStripStatusLabel();
+            timerEachSecond = new System.Windows.Forms.Timer(components);
             ((System.ComponentModel.ISupportInitialize) splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -194,7 +197,7 @@
             // 
             // statusStrip
             // 
-            statusStrip.Items.AddRange(new ToolStripItem[] { toolStripProgressBar, toolStripStatusLabel });
+            statusStrip.Items.AddRange(new ToolStripItem[] { toolStripProgressBar, toolStripStatusLabel, toolStripTimer });
             statusStrip.Location = new Point(0, 534);
             statusStrip.Name = "statusStrip";
             statusStrip.Size = new Size(844, 22);
@@ -213,6 +216,16 @@
             // 
             toolStripStatusLabel.Name = "toolStripStatusLabel";
             toolStripStatusLabel.Size = new Size(0, 17);
+            // 
+            // toolStripTimer
+            // 
+            toolStripTimer.Name = "toolStripTimer";
+            toolStripTimer.Size = new Size(0, 17);
+            // 
+            // timerEachSecond
+            // 
+            timerEachSecond.Enabled = true;
+            timerEachSecond.Interval = 1000;
             // 
             // Form1
             // 
@@ -258,5 +271,7 @@
         private ToolStripStatusLabel toolStripStatusLabel;
         private Button btnUncookArchives;
         private FolderBrowserDialog dlgChooseUncookDestination;
+        private ToolStripStatusLabel toolStripTimer;
+        private System.Windows.Forms.Timer timerEachSecond;
     }
 }

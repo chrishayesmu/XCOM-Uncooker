@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.Logging;
 using Microsoft.Win32;
+using System.Diagnostics;
 using UnrealArchiveLibrary.Unreal;
 using UnrealPackageLibrary;
 
@@ -10,7 +11,7 @@ namespace XCOM_Uncooker_GUI
     {
         // These archives will cause problems in the UDK if our uncooked version is loaded, so we
         // don't output them at all to avoid that.
-        public static readonly List<string> ArchivesToNotUncook = [ 
+        public static readonly List<string> ArchivesToNeverUncook = [ 
             "Core", 
             "Engine", 
             "EngineDebugMaterials", 
@@ -33,6 +34,7 @@ namespace XCOM_Uncooker_GUI
         ];
 
         private IUnrealArchiveManager? archiveManager;
+        private Stopwatch stopwatch = new Stopwatch();
 
         private string inputArchivesSourceFolder = "";
         private List<ArchivePath> inputArchivePaths = [];
@@ -55,6 +57,17 @@ namespace XCOM_Uncooker_GUI
         public Form1()
         {
             InitializeComponent();
+
+            timerEachSecond.Tick += UpdateTimerText;
+        }
+
+        private void UpdateTimerText(object? sender, EventArgs e)
+        {
+            if (stopwatch.IsRunning)
+            {
+                TimeSpan elapsedTime = stopwatch.Elapsed;
+                toolStripTimer.Text = $"({elapsedTime.ToString("mm\\:ss")} elapsed)";
+            }
         }
 
         private void btnFullyLoadArchives_Click(object sender, EventArgs e)
@@ -73,6 +86,8 @@ namespace XCOM_Uncooker_GUI
 
                 archiveManager = new UnrealArchiveManager(loggerFactory);
             }
+
+            stopwatch.Restart();
 
             Task.Run(() => archiveManager.LoadInputArchives(inputArchivesSourceFolder, selectedArchiveFilePaths, OnProgressEvent, DependencyLoadingMode.All));
         }
@@ -184,24 +199,25 @@ namespace XCOM_Uncooker_GUI
 
             if (uncookForm.ShowDialog() == DialogResult.OK)
             {
+                stopwatch.Restart();
+
                 Task.Run(() =>
                 {
                     var outputLinker = archiveManager.UncookArchives(tfcEntries, OnProgressEvent, outputArchivesOverride: uncookForm.SelectedOutputArchives);
-
-                    foreach (var archive in outputLinker.Archives)
+                    var archives = outputLinker.Archives.Where(archive => !ArchivesToNeverUncook.Contains(archive.FileName));
+                    int numArchivesWritten = 0, totalArchives = archives.Count();
+                    
+                    // TODO move MaxDegreeOfParallelism to an exposed setting
+                    Parallel.ForEach(archives, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, archive =>
                     {
-                        if (ArchivesToNotUncook.Contains(archive.FileName))
-                        {
-                            continue;
-                        }
-
                         PackageOrganizer.TryMatchPackageToFolders(archive, out string folderPath);
                         folderPath = Path.Combine(uncookForm.OutputDirectory, folderPath);
 
                         archiveManager.WriteArchiveToDisk(archive, folderPath);
-                    }
+
+                        OnProgressEvent(ProgressEvent.ArchiveWrittenToDisk, Interlocked.Increment(ref numArchivesWritten), totalArchives);
+                    });
                 });
-                
             }
         }
 
@@ -337,6 +353,7 @@ namespace XCOM_Uncooker_GUI
                 ProgressEvent.LoadComplete => "Archive load complete",
                 ProgressEvent.ArchiveUncookedInMemory => "Uncooking archives in memory",
                 ProgressEvent.ArchivePostUncookFixup => "Fixing up uncooked archives",
+                ProgressEvent.ArchiveWrittenToDisk => "Writing archives to disk",
                 ProgressEvent.UncookComplete => "Archive uncooking complete",
                 _ => $"UNLABELED EVENT {e}",
             };
@@ -360,6 +377,18 @@ namespace XCOM_Uncooker_GUI
             if (e == ProgressEvent.DependencyLoaded)
             {
                 statusText = $"{statusLabel} ({numCompleted}/{numTotal}?)";
+            }
+
+            // Stop time measurement if needed
+            else if (e == ProgressEvent.LoadComplete)
+            {
+                stopwatch.Stop();
+            }
+            else if (e == ProgressEvent.ArchiveWrittenToDisk && progressValue == 100)
+            {
+                stopwatch.Stop();
+
+                statusText = $"Uncooking complete: {numTotal} archive file(s) written to disk";
             }
 
             // Make sure UI updates are happening on the UI thread

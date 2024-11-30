@@ -432,6 +432,7 @@ namespace UnrealArchiveLibrary.Unreal
                                   sourceObj.ExportTableEntry.IsClassDefaultObject ? new UObject(this, destTableEntry) : 
                                                                                     UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
                 destObj.CloneFromOtherArchive(sourceObj);
+
                 ExportedObjects[destTableEntry.TableEntryIndex] = destObj;
                 DependsMap.Add(Array.Empty<int>());
             }
@@ -533,6 +534,14 @@ namespace UnrealArchiveLibrary.Unreal
             }
 
             FObjectTableEntry sourceTableEntry = source.GetObjectTableEntry(index);
+            string objectClassName = sourceTableEntry.ClassName;
+
+            // These are intrinsic classes which can't be exported during uncooking
+            if (objectClassName == "VisGroupActor" || objectClassName == "XComWorldDataContainer")
+            {
+                return 0;
+            }
+
             string fullObjectPath = sourceTableEntry.FullObjectPath;
             string uncookedArchiveName = ParentLinker.GetUncookedArchiveNameForObject(fullObjectPath);
             bool isIntrinsic = IsIntrinsicObject(fullObjectPath);
@@ -549,16 +558,6 @@ namespace UnrealArchiveLibrary.Unreal
                 {
                     // Somehow this class is referenced in an archive but doesn't seem to have shipped with the game?
                     uncookedArchiveName = "UnrealEd";
-                }
-                else
-                {
-                    string objectClassName = sourceTableEntry.ClassName;
-
-                    // These are intrinsic classes which can't be exported during uncooking
-                    if (objectClassName == "VisGroupActor" || objectClassName == "XComWorldDataContainer")
-                    {
-                        return 0;
-                    }
                 }
             }
 

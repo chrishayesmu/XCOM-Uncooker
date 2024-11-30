@@ -39,7 +39,7 @@ namespace UnrealPackageLibrary
         ArchiveWrittenToDisk,
         DependencyLoaded, // An archive which is a dependency of another archive has been loaded (up to its headers).
         LoadComplete,
-        UncookComplete
+        UncookComplete, // All archives are uncooked in memory (but not necessarily written to disk).
     }
 
     /// <summary>
