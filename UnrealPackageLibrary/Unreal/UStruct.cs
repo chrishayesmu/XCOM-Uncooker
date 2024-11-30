@@ -231,37 +231,34 @@ namespace UnrealArchiveLibrary.Unreal
 
         private void LinkProperties()
         {
-            lock (this)
+            // Don't try to link properties until we've had a chance to read the struct's data, or we 
+            // won't find anything. This should only apply when deserializing an archive.
+            if (arePropertiesLinked || (!hasDeserializedStructData && Archive.IsLoading))
             {
-                // Don't try to link properties until we've had a chance to read the struct's data, or we 
-                // won't find anything. This should only apply when deserializing an archive.
-                if (arePropertiesLinked || (!hasDeserializedStructData && Archive.IsLoading))
-                {
-                    return;
-                }
+                return;
+            }
 
-                arePropertiesLinked = true;
+            arePropertiesLinked = true;
            
-                // Go through the inheritance hierarchy from top to bottom
-                var inheritanceHierarchy = new Stack<UStruct>();
+            // Go through the inheritance hierarchy from top to bottom
+            var inheritanceHierarchy = new Stack<UStruct>();
             
-                UStruct structDef = this;
-                while (structDef != null)
-                {
-                    inheritanceHierarchy.Push(structDef);
-                    structDef = (UStruct) structDef.SuperField;
-                }
+            UStruct structDef = this;
+            while (structDef != null)
+            {
+                inheritanceHierarchy.Push(structDef);
+                structDef = (UStruct) structDef.SuperField;
+            }
 
-                // Add property fields in order as we find them
-                while (inheritanceHierarchy.TryPop(out structDef))
-                {
-                    UProperty prop = structDef.GetNextProperty(structDef.FirstChild);
+            // Add property fields in order as we find them
+            while (inheritanceHierarchy.TryPop(out structDef))
+            {
+                UProperty? prop = structDef.GetNextProperty(structDef.FirstChild);
 
-                    while (prop != null)
-                    {
-                        linkedProperties.Add(prop);
-                        prop = structDef.GetNextProperty(prop.NextField);
-                    }
+                while (prop != null)
+                {
+                    linkedProperties.Add(prop);
+                    prop = structDef.GetNextProperty(prop.NextField);
                 }
             }
         }

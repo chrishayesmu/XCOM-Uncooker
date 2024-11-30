@@ -296,11 +296,8 @@ namespace UnrealArchiveLibrary.Unreal
         /// </summary>
         public void SerializeBodyData()
         {
-            lock (_stream!)
-            {
-                SerializeDependsMap();
-                SerializeExportObjects();
-            }
+            SerializeDependsMap();
+            SerializeExportObjects();
 
             if (IsLoading)
             {
@@ -398,44 +395,41 @@ namespace UnrealArchiveLibrary.Unreal
 
             // We might already have an export table entry, if another object referenced this export before we loaded it. If not,
             // then we'll want to make a new one.
-            lock (this)
+            FExportTableEntry? destTableEntry = GetExportTableEntry(fullObjectPath, sourceObj.TableEntry);
+
+            if (destTableEntry == null)
             {
-                FExportTableEntry? destTableEntry = GetExportTableEntry(fullObjectPath, sourceObj.TableEntry);
+                bool outerIsThisPackage = (sourceObj.Outer?.ObjectName ?? "") == FileName;
 
-                if (destTableEntry == null)
+                destTableEntry = new FExportTableEntry(this)
                 {
-                    bool outerIsThisPackage = (sourceObj.Outer?.ObjectName ?? "") == FileName;
+                    ClassIndex = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
+                    SuperIndex = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
+                    OuterIndex = outerIsThisPackage ? 0 : MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
+                    ObjectName = MapNameFromSourceArchive(sourceExportTable.ObjectName),
+                    ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
+                    ObjectFlags = sourceExportTable.ObjectFlags,
+                    SerialSize = -1,
+                    SerialOffset = -1,
+                    ExportFlags = 0, // drop export flags; they shouldn't apply to uncooked objects
+                    GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
+                    PackageGuid = sourceExportTable.PackageGuid,
+                    PackageFlags = sourceExportTable.PackageFlags,
+                    TableEntryIndex = ExportTable.Count
+                };
 
-                    destTableEntry = new FExportTableEntry(this)
-                    {
-                        ClassIndex = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
-                        SuperIndex = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
-                        OuterIndex = outerIsThisPackage ? 0 : MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
-                        ObjectName = MapNameFromSourceArchive(sourceExportTable.ObjectName),
-                        ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
-                        ObjectFlags = sourceExportTable.ObjectFlags,
-                        SerialSize = -1,
-                        SerialOffset = -1,
-                        ExportFlags = 0, // drop export flags; they shouldn't apply to uncooked objects
-                        GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
-                        PackageGuid = sourceExportTable.PackageGuid,
-                        PackageFlags = sourceExportTable.PackageFlags,
-                        TableEntryIndex = ExportTable.Count
-                    };
-
-                    ExportTable.Add(destTableEntry);
-                    ExportTableByObjectPath.Add(fullObjectPath, destTableEntry);
-                }
-
-                // TODO: this is a hack because my definition of FExportTableEntry.ClassName is stupid and I don't want to change it right now
-                UObject destObj = sourceObj.ExportTableEntry.IsClass              ? new UClass(this, destTableEntry) : 
-                                  sourceObj.ExportTableEntry.IsClassDefaultObject ? new UObject(this, destTableEntry) : 
-                                                                                    UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
-                destObj.CloneFromOtherArchive(sourceObj);
-
-                ExportedObjects[destTableEntry.TableEntryIndex] = destObj;
-                DependsMap.Add(Array.Empty<int>());
+                ExportTable.Add(destTableEntry);
+                ExportTableByObjectPath.Add(fullObjectPath, destTableEntry);
             }
+
+            // TODO: this is a hack because my definition of FExportTableEntry.ClassName is stupid and I don't want to change it right now
+            UObject destObj = sourceObj.ExportTableEntry.IsClass              ? new UClass(this, destTableEntry) : 
+                                sourceObj.ExportTableEntry.IsClassDefaultObject ? new UObject(this, destTableEntry) : 
+                                                                                UObject.NewObjectBasedOnClassName(sourceObj.ExportTableEntry.ClassName, this, destTableEntry);
+            destObj.CloneFromOtherArchive(sourceObj);
+
+            ExportedObjects[destTableEntry.TableEntryIndex] = destObj;
+            DependsMap.Add(Array.Empty<int>());
         }
 
         public void AddImportObject(string ClassPackage, string ClassName, int OuterIndex, string ObjectName, FArchive? sourceArchive = null)
@@ -498,22 +492,19 @@ namespace UnrealArchiveLibrary.Unreal
                 return -1 * (importIndex + 1);
             }
 
-            lock (this)
+            // Didn't find an existing import; add a new import entry instead
+            FImportTableEntry importEntry = new FImportTableEntry(this)
             {
-                // Didn't find an existing import; add a new import entry instead
-                FImportTableEntry importEntry = new FImportTableEntry(this)
-                {
-                    ClassPackage = classPackage!,
-                    _className = className,
-                    OuterIndex = outerIndex,
-                    ObjectName = objectName,
-                    TableEntryIndex = ImportTable.Count
-                };
+                ClassPackage = classPackage!,
+                _className = className,
+                OuterIndex = outerIndex,
+                ObjectName = objectName,
+                TableEntryIndex = ImportTable.Count
+            };
 
-                importIndex = -1 * (ImportTable.Count + 1);
-                ImportTable.Add(importEntry);
-                return importIndex;
-            }
+            importIndex = -1 * (ImportTable.Count + 1);
+            ImportTable.Add(importEntry);
+            return importIndex;
         }
 
         /// <summary>
@@ -597,31 +588,28 @@ namespace UnrealArchiveLibrary.Unreal
 
                 FExportTableEntry sourceExportTable = sourceExportObject.ExportTableEntry;
 
-                lock (this)
+                destExportEntry = new FExportTableEntry(this)
                 {
-                    destExportEntry = new FExportTableEntry(this)
-                    {
-                        ClassIndex     = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
-                        SuperIndex     = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
-                        OuterIndex     = MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
-                        ObjectName     = MapNameFromSourceArchive(sourceExportTable.ObjectName),
-                        ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
-                        ObjectFlags    = sourceExportTable.ObjectFlags,
-                        SerialSize     = -1,
-                        SerialOffset   = -1,
-                        ExportFlags    = 0, // drop export flags; they shouldn't apply to uncooked objects
-                        GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
-                        PackageGuid    = sourceExportTable.PackageGuid,
-                        PackageFlags   = sourceExportTable.PackageFlags,
-                        TableEntryIndex = ExportTable.Count
-                    };
+                    ClassIndex     = MapIndexFromSourceArchive(sourceExportTable.ClassIndex, sourceExportTable.Archive),
+                    SuperIndex     = MapIndexFromSourceArchive(sourceExportTable.SuperIndex, sourceExportTable.Archive),
+                    OuterIndex     = MapIndexFromSourceArchive(sourceExportTable.OuterIndex, sourceExportTable.Archive),
+                    ObjectName     = MapNameFromSourceArchive(sourceExportTable.ObjectName),
+                    ArchetypeIndex = MapIndexFromSourceArchive(sourceExportTable.ArchetypeIndex, sourceExportTable.Archive),
+                    ObjectFlags    = sourceExportTable.ObjectFlags,
+                    SerialSize     = -1,
+                    SerialOffset   = -1,
+                    ExportFlags    = 0, // drop export flags; they shouldn't apply to uncooked objects
+                    GenerationNetObjectCount = [], // TODO is this necessary? can we just drop it?
+                    PackageGuid    = sourceExportTable.PackageGuid,
+                    PackageFlags   = sourceExportTable.PackageFlags,
+                    TableEntryIndex = ExportTable.Count
+                };
 
-                    int exportIndex = ExportTable.Count + 1;
-                    ExportTable.Add(destExportEntry);
-                    ExportTableByObjectPath.Add(fullObjectPath, destExportEntry);
+                int exportIndex = ExportTable.Count + 1;
+                ExportTable.Add(destExportEntry);
+                ExportTableByObjectPath.Add(fullObjectPath, destExportEntry);
 
-                    return exportIndex;
-                }
+                return exportIndex;
             }
             else
             {
@@ -879,12 +867,9 @@ namespace UnrealArchiveLibrary.Unreal
 
             if (ExportedObjects[exportTableIndex] == null && IsLoading)
             {
-                lock (_stream)
-                {
-                    long previousPosition = _stream.Position;
-                    ExportedObjects[exportTableIndex] = LoadExport(exportTableIndex);
-                    _stream.Seek(previousPosition, SeekOrigin.Begin);
-                }
+                long previousPosition = _stream.Position;
+                ExportedObjects[exportTableIndex] = LoadExport(exportTableIndex);
+                _stream.Seek(previousPosition, SeekOrigin.Begin);
             }
 
             return ExportedObjects[exportTableIndex];
@@ -1022,43 +1007,40 @@ namespace UnrealArchiveLibrary.Unreal
         /// <param name="index">The 0-based index of the export object.</param>
         private UObject LoadExport(int i)
         {
-            lock (_stream)
+            string exportClassName;
+
+            if (ExportTable[i].ClassIndex == 0)
             {
-                string exportClassName;
+                exportClassName = "Class";
+            }
+            else if (ExportTable[i].ClassIndex > 0)
+            {
+                var classObjName = GetExportTableEntry(ExportTable[i].ClassIndex).ObjectName;
+                exportClassName = NameToString(classObjName);
+            }
+            else
+            {
+                var classObjName = GetImportTableEntry(ExportTable[i].ClassIndex).ObjectName;
+                exportClassName = NameToString(classObjName);
+            }
 
-                if (ExportTable[i].ClassIndex == 0)
-                {
-                    exportClassName = "Class";
-                }
-                else if (ExportTable[i].ClassIndex > 0)
-                {
-                    var classObjName = GetExportTableEntry(ExportTable[i].ClassIndex).ObjectName;
-                    exportClassName = NameToString(classObjName);
-                }
-                else
-                {
-                    var classObjName = GetImportTableEntry(ExportTable[i].ClassIndex).ObjectName;
-                    exportClassName = NameToString(classObjName);
-                }
+            // ClassDefaultObjects have the same class as an actual object of their type, but they don't have any of the custom serialized data, so they should
+            // just be treated as ordinary UObjects from our perspective
+            var exportObj = ExportTable[i].IsClassDefaultObject ? new UObject(this, ExportTable[i]) : UObject.NewObjectBasedOnClassName(exportClassName, this, ExportTable[i]);
 
-                // ClassDefaultObjects have the same class as an actual object of their type, but they don't have any of the custom serialized data, so they should
-                // just be treated as ordinary UObjects from our perspective
-                var exportObj = ExportTable[i].IsClassDefaultObject ? new UObject(this, ExportTable[i]) : UObject.NewObjectBasedOnClassName(exportClassName, this, ExportTable[i]);
-
-                _stream.Seek(ExportTable[i].SerialOffset, SeekOrigin.Begin);
-                exportObj.Serialize(_stream);
+            _stream.Seek(ExportTable[i].SerialOffset, SeekOrigin.Begin);
+            exportObj.Serialize(_stream);
 
 #if DEBUG
-                int expectedEndPosition = ExportTable[i].SerialOffset + ExportTable[i].SerialSize;
+            int expectedEndPosition = ExportTable[i].SerialOffset + ExportTable[i].SerialSize;
 
-                if (_stream.Position != expectedEndPosition)
-                {
-                    long extraBytes = expectedEndPosition - _stream.Position;
-                    Log.LogWarning("In archive {fileName}, object {fullObjectPath} did not fully deserialize its data ({extraBytes} bytes remaining). Class is {className}", FileName, exportObj.FullObjectPath, extraBytes, ExportTable[i].ClassName);
-                }
-#endif
-                return exportObj;
+            if (_stream.Position != expectedEndPosition)
+            {
+                long extraBytes = expectedEndPosition - _stream.Position;
+                Log.LogWarning("In archive {fileName}, object {fullObjectPath} did not fully deserialize its data ({extraBytes} bytes remaining). Class is {className}", FileName, exportObj.FullObjectPath, extraBytes, ExportTable[i].ClassName);
             }
+#endif
+            return exportObj;
         }
 
         /// <summary>

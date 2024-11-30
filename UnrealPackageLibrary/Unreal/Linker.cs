@@ -273,7 +273,7 @@ namespace UnrealArchiveLibrary.Unreal
             }
 
             var outputArchives = new FArchive[ObjectsByUncookedArchiveName.Count];
-            int outArchiveIndex = 0;
+            int outArchiveIndex = -1;
             int totalNumObjects = numObjects;
             numObjects = 0;
 
@@ -299,11 +299,7 @@ namespace UnrealArchiveLibrary.Unreal
                 // disk, causing None to be unfindable when loading the UPK later. So we just manually kickstart it here
                 outArchive.GetOrCreateName("None");
 
-                lock (this)
-                {
-                    outputArchives[outArchiveIndex] = outArchive;
-                    Interlocked.Increment(ref outArchiveIndex);
-                }
+                outputArchives[Interlocked.Increment(ref outArchiveIndex)] = outArchive;
 
                 // TODO: the archive should be managing this state internally
                 int exportCount = objectsByName.CountWhere(obj => obj is not UPackage || obj.ObjectName != outArchive.FileName);
