@@ -68,6 +68,11 @@ namespace UnrealArchiveLibrary.Unreal.Intrinsic.Core.Properties
                 return new USerializedImmutableStructProperty(archive, this, tag);
             }
 
+            if (!archive.IsCooked)
+            {
+                return new USerializedStructProperty(archive, this, tag);
+            }
+
             return structName switch
             {
                 "ActorReference" => new USerializedActorReferenceProperty(archive, this, tag),

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using UnrealArchiveLibrary.IO;
 using UnrealArchiveLibrary.Unreal.Intrinsic.Core;
 using UnrealArchiveLibrary.Unreal.SerializedProperties;
+using UnrealPackageLibrary;
 
 namespace UnrealArchiveLibrary.Unreal.Intrinsic.Core.Properties
 {
@@ -87,6 +88,12 @@ namespace UnrealArchiveLibrary.Unreal.Intrinsic.Core.Properties
         public PropertyFlag PropertyFlags;
 
         /// <summary>
+        /// XCOM 2 only: allows setting a config file for individual fields of a class, in addition to
+        /// the setting at the class level.
+        /// </summary>
+        public FName? ConfigName;
+
+        /// <summary>
         /// What category to display this property under in the Unreal Editor.
         /// </summary>
         public FName CategoryName;
@@ -116,6 +123,12 @@ namespace UnrealArchiveLibrary.Unreal.Intrinsic.Core.Properties
 
             stream.Int32(ref ArrayDim);
             stream.Enum64(ref PropertyFlags);
+
+            if (Archive.Format == ArchiveFormat.XCom2WotC)
+            {
+                stream.Name(ref ConfigName);
+            }
+
             stream.Name(ref CategoryName);
             stream.Int32(ref ArraySizeEnum);
 
@@ -133,6 +146,7 @@ namespace UnrealArchiveLibrary.Unreal.Intrinsic.Core.Properties
 
             ArrayDim = other.ArrayDim;
             PropertyFlags = other.PropertyFlags;
+            ConfigName = Archive.MapNameFromSourceArchive(other.ConfigName);
             CategoryName = Archive.MapNameFromSourceArchive(other.CategoryName);
             ArraySizeEnum = Archive.MapIndexFromSourceArchive(other.ArraySizeEnum, other.Archive);
             ReplicationOffset = other.ReplicationOffset;

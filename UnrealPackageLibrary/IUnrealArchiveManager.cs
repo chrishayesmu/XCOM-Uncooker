@@ -27,7 +27,8 @@ namespace UnrealPackageLibrary
     public enum ArchiveFormat
     {
         XComEW,
-        XCom2
+        XCom2WotC,
+        Unknown
     }
 
     public enum ProgressEvent

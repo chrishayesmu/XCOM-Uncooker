@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using UnrealArchiveLibrary.IO;
 using UnrealArchiveLibrary.Unreal.Intrinsic.Core;
 using UnrealArchiveLibrary.Utils;
+using UnrealPackageLibrary;
 
 namespace UnrealArchiveLibrary.Unreal
 {
@@ -154,6 +155,8 @@ namespace UnrealArchiveLibrary.Unreal
         /// </summary>
         public string FileName { get;  set; } = fileName;
 
+        public ArchiveFormat Format { get; private set; } = ArchiveFormat.Unknown;
+
         private readonly string archivePathPrefix = fileName + ".";
 
         /// <summary>
@@ -262,7 +265,7 @@ namespace UnrealArchiveLibrary.Unreal
 
         public void SerializeHeaderData()
         {
-            if (IsLoading && IsFullyCompressed)
+            if (IsFullyCompressed)
             {
                 throw new Exception($"{nameof(SerializeHeaderData)} should not be called on a fully compressed archive; decompress it first");
             }
@@ -273,9 +276,26 @@ namespace UnrealArchiveLibrary.Unreal
 
             _stream!.Object(ref PackageFileSummary);
 
+            if (PackageFileSummary.EngineVersion == 8917)
+            {
+                if (PackageFileSummary.FileVersion == 845)
+                {
+                    if (PackageFileSummary.LicenseeVersion == 0 || PackageFileSummary.LicenseeVersion == 64)
+                    {
+                        // Nearly all of the shipped EW files are version 64, except one sound bank file which seemingly got overlooked and is 0
+                        Format = ArchiveFormat.XComEW;
+                    }
+                    else if (PackageFileSummary.LicenseeVersion == 120)
+                    {
+                        Format = ArchiveFormat.XCom2WotC;
+                    }
+                }
+            }
+
+
             // Although we could technically do on-the-fly decompression, it sounds like a real pain, so we just stop archive
             // deserialization if it's compressed, then later it'll get decompressed into a separate file and start over from there.
-            if (IsBodyCompressed || IsFullyCompressed)
+            if (IsBodyCompressed)
             {
                 return;
             }
