@@ -262,6 +262,11 @@ namespace UnrealArchiveLibrary.Unreal
 
         public void SerializeHeaderData()
         {
+            if (IsLoading && IsFullyCompressed)
+            {
+                throw new Exception($"{nameof(SerializeHeaderData)} should not be called on a fully compressed archive; decompress it first");
+            }
+
             // Note: when writing an archive, this function will get called twice. We don't know all of the sizes/offsets
             // on the first pass, but we know that the header size won't change. Accordingly, we write the header once with
             // bad values, serialize all objects (while updating their metadata), then overwrite the header later.
@@ -1127,103 +1132,6 @@ namespace UnrealArchiveLibrary.Unreal
             {
                 Log.LogWarning("Archive {fileName}: done serializing export objects. {numSucceeded} succeeded and {numFailed} failed deserialization. {numAlreadyLoaded} were previously loaded.", FileName, numSucceeded, numFailed, numAlreadyLoaded);
             }
-        }
-
-        /// <summary>
-        /// Serializes the metadata at the beginning of the package file, which describes version info, package flags, and the
-        /// structure of the remainder of the package header.
-        /// </summary>
-        private void SerializeFileSummary()
-        {
-            if (IsSaving)
-            {
-                // Remap the net indices of objects so they're contiguous; this doesn't really matter, but it does make
-                // the UDK spit out a lot less warning logs, which is nice
-                int nextNetIndex = 0;
-
-                for (int i = 0; i < ExportedObjects.Length; i++)
-                {
-                    // FIXME: there's a bug causing ExportedObjects to be bigger than ExportTable somewhere
-                    if (ExportedObjects[i] == null)
-                    {
-                        continue;
-                    }
-
-                    if (ExportedObjects[i].NetIndex != 0)
-                    {
-                        ExportedObjects[i].NetIndex = nextNetIndex++;
-                    }
-                }
-
-                // Before we can serialize the file summary to disk, we need to populate the generation data.
-                // We always have a single generation.
-                PackageFileSummary.Generations[0].ExportCount = ExportTable.Count;
-                PackageFileSummary.Generations[0].NameCount = NameTable.Count;
-                PackageFileSummary.Generations[0].NetObjectCount = nextNetIndex;
-            }
-
-            _stream.UInt32(ref PackageFileSummary.Signature);
-
-            if (IsLoading && PackageFileSummary.Signature != UNREAL_SIGNATURE)
-            {
-                throw new Exception("Package is expected to start with the Unreal package signature, 0x9E2A83C1");
-            }
-
-            _stream.UInt16(ref PackageFileSummary.FileVersion);
-            _stream.UInt16(ref PackageFileSummary.LicenseeVersion);
-
-            // If the file version doesn't match, either the UPK isn't from XCOM, or it's actually a fully-compressed
-            // file and we're reading compression metadata rather than the summary data. Check for the latter.
-            if (IsLoading && PackageFileSummary.FileVersion != 845)
-            {
-                _stream.Seek(4, SeekOrigin.Begin);
-
-                int chunkSize = 0, compressedSize = 0, uncompressedSize = 0;
-                _stream.Int32(ref chunkSize);
-                _stream.Int32(ref compressedSize);
-                _stream.Int32(ref uncompressedSize);
-
-                // The right thing to do would be to compare the actual file size with the one we'd expect based on
-                // the compression metadata, but I'm lazy and this basic sanity check will suffice for XCOM
-                if (chunkSize == 131072 && compressedSize < uncompressedSize)
-                {
-                    PackageFileSummary.PackageFlags &= PackageFlag.StoreFullyCompressed;
-                    return;
-                }
-                else
-                {
-                    throw new Exception($"Archive {FileName} has an invalid file version: {PackageFileSummary.FileVersion}");
-                }
-            }
-
-            _stream.Int32(ref PackageFileSummary.HeaderSize);
-            _stream.String(ref PackageFileSummary.FolderName);
-            _stream.Enum32(ref PackageFileSummary.PackageFlags);
-            _stream.Int32(ref PackageFileSummary.NameCount);
-            _stream.Int32(ref PackageFileSummary.NameOffset);
-            _stream.Int32(ref PackageFileSummary.ExportCount);
-            _stream.Int32(ref PackageFileSummary.ExportOffset);
-            _stream.Int32(ref PackageFileSummary.ImportCount);
-            _stream.Int32(ref PackageFileSummary.ImportOffset);
-            _stream.Int32(ref PackageFileSummary.DependsOffset);
-            _stream.Int32(ref PackageFileSummary.ImportExportGuidsOffset);
-            _stream.Int32(ref PackageFileSummary.ImportGuidsCount);
-            _stream.Int32(ref PackageFileSummary.ExportGuidsCount);
-
-            // The thumbnail table offset is just here for posterity; XCOM EW is cooked for console,
-            // and the thumbnail table is gone. For some reason, the thumbnail table offset is still
-            // set, even though it should be set to 0 in a cooked build. 
-            _stream.Int32(ref PackageFileSummary.ThumbnailTableOffset);
-
-            _stream.Guid(ref PackageFileSummary.PackageGuid);
-            _stream.Array(ref PackageFileSummary.Generations);
-            _stream.Int32(ref PackageFileSummary.EngineVersion);
-            _stream.Int32(ref PackageFileSummary.CookerVersion);
-            _stream.Enum32(ref PackageFileSummary.CompressionFlags);
-            _stream.Array(ref PackageFileSummary.CompressedChunks);
-            _stream.UInt32(ref PackageFileSummary.PackageSource);
-            _stream.StringArray(ref PackageFileSummary.AdditionalPackagesToCook);
-            _stream.Object(ref PackageFileSummary.TextureAllocations);
         }
 
         private void SerializeExportTable()

@@ -117,7 +117,16 @@ namespace XCOM_Uncooker_GUI
                 // Look for archive files
                 if (Directory.Exists(path))
                 {
-                    var dirFiles = Directory.GetFiles(inputArchivesSourceFolder, "*.upk", SearchOption.AllDirectories);
+                    var extensions = new HashSet<string>
+                    {
+                        ".u",
+                        ".udk",
+                        ".upk"
+                    };
+
+                    var dirFiles = Directory.EnumerateFiles(inputArchivesSourceFolder, "*.*", SearchOption.AllDirectories)
+                                            .Where(p => extensions.Contains(Path.GetExtension(p)));
+
                     filePaths.AddRange(dirFiles);
 
                     tfcEntries = Directory.GetFiles(inputArchivesSourceFolder, "*.tfc", SearchOption.AllDirectories)

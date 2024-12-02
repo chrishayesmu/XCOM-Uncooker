@@ -73,7 +73,7 @@ namespace UnrealPackageLibrary
         /// <summary>
         /// The file extensions which should be considered to represent Unreal archive files.
         /// </summary>
-        public List<string> ArchiveFileExtensions = [ ".umap", ".upk", ".xxx" ];
+        public List<string> ArchiveFileExtensions = [ ".u", ".udk", ".umap", ".upk", ".xxx" ];
 
         public ArchiveManagerSettings()
         {
