@@ -17,7 +17,7 @@
             {
                 components.Dispose();
             }
-            archiveManager?.Dispose();
+            xcomEwArchiveManager?.Dispose();
             base.Dispose(disposing);
         }
 
@@ -46,9 +46,13 @@
             statusStrip = new StatusStrip();
             toolStripProgressBar = new ToolStripProgressBar();
             toolStripStatusLabel = new ToolStripStatusLabel();
-            dlgChooseUncookDestination = new FolderBrowserDialog();
             toolStripTimer = new ToolStripStatusLabel();
+            dlgChooseUncookDestination = new FolderBrowserDialog();
             timerEachSecond = new System.Windows.Forms.Timer(components);
+            txtWotcSdkPath = new TextBox();
+            btnOpenWotcSdkPath = new Button();
+            label2 = new Label();
+            dlgOpenWotcSdkFolder = new FolderBrowserDialog();
             ((System.ComponentModel.ISupportInitialize) splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -106,7 +110,7 @@
             treeViewExportObjects.Anchor =  AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             treeViewExportObjects.Location = new Point(3, 3);
             treeViewExportObjects.Name = "treeViewExportObjects";
-            treeViewExportObjects.Size = new Size(535, 490);
+            treeViewExportObjects.Size = new Size(535, 515);
             treeViewExportObjects.TabIndex = 0;
             // 
             // lstInputArchives
@@ -156,7 +160,7 @@
             splitContainer1.Anchor =  AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             splitContainer1.FixedPanel = FixedPanel.Panel1;
             splitContainer1.IsSplitterFixed = true;
-            splitContainer1.Location = new Point(12, 35);
+            splitContainer1.Location = new Point(12, 65);
             splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -167,7 +171,7 @@
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(treeViewExportObjects);
-            splitContainer1.Size = new Size(820, 496);
+            splitContainer1.Size = new Size(820, 521);
             splitContainer1.SplitterDistance = 275;
             splitContainer1.TabIndex = 8;
             // 
@@ -182,7 +186,7 @@
             flowLayoutPanel1.Controls.Add(btnUncookArchives);
             flowLayoutPanel1.Location = new Point(0, 0);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
-            flowLayoutPanel1.Size = new Size(275, 493);
+            flowLayoutPanel1.Size = new Size(275, 518);
             flowLayoutPanel1.TabIndex = 0;
             // 
             // btnUncookArchives
@@ -198,7 +202,7 @@
             // statusStrip
             // 
             statusStrip.Items.AddRange(new ToolStripItem[] { toolStripProgressBar, toolStripStatusLabel, toolStripTimer });
-            statusStrip.Location = new Point(0, 534);
+            statusStrip.Location = new Point(0, 589);
             statusStrip.Name = "statusStrip";
             statusStrip.Size = new Size(844, 22);
             statusStrip.SizingGrip = false;
@@ -227,11 +231,41 @@
             timerEachSecond.Enabled = true;
             timerEachSecond.Interval = 1000;
             // 
+            // txtWotcSdkPath
+            // 
+            txtWotcSdkPath.Location = new Point(126, 35);
+            txtWotcSdkPath.Name = "txtWotcSdkPath";
+            txtWotcSdkPath.ReadOnly = true;
+            txtWotcSdkPath.Size = new Size(376, 23);
+            txtWotcSdkPath.TabIndex = 10;
+            // 
+            // btnOpenWotcSdkPath
+            // 
+            btnOpenWotcSdkPath.Location = new Point(508, 35);
+            btnOpenWotcSdkPath.Name = "btnOpenWotcSdkPath";
+            btnOpenWotcSdkPath.Size = new Size(75, 23);
+            btnOpenWotcSdkPath.TabIndex = 11;
+            btnOpenWotcSdkPath.Text = "Browse..";
+            btnOpenWotcSdkPath.UseVisualStyleBackColor = true;
+            btnOpenWotcSdkPath.Click += btnOpenWotcSdkPath_Click;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(12, 39);
+            label2.Name = "label2";
+            label2.Size = new Size(108, 15);
+            label2.TabIndex = 12;
+            label2.Text = "XCOM 2 WotC SDK";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(844, 556);
+            ClientSize = new Size(844, 611);
+            Controls.Add(label2);
+            Controls.Add(btnOpenWotcSdkPath);
+            Controls.Add(txtWotcSdkPath);
             Controls.Add(statusStrip);
             Controls.Add(splitContainer1);
             Controls.Add(btnOpenSourceFolder);
@@ -273,5 +307,9 @@
         private FolderBrowserDialog dlgChooseUncookDestination;
         private ToolStripStatusLabel toolStripTimer;
         private System.Windows.Forms.Timer timerEachSecond;
+        private TextBox txtWotcSdkPath;
+        private Button btnOpenWotcSdkPath;
+        private Label label2;
+        private FolderBrowserDialog dlgOpenWotcSdkFolder;
     }
 }

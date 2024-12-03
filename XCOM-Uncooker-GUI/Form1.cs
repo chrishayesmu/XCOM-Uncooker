@@ -11,29 +11,45 @@ namespace XCOM_Uncooker_GUI
     {
         // These archives will cause problems in the UDK if our uncooked version is loaded, so we
         // don't output them at all to avoid that.
-        public static readonly List<string> ArchivesToNeverUncook = [ 
-            "Core", 
-            "Engine", 
-            "EngineDebugMaterials", 
-            "EngineFonts", 
-            "EngineMaterials", 
-            "EngineMeshes", 
-            "EngineResources", 
-            "EngineSounds", 
-            "EngineVolumetrics", 
-            "Engine_MaterialFunctions02", 
-            "Engine_MI_Shaders", 
-            "GameFramework", 
-            "GFxUI", 
-            "GFxUIEditor", 
-            "IpDrv", 
-            "OnlineSubsystemSteamworks", 
-            "XComGame", 
-            "XComStrategyGame", 
-            "XComUIShell" 
+        private static readonly List<string> ArchivesToNeverUncook = [
+            "Core",
+            "Engine",
+            "EngineDebugMaterials",
+            "EngineFonts",
+            "EngineMaterials",
+            "EngineMeshes",
+            "EngineResources",
+            "EngineSounds",
+            "EngineVolumetrics",
+            "Engine_MaterialFunctions02",
+            "Engine_MI_Shaders",
+            "GameFramework",
+            "GFxUI",
+            "GFxUIEditor",
+            "IpDrv",
+            "OnlineSubsystemSteamworks",
+            "XComGame",
+            "XComStrategyGame",
+            "XComUIShell"
         ];
 
-        private IUnrealArchiveManager? archiveManager;
+        // These are the specific directories we're interested in loading from the WotC SDK. They are
+        // relative to the XComGame/Content directory within the SDK's root.
+        private static readonly string[] WotcSdkContentDirectories = [
+            "XCOM_2\\Packages\\FX\\_FX_Legacy\\FX_EU", 
+            "XCOM_2\\Packages\\FX\\_FX_Legacy\\FX_EW"
+        ];
+
+        // These are the uncooked script files we want to load from the WotC SDK.
+        private static readonly string[] WotcSdkScriptPackages = [
+            "Core.u",
+            "Engine.u",
+            "XComEditor.u",
+            "XComGame.u"
+        ];
+
+        private IUnrealArchiveManager? xcomEwArchiveManager;
+        private IUnrealArchiveManager? xcomWotcSdkArchiveManager;
         private Stopwatch stopwatch = new Stopwatch();
 
         private string inputArchivesSourceFolder = "";
@@ -77,19 +93,14 @@ namespace XCOM_Uncooker_GUI
 
             var selectedArchiveFilePaths = inputArchivePaths.Where(p => p.IsChecked).Select(p => p.FilePath);
 
-            if (archiveManager == null)
+            if (xcomEwArchiveManager == null)
             {
-                var loggerFactory = LoggerFactory.Create(builder =>
-                {
-                    builder.AddConsole();
-                });
-
-                archiveManager = new UnrealArchiveManager(loggerFactory);
+                xcomEwArchiveManager = new UnrealArchiveManager(CreateLoggerFactory());
             }
 
             stopwatch.Restart();
 
-            Task.Run(() => archiveManager.LoadInputArchives(inputArchivesSourceFolder, selectedArchiveFilePaths, OnProgressEvent, DependencyLoadingMode.All));
+            Task.Run(() => xcomEwArchiveManager.LoadInputArchives(inputArchivesSourceFolder, selectedArchiveFilePaths, OnProgressEvent, DependencyLoadingMode.All));
         }
 
         private void btnOpenSourceFolder_Click(object sender, EventArgs e)
@@ -106,8 +117,8 @@ namespace XCOM_Uncooker_GUI
                 inputArchivesSourceFolder = path;
 
                 inputArchivePaths.Clear();
-                archiveManager?.Dispose();
-                archiveManager = null;
+                xcomEwArchiveManager?.Dispose();
+                xcomEwArchiveManager = null;
 
                 btnFullyLoadArchives.Enabled = false;
                 btnUncookArchives.Enabled = false;
@@ -148,11 +159,11 @@ namespace XCOM_Uncooker_GUI
                 inputArchivePaths = filePaths
                     .Where(path => !Path.GetFileName(path).StartsWith("patch_"))
                     .Select(path => new ArchivePath()
-                        {
-                            FilePath = path,
-                            FileName = Path.GetFileName(path),
-                            Archive = null
-                        })
+                    {
+                        FilePath = path,
+                        FileName = Path.GetFileName(path),
+                        Archive = null
+                    })
                     .ToList();
 
                 inputArchivePaths.Sort((a, b) => a.FileName.CompareTo(b.FileName));
@@ -167,6 +178,38 @@ namespace XCOM_Uncooker_GUI
                 }
 
                 lstInputArchives.EndUpdate();
+            }
+        }
+
+        private void btnOpenWotcSdkPath_Click(object sender, EventArgs e)
+        {
+            if (dlgOpenWotcSdkFolder.InitialDirectory == "")
+            {
+                dlgOpenWotcSdkFolder.InitialDirectory = GetLikelyWotcSdkDirectory();
+            }
+
+            if (dlgOpenWotcSdkFolder.ShowDialog() == DialogResult.OK)
+            {
+                string wotcSdkBaseDir = dlgOpenWotcSdkFolder.SelectedPath;
+
+                // TODO
+                xcomWotcSdkArchiveManager?.Dispose();
+                xcomWotcSdkArchiveManager = new UnrealArchiveManager(CreateLoggerFactory());
+
+                //Task.Run(() =>
+                //{
+                    // First load the uncooked script packages
+                    string scriptDir = Path.Combine(wotcSdkBaseDir, "XComGame", "Script");
+                    var scriptFiles = WotcSdkScriptPackages.Select(f => Path.Combine(scriptDir, f));
+                    xcomWotcSdkArchiveManager.LoadInputArchives(scriptDir, scriptFiles, OnProgressEvent, DependencyLoadingMode.All);
+
+                    // Now add the uncooked content packages
+                    string contentDir = Path.Combine(wotcSdkBaseDir, "XComGame", "Content");
+                    string baseDir = Path.Combine(contentDir, "XCOM_2"); // limit dependency resolution to this folder
+                    var contentFiles = WotcSdkContentDirectories.Select(p => Path.Combine(contentDir, p)).SelectMany(p => Directory.GetFiles(p, "*.upk"));
+
+                    xcomWotcSdkArchiveManager.LoadInputArchives(baseDir, contentFiles, OnProgressEvent, DependencyLoadingMode.All);
+                //});
             }
         }
 
@@ -204,7 +247,7 @@ namespace XCOM_Uncooker_GUI
 
         private void btnUncookArchives_Click(object sender, EventArgs e)
         {
-            var uncookForm = new UncookForm(archiveManager!);
+            var uncookForm = new UncookForm(xcomEwArchiveManager!);
 
             if (uncookForm.ShowDialog() == DialogResult.OK)
             {
@@ -212,17 +255,17 @@ namespace XCOM_Uncooker_GUI
 
                 Task.Run(() =>
                 {
-                    var outputLinker = archiveManager.UncookArchives(tfcEntries, OnProgressEvent, outputArchivesOverride: uncookForm.SelectedOutputArchives);
+                    var outputLinker = xcomEwArchiveManager.UncookArchives(tfcEntries, OnProgressEvent, outputArchivesOverride: uncookForm.SelectedOutputArchives);
                     var archives = outputLinker.Archives.Where(archive => !ArchivesToNeverUncook.Contains(archive.FileName));
                     int numArchivesWritten = 0, totalArchives = archives.Count();
-                    
+
                     // TODO move MaxDegreeOfParallelism to an exposed setting
                     Parallel.ForEach(archives, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, archive =>
                     {
                         PackageOrganizer.TryMatchPackageToFolders(archive, out string folderPath);
                         folderPath = Path.Combine(uncookForm.OutputDirectory, folderPath);
 
-                        archiveManager.WriteArchiveToDisk(archive, folderPath);
+                        xcomEwArchiveManager.WriteArchiveToDisk(archive, folderPath);
 
                         OnProgressEvent(ProgressEvent.ArchiveWrittenToDisk, Interlocked.Increment(ref numArchivesWritten), totalArchives);
                     });
@@ -318,6 +361,14 @@ namespace XCOM_Uncooker_GUI
             }
         }
 
+        private static ILoggerFactory CreateLoggerFactory()
+        {
+            return LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            });
+        }
+
         private string FormatUObjectAsShortText(UObject obj, bool useFullPath = false, bool includeExportIndex = false)
         {
             string text = obj.TableEntry.ClassNameString + " " + (useFullPath ? obj.FullObjectPath : obj.ObjectName);
@@ -346,6 +397,23 @@ namespace XCOM_Uncooker_GUI
                 string xewPath = Path.Combine(value, "XEW", "XComGame", "CookedPCConsole");
 
                 return Directory.Exists(xewPath) ? xewPath : "";
+            }
+        }
+
+        private string GetLikelyWotcSdkDirectory()
+        {
+            string regKey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 602410";
+
+            using (var key = Registry.LocalMachine.OpenSubKey(regKey))
+            {
+                string? value = key?.GetValue("InstallLocation") as string;
+
+                if (value == null)
+                {
+                    return "";
+                }
+
+                return Directory.Exists(value) ? value : "";
             }
         }
 
@@ -413,7 +481,7 @@ namespace XCOM_Uncooker_GUI
                     // to see if they've been loaded or not
                     foreach (var pathObj in inputArchivePaths)
                     {
-                        if (archiveManager.InputLinker.TryGetArchiveWithFileName(Path.GetFileNameWithoutExtension(pathObj.FileName), out var archive))
+                        if (xcomEwArchiveManager.InputLinker.TryGetArchiveWithFileName(Path.GetFileNameWithoutExtension(pathObj.FileName), out var archive))
                         {
                             pathObj.Archive = archive;
                         }
