@@ -233,46 +233,24 @@ namespace UnrealPackageLibrary
 
             // Build a dependency tree so we can operate on it breadth-first
             var dependencyTree = BuildDependencyTree(headersLoadedArchives);
-            var dependencyTreeNew = BuildNewDependencyTree(headersLoadedArchives);
 
             // All dependencies are now loaded (or can't be found); deserialize them in dependency order
+            int numTotalArchives = dependencyTree.GetNodes().Count;
             numLoadedArchives = 0;
 
-            bool useNewTree = true;
-
-            if (useNewTree)
+            // TODO: need to find a way to parallelize using this tree structure
+            dependencyTree.BFS((graph, previous, current) =>
             {
-                dependencyTreeNew.BFS((graph, previous, current) =>
+                var archive = graph.GetComponent<DependencyTreeNodeComponent>(current).Archive;
+
+                // Make sure the archive's open, in case we're carrying over previously-loaded archives
+                if (archive.IsOpen)
                 {
-                    var archive = graph.GetComponent<DependencyTreeNodeComponent>(current).Archive;
+                    archive.SerializeBodyData(classWhitelist);
+                }
 
-                    // Make sure the archive's open, in case we're carrying over previously-loaded archives
-                    if (archive.IsOpen)
-                    {
-                        archive.SerializeBodyData(classWhitelist);
-                    }
-
-                    progressHandler?.Invoke(ProgressEvent.ArchiveBodyLoaded, Interlocked.Increment(ref numLoadedArchives), dependencyTree.NodeCount);
-                });
-            }
-            else
-            {
-                dependencyTree.TraverseBreadthFirstMultiple((archivesAtDepth, depth) =>
-                {
-                    _logger.LogInformation("Processing {numArchives} at depth {depth}", archivesAtDepth.Count(), depth);
-
-                    Parallel.ForEach(archivesAtDepth, new ParallelOptions() { MaxDegreeOfParallelism = Settings.MaxParallelismForSerialization }, (archive) =>
-                    {
-                        // Make sure the archive's open, in case we're carrying over previously-loaded archives
-                        if (archive.IsOpen)
-                        {
-                            archive.SerializeBodyData(classWhitelist);
-                        }
-
-                        progressHandler?.Invoke(ProgressEvent.ArchiveBodyLoaded, Interlocked.Increment(ref numLoadedArchives), dependencyTree.NodeCount);
-                    });
-                });
-            }
+                progressHandler?.Invoke(ProgressEvent.ArchiveBodyLoaded, Interlocked.Increment(ref numLoadedArchives), numTotalArchives);
+            });
 
             // Close all our file streams
             foreach (var archive in headersLoadedArchives)
@@ -474,7 +452,7 @@ namespace UnrealPackageLibrary
             return uncookedLinker;
         }
 
-        private Graph BuildNewDependencyTree(IEnumerable<FArchive> archives)
+        private Graph BuildDependencyTree(IEnumerable<FArchive> archives)
         {
             Graph graph = new Graph();
 
@@ -521,43 +499,6 @@ namespace UnrealPackageLibrary
             }
 
             return graph;
-        }
-
-        private DirectedAcyclicGraph<FArchive> BuildDependencyTree(IEnumerable<FArchive> archives)
-        {
-            var dependencyTree = new DirectedAcyclicGraph<FArchive>();
-
-            foreach (var archive in archives)
-            {
-                // AddEdge below will add both the source and target archive to the tree if needed. However,
-                // if an archive doesn't have any dependencies (or they couldn't be loaded), that AddEdge call will
-                // never happen. To make sure every archive ends up in the tree, we explicitly add them here first.
-                dependencyTree.AddNode(archive);
-
-                // TODO don't repeat this work
-                foreach (var importEntry in archive.ImportTable)
-                {
-                    if (importEntry.IsPackage && importEntry.OuterIndex == 0 && importEntry.ObjectName != archive.NormalizedName)
-                    {
-                        if (InputLinker.TryGetArchiveWithNormalizedName(importEntry.ObjectName, out FArchive? depArchive))
-                        {
-                            dependencyTree.AddEdge(archive, depArchive!);
-                        }
-
-                    }
-                    else if (archive.IsMap && importEntry.IsClass && importEntry.OuterIndex > 0)
-                    {
-                        // Maps have a very weird behavior where they can have a cooked copy of a class in their exports, but at the same
-                        // time, the class is still listed as an import. For our purposes, we need to load the original archive if we can
-                        if (importEntry.OuterTable.IsPackage && InputLinker.TryGetArchiveWithNormalizedName(importEntry.OuterTable.ObjectName, out FArchive? depArchive))
-                        {
-                            dependencyTree.AddEdge(archive, depArchive!);
-                        }
-                    }
-                }
-            }
-
-            return dependencyTree;
         }
 
         /// <summary>
