@@ -65,6 +65,13 @@ namespace UnrealArchiveLibrary.IO
         public void SkipBytes(int numBytes)
         {
             _stream.Seek(numBytes, SeekOrigin.Current);
+
+#if DEBUG
+            if (_stream.Position > _stream.Length)
+            {
+                throw new Exception($"Stream overrun: position = {_stream.Position}, length = {_stream.Length}");
+            }
+#endif
         }
 
         public void Array<T>(ref T[] data, UObject owner = null) where T : IUnrealSerializable, new()

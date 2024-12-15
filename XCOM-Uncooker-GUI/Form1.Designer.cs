@@ -191,6 +191,7 @@
             // 
             // btnUncookArchives
             // 
+            btnUncookArchives.Enabled = false;
             btnUncookArchives.Location = new Point(3, 465);
             btnUncookArchives.Name = "btnUncookArchives";
             btnUncookArchives.Size = new Size(269, 23);

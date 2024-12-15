@@ -8,6 +8,7 @@ using UnrealArchiveLibrary.IO;
 using UnrealArchiveLibrary.Unreal.ObjectSubtypes.Actor;
 using UnrealArchiveLibrary.Unreal.ObjectSubtypes.Physics;
 using UnrealArchiveLibrary.Unreal.SerializedProperties;
+using UnrealPackageLibrary;
 
 namespace UnrealArchiveLibrary.Unreal.ObjectSubtypes.Models
 {
@@ -352,6 +353,12 @@ namespace UnrealArchiveLibrary.Unreal.ObjectSubtypes.Models
             stream.UInt32(ref BaseVertexIndex);
             stream.Array(ref RigidVertices);
             stream.Array(ref SoftVertices);
+
+            if (stream.Archive.Format == ArchiveFormat.XCom2WotC)
+            {
+                stream.SkipBytes(308); // TODO
+            }
+
             stream.Int16Array(ref BoneMap);
             stream.Int32(ref NumRigidVertices);
             stream.Int32(ref NumSoftVertices);

@@ -140,13 +140,13 @@ namespace UnrealArchiveLibrary.Unreal
         /// it is true, then the outer array will be non-null, but the inner arrays are not created until the
         /// archive's body has been deserialized.
         /// </remarks>
-        public List<int[]> DependsMap = new List<int[]>();
+        public List<int[]> DependsMap = [];
 
         /// <summary>
         /// The deserialized objects which this archive exports. Before <see cref="SerializeExportObjects"/> is called,
         /// most or all of the entries in this array will be null, save for any which were loaded on demand.
         /// </summary>
-        public UObject[] ExportedObjects { get; set; } = [];
+        public List<UObject> ExportedObjects { get; set; } = [];
 
         #endregion
 
@@ -276,22 +276,25 @@ namespace UnrealArchiveLibrary.Unreal
 
             _stream!.Object(ref PackageFileSummary);
 
-            if (PackageFileSummary.EngineVersion == 8917)
+            if (Format == ArchiveFormat.Unknown)
             {
-                if (PackageFileSummary.FileVersion == 845)
+                if (PackageFileSummary.EngineVersion == 8917)
                 {
-                    if (PackageFileSummary.LicenseeVersion == 0 || PackageFileSummary.LicenseeVersion == 64)
+                    if (PackageFileSummary.FileVersion == 845)
                     {
-                        // Nearly all of the shipped EW files are version 64, except one sound bank file which seemingly got overlooked and is 0
-                        Format = ArchiveFormat.XComEW;
-                    }
-                    else if (PackageFileSummary.LicenseeVersion == 120)
-                    {
-                        Format = ArchiveFormat.XCom2WotC;
+                        if (PackageFileSummary.LicenseeVersion == 0 || PackageFileSummary.LicenseeVersion == 64)
+                        {
+                            // Nearly all of the shipped EW files are version 64, except one sound bank file which seemingly got overlooked and is 0
+                            Format = ArchiveFormat.XComEW;
+                        }
+                        else if (PackageFileSummary.LicenseeVersion > 64)
+                        {
+                            // There are multiple licensee versions in the WotC SDK (117, 120, maybe more)
+                            Format = ArchiveFormat.XCom2WotC;
+                        }
                     }
                 }
             }
-
 
             // Although we could technically do on-the-fly decompression, it sounds like a real pain, so we just stop archive
             // deserialization if it's compressed, then later it'll get decompressed into a separate file and start over from there.
@@ -307,8 +310,7 @@ namespace UnrealArchiveLibrary.Unreal
 
             if (IsLoading)
             {
-                // Keep ExportedObjects ready to populate in case something is loaded directly by another archive
-                ExportedObjects = new UObject[ExportTable.Count];
+                ExportedObjects = new List<UObject>(new UObject[ExportTable.Count]);
             }
             else
             {
@@ -319,10 +321,10 @@ namespace UnrealArchiveLibrary.Unreal
         /// <summary>
         /// Causes this archive to read and store all of the data outside of its header block.
         /// </summary>
-        public void SerializeBodyData()
+        public void SerializeBodyData(IEnumerable<string>? classWhitelist = null)
         {
             SerializeDependsMap();
-            SerializeExportObjects();
+            SerializeExportObjects(classWhitelist);
 
             if (IsLoading)
             {
@@ -394,7 +396,7 @@ namespace UnrealArchiveLibrary.Unreal
         /// to make them valid within this archive.
         /// </summary>
         /// <param name="sourceObj">The object being added in this archive; must be an export from another archive. It will not be modified.</param>
-        public void AddExportObject(UObject sourceObj)
+        public UObject? AddExportObject(UObject sourceObj)
         {
             FExportTableEntry sourceExportTable = sourceObj.ExportTableEntry!;
             string fullObjectPath = sourceExportTable.FullObjectPath;
@@ -403,7 +405,7 @@ namespace UnrealArchiveLibrary.Unreal
             // demarking when content is combined into a single UPK via cooking
             if (sourceObj is UPackage && sourceObj.ObjectName == FileName)
             {
-                return;
+                return null;
             }
 
             if (sourceObj is UClass)
@@ -445,6 +447,11 @@ namespace UnrealArchiveLibrary.Unreal
 
                 ExportTable.Add(destTableEntry);
                 ExportTableByObjectPath.Add(fullObjectPath, destTableEntry);
+
+                if (destTableEntry.TableEntryIndex >= ExportedObjects.Count)
+                {
+                    ExportedObjects.Add(null); // make room for the object later
+                }
             }
 
             // TODO: this is a hack because my definition of FExportTableEntry.ClassName is stupid and I don't want to change it right now
@@ -455,8 +462,13 @@ namespace UnrealArchiveLibrary.Unreal
 
             ExportedObjects[destTableEntry.TableEntryIndex] = destObj;
             DependsMap.Add(Array.Empty<int>());
+
+            return destObj;
         }
 
+        /// <summary>
+        /// Adds an entry to the import table. Does NOT check to make sure an identical entry doesn't already exist, so use with caution.
+        /// </summary>
         public void AddImportObject(string ClassPackage, string ClassName, int OuterIndex, string ObjectName, FArchive? sourceArchive = null)
         {
             var importObj = new FImportTableEntry(this)
@@ -633,6 +645,11 @@ namespace UnrealArchiveLibrary.Unreal
                 int exportIndex = ExportTable.Count + 1;
                 ExportTable.Add(destExportEntry);
                 ExportTableByObjectPath.Add(fullObjectPath, destExportEntry);
+
+                if (exportIndex >= ExportedObjects.Count)
+                {
+                    ExportedObjects.Add(null); // leave room for the object later
+                }
 
                 return exportIndex;
             }
@@ -885,9 +902,9 @@ namespace UnrealArchiveLibrary.Unreal
 
             int exportTableIndex = index - 1;
 
-            if (exportTableIndex >= ExportedObjects.Length)
+            if (exportTableIndex >= ExportedObjects.Count)
             {
-                throw new ArgumentException($"{nameof(GetObjectByIndex)}: requested index {index} ref of bounds. Only {ExportedObjects.Length} export objects exist in archive {FileName}.");
+                throw new ArgumentException($"{nameof(GetObjectByIndex)}: requested index {index} ref of bounds. Only {ExportedObjects.Count} export objects exist in archive {FileName}.");
             }
 
             if (ExportedObjects[exportTableIndex] == null && IsLoading)
@@ -905,9 +922,9 @@ namespace UnrealArchiveLibrary.Unreal
         /// </summary>
         private void ConnectInnerObjects()
         {
-            for (int i = 0; i < ExportedObjects.Length; i++)
+            for (int i = 0; i < ExportedObjects.Count; i++)
             {
-                UObject outer = ExportedObjects[i].Outer;
+                UObject outer = ExportedObjects[i]?.Outer;
 
                 if (outer != null)
                 {
@@ -923,8 +940,13 @@ namespace UnrealArchiveLibrary.Unreal
         {
             var packages = new List<UPackage>();
 
-            for (int i = 0; i < ExportedObjects.Length; i++)
+            for (int i = 0; i < ExportedObjects.Count; i++)
             {
+                if (ExportedObjects[i] == null)
+                {
+                    continue;
+                }
+
                 if (ExportedObjects[i].TableEntry.OuterIndex != 0)
                 {
                     continue;
@@ -1110,7 +1132,7 @@ namespace UnrealArchiveLibrary.Unreal
         /// <summary>
         /// Deserializes all of the export objects which are contained in this archive.
         /// </summary>
-        private void SerializeExportObjects()
+        private void SerializeExportObjects(IEnumerable<string>? classWhitelist = null)
         {
             int numAlreadyLoaded = 0, numFailed = 0, numSucceeded = 0;
 
@@ -1127,6 +1149,16 @@ namespace UnrealArchiveLibrary.Unreal
                 {
                     if (IsLoading)
                     {
+                        if (classWhitelist != null)
+                        {
+                            string className = ExportTable[i].ClassNameString;
+
+                            if (!classWhitelist.Contains(className))
+                            {
+                                continue;
+                            }
+                        }
+
                         ExportedObjects[i] = LoadExport(i);
                     }
                     else

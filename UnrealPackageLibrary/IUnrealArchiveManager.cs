@@ -151,7 +151,8 @@ namespace UnrealPackageLibrary
         /// <see cref="LoadInputArchives(string, IEnumerable{string}, DependencyLoadingMode)"/>
         /// </summary>
         /// <param name="inputArchivePaths">Paths to the archive files to load</param>
-        public void LoadInputArchives(IEnumerable<string> inputArchivePaths, ProgressHandler? progressHandler = null);
+        /// <param name="classWhitelist">If set, only objects of the given classes will be deserialized; all others are skipped.</param>
+        public void LoadInputArchives(IEnumerable<string> inputArchivePaths, IEnumerable<string>? classWhitelist = null, ProgressHandler? progressHandler = null);
 
         /// <summary>
         /// Loads all archives from the paths provided. Each path should be to a file; directories will
@@ -162,8 +163,12 @@ namespace UnrealPackageLibrary
         /// <param name="baseDirectory">When automatically loading dependencies, it will be assumed that they can be found
         /// in this directory. Subdirectories will be included in the search.</param>
         /// <param name="inputArchivePaths">Paths to the archive files to load</param>
+        /// <param name="classWhitelist">
+        /// If set, only objects of the given classes will be deserialized; all others are skipped. However, if an object is 
+        /// needed because it's a dependency of a whitelisted object, then that object will be loaded regardless of the whitelist.
+        /// </param>
         /// <param name="dependencyMode">How to handle missing dependencies during loading</param>
-        public void LoadInputArchives(string baseDirectory, IEnumerable<string> inputArchivePaths, ProgressHandler? progressHandler = null, DependencyLoadingMode dependencyMode = DependencyLoadingMode.All);
+        public void LoadInputArchives(string baseDirectory, IEnumerable<string> inputArchivePaths, IEnumerable<string>? classWhitelist = null, ProgressHandler? progressHandler = null, DependencyLoadingMode dependencyMode = DependencyLoadingMode.All);
 
         /// <summary>
         /// Creates uncooked archives based on the contents of the currently loaded input archives.  Uncooked archives

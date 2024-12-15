@@ -236,6 +236,7 @@ namespace UnrealArchiveLibrary.Unreal.ObjectSubtypes.Models
             stream.Array(ref Elements);
             stream.Object(ref PositionVertexBuffer);
             stream.Object(ref VertexBuffer);
+            // TODO might be something here in XCOM 2's files
             stream.Object(ref ColorVertexBuffer);
             stream.UInt32(ref NumVertices);
             stream.Object(ref IndexBuffer);

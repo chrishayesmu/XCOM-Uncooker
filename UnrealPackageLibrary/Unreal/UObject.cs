@@ -288,7 +288,7 @@ namespace UnrealArchiveLibrary.Unreal
         /// missing if it wasn't serialized (e.g. because it didn't differ from its default value), or if the name
         /// is just plain wrong.
         /// </summary>
-        public USerializedProperty GetSerializedProperty(string propName)
+        public USerializedProperty? GetSerializedProperty(string propName)
         {
             foreach (var prop in SerializedProperties)
             {

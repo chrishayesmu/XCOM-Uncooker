@@ -3,6 +3,7 @@ using Microsoft.VisualBasic.Logging;
 using Microsoft.Win32;
 using System.Diagnostics;
 using UnrealArchiveLibrary.Unreal;
+using UnrealArchiveLibrary.Unreal.SerializedProperties;
 using UnrealPackageLibrary;
 
 namespace XCOM_Uncooker_GUI
@@ -31,6 +32,170 @@ namespace XCOM_Uncooker_GUI
             "XComGame",
             "XComStrategyGame",
             "XComUIShell"
+        ];
+
+        // Classes which we want deserialized from the WotC SDK's content files.
+        private static readonly ISet<string> WotcClassesToDeserialize = new HashSet<string>() { 
+            "Material",
+            "MaterialExpression",
+            "MaterialExpressionAbs",
+            "MaterialExpressionAdd",
+            "MaterialExpressionAntialiasedTextureMask",
+            "MaterialExpressionAppendVector",
+            "MaterialExpressionBumpOffset",
+            "MaterialExpressionCameraVector",
+            "MaterialExpressionCameraWorldPosition",
+            "MaterialExpressionCeil",
+            "MaterialExpressionClamp",
+            "MaterialExpressionComment",
+            "MaterialExpressionComponentMask",
+            "MaterialExpressionConstant",
+            "MaterialExpressionConstant2Vector",
+            "MaterialExpressionConstant3Vector",
+            "MaterialExpressionConstant4Vector",
+            "MaterialExpressionConstantBiasScale",
+            "MaterialExpressionConstantClamp",
+            "MaterialExpressionConstantScale",
+            "MaterialExpressionCosine",
+            "MaterialExpressionCrossProduct",
+            "MaterialExpressionCustom",
+            "MaterialExpressionCustomTexture",
+            "MaterialExpressionDecalAttenuation",
+            "MaterialExpressionDepthBiasBlend",
+            "MaterialExpressionDepthBiasedAlpha",
+            "MaterialExpressionDepthBiasedBlend",
+            "MaterialExpressionDepthOfFieldFunction",
+            "MaterialExpressionDeriveNormalZ",
+            "MaterialExpressionDesaturation",
+            "MaterialExpressionDestColor",
+            "MaterialExpressionDestDepth",
+            "MaterialExpressionDestWorldPosition",
+            "MaterialExpressionDistance",
+            "MaterialExpressionDivide",
+            "MaterialExpressionDotProduct",
+            "MaterialExpressionDynamicParameter",
+            "MaterialExpressionDynamicSwitchParameter",
+            "MaterialExpressionFlipBookSample",
+            "MaterialExpressionFloor",
+            "MaterialExpressionFluidNormal",
+            "MaterialExpressionFmod",
+            "MaterialExpressionFontSample",
+            "MaterialExpressionFontSampleParameter",
+            "MaterialExpressionFrac",
+            "MaterialExpressionFresnel",
+            "MaterialExpressionFunctionInput",
+            "MaterialExpressionFunctionOutput",
+            "MaterialExpressionGammaCorrection",
+            "MaterialExpressionGate",
+            "MaterialExpressionIf",
+            "MaterialExpressionLength",
+            "MaterialExpressionLensFlareIntensity",
+            "MaterialExpressionLensFlareOcclusion",
+            "MaterialExpressionLensFlareRadialDistance",
+            "MaterialExpressionLensFlareRayDistance",
+            "MaterialExpressionLensFlareSourceDistance",
+            "MaterialExpressionLightmapUVs",
+            "MaterialExpressionLightmassReplace",
+            "MaterialExpressionLightVector",
+            "MaterialExpressionLinearInterpolate",
+            "MaterialExpressionMaterialFunctionCall",
+            "MaterialExpressionMax",
+            "MaterialExpressionMeshEmitterDynamicParameter",
+            "MaterialExpressionMeshEmitterVertexColor",
+            "MaterialExpressionMeshSubUV",
+            "MaterialExpressionMeshSubUVBlend",
+            "MaterialExpressionMin",
+            "MaterialExpressionMultiply",
+            "MaterialExpressionNormalize",
+            "MaterialExpressionObjectOrientation",
+            "MaterialExpressionObjectRadius",
+            "MaterialExpressionObjectWorldPosition",
+            "MaterialExpressionOcclusionPercentage",
+            "MaterialExpressionOneMinus",
+            "MaterialExpressionPanner",
+            "MaterialExpressionParameter",
+            "MaterialExpressionParticleMacroUV",
+            "MaterialExpressionParticleSubUV",
+            "MaterialExpressionPerInstanceRandom",
+            "MaterialExpressionPixelDepth",
+            "MaterialExpressionPower",
+            "MaterialExpressionReflect",
+            "MaterialExpressionReflectionVector",
+            "MaterialExpressionRotateAboutAxis",
+            "MaterialExpressionRotator",
+            "MaterialExpressionScalarParameter",
+            "MaterialExpressionSceneCaptureState",
+            "MaterialExpressionSceneDepth",
+            "MaterialExpressionSceneTexture",
+            "MaterialExpressionScreenPosition",
+            "MaterialExpressionScreenTexelSize",
+            "MaterialExpressionSine",
+            "MaterialExpressionSmoothstep",
+            "MaterialExpressionSphereMask",
+            "MaterialExpressionSplice",
+            "MaterialExpressionSplit",
+            "MaterialExpressionSquareRoot",
+            "MaterialExpressionStaticBool",
+            "MaterialExpressionStaticBoolParameter",
+            "MaterialExpressionStaticComponentMaskParameter",
+            "MaterialExpressionStaticSwitch",
+            "MaterialExpressionStaticSwitchParameter",
+            "MaterialExpressionSubtract",
+            "MaterialExpressionTerrainLayerCoords",
+            "MaterialExpressionTerrainLayerSwitch",
+            "MaterialExpressionTerrainLayerWeight",
+            "MaterialExpressionTextureCoordinate",
+            "MaterialExpressionTextureObject",
+            "MaterialExpressionTextureObjectParameter",
+            "MaterialExpressionTextureSample",
+            "MaterialExpressionTextureSampleParameter",
+            "MaterialExpressionTextureSampleParameter2D",
+            "MaterialExpressionTextureSampleParameterCube",
+            "MaterialExpressionTextureSampleParameterFlipbook",
+            "MaterialExpressionTextureSampleParameterMeshSubUV",
+            "MaterialExpressionTextureSampleParameterMeshSubUVBlend",
+            "MaterialExpressionTextureSampleParameterMovie",
+            "MaterialExpressionTextureSampleParameterNormal",
+            "MaterialExpressionTextureSampleParameterSubUV",
+            "MaterialExpressionTime",
+            "MaterialExpressionTransform",
+            "MaterialExpressionTransformPosition",
+            "MaterialExpressionTwoSidedSign",
+            "MaterialExpressionVectorParameter",
+            "MaterialExpressionVertexColor",
+            "MaterialExpressionVertexTextureSampleParameter2D",
+            "MaterialExpressionViewportPosition",
+            "MaterialExpressionWindDirectionAndSpeed",
+            "MaterialExpressionWorldNormal",
+            "MaterialExpressionWorldPosition",
+            "MaterialExpressionXComCursorPosition",
+            "MaterialExpressionXComDynamicSwitchParameter",
+            "MaterialExpressionXComFOWVolume",
+            "MaterialExpressionXComVectorParameter",
+            "MaterialFunction"
+        };
+
+        // Expression property names which we should copy data from WotC for.
+        private static readonly string[] WotcMaterialExpressionProperties = [
+            "DiffuseColor",
+            "DiffusePower",
+            "SpecularColor",
+            "SpecularPower",
+            "Normal",
+            "EmissiveColor",
+            "Opacity",
+            "OpacityMask",
+            "CustomLighting",
+            "CustomSkylightDiffuse",
+            "AnisotropicDirection",
+            "TwoSidedLightingMask",
+            "TwoSidedLightingColor",
+            "WorldPositionOffset",
+            "WorldDisplacement",
+            "TessellationMultiplier",
+            "SubsurfaceInscatteringColor",
+            "SubsurfaceAbsorptionColor",
+            "SubsurfaceScatteringRadius"
         ];
 
         // These are the specific directories we're interested in loading from the WotC SDK. They are
@@ -89,7 +254,7 @@ namespace XCOM_Uncooker_GUI
         private void btnFullyLoadArchives_Click(object sender, EventArgs e)
         {
             btnFullyLoadArchives.Enabled = false;
-            btnUncookArchives.Enabled = btnFullyLoadArchives.Enabled;
+            btnUncookArchives.Enabled = false;
 
             var selectedArchiveFilePaths = inputArchivePaths.Where(p => p.IsChecked).Select(p => p.FilePath);
 
@@ -100,7 +265,7 @@ namespace XCOM_Uncooker_GUI
 
             stopwatch.Restart();
 
-            Task.Run(() => xcomEwArchiveManager.LoadInputArchives(inputArchivesSourceFolder, selectedArchiveFilePaths, OnProgressEvent, DependencyLoadingMode.All));
+            Task.Run(() => xcomEwArchiveManager.LoadInputArchives(inputArchivesSourceFolder, selectedArchiveFilePaths, progressHandler: OnProgressEvent, dependencyMode: DependencyLoadingMode.All));
         }
 
         private void btnOpenSourceFolder_Click(object sender, EventArgs e)
@@ -122,6 +287,8 @@ namespace XCOM_Uncooker_GUI
 
                 btnFullyLoadArchives.Enabled = false;
                 btnUncookArchives.Enabled = false;
+                btnOpenSourceFolder.Enabled = false;
+                btnOpenWotcSdkPath.Enabled = false;
 
                 var filePaths = new List<string>();
 
@@ -178,6 +345,9 @@ namespace XCOM_Uncooker_GUI
                 }
 
                 lstInputArchives.EndUpdate();
+
+                btnOpenSourceFolder.Enabled = true;
+                btnOpenWotcSdkPath.Enabled = true;
             }
         }
 
@@ -191,25 +361,35 @@ namespace XCOM_Uncooker_GUI
             if (dlgOpenWotcSdkFolder.ShowDialog() == DialogResult.OK)
             {
                 string wotcSdkBaseDir = dlgOpenWotcSdkFolder.SelectedPath;
+                txtWotcSdkPath.Text = wotcSdkBaseDir;
 
-                // TODO
+                btnOpenSourceFolder.Enabled = false;
+                btnOpenWotcSdkPath.Enabled = false;
+
                 xcomWotcSdkArchiveManager?.Dispose();
                 xcomWotcSdkArchiveManager = new UnrealArchiveManager(CreateLoggerFactory());
 
-                //Task.Run(() =>
-                //{
+                Task.Run(() =>
+                {
                     // First load the uncooked script packages
                     string scriptDir = Path.Combine(wotcSdkBaseDir, "XComGame", "Script");
                     var scriptFiles = WotcSdkScriptPackages.Select(f => Path.Combine(scriptDir, f));
-                    xcomWotcSdkArchiveManager.LoadInputArchives(scriptDir, scriptFiles, OnProgressEvent, DependencyLoadingMode.All);
+                    xcomWotcSdkArchiveManager.LoadInputArchives(scriptDir, scriptFiles, progressHandler: OnProgressEvent, dependencyMode: DependencyLoadingMode.All);
 
                     // Now add the uncooked content packages
                     string contentDir = Path.Combine(wotcSdkBaseDir, "XComGame", "Content");
                     string baseDir = Path.Combine(contentDir, "XCOM_2"); // limit dependency resolution to this folder
-                    var contentFiles = WotcSdkContentDirectories.Select(p => Path.Combine(contentDir, p)).SelectMany(p => Directory.GetFiles(p, "*.upk"));
+                    var contentFiles = WotcSdkContentDirectories.Select(p => Path.Combine(contentDir, p)).SelectMany(p => Directory.GetFiles(p, "*.upk"))
+                                   .Where(p => !p.EndsWith("epacePackage.upk"));
 
-                    xcomWotcSdkArchiveManager.LoadInputArchives(baseDir, contentFiles, OnProgressEvent, DependencyLoadingMode.All);
-                //});
+                    xcomWotcSdkArchiveManager.LoadInputArchives(baseDir, contentFiles, classWhitelist: WotcClassesToDeserialize, progressHandler: OnProgressEvent, dependencyMode: DependencyLoadingMode.All);
+
+                    BeginInvoke(() =>
+                    {
+                        btnOpenSourceFolder.Enabled = true;
+                        btnOpenWotcSdkPath.Enabled = true;
+                    });
+                });
             }
         }
 
@@ -226,7 +406,6 @@ namespace XCOM_Uncooker_GUI
             lstInputArchives.EndUpdate();
 
             btnFullyLoadArchives.Enabled = ShouldEnableFullyLoadArchivesButton();
-            btnUncookArchives.Enabled = btnFullyLoadArchives.Enabled;
         }
 
         private void btnSelectNoInputArchives_Click(object sender, EventArgs e)
@@ -242,12 +421,16 @@ namespace XCOM_Uncooker_GUI
             lstInputArchives.EndUpdate();
 
             btnFullyLoadArchives.Enabled = ShouldEnableFullyLoadArchivesButton();
-            btnUncookArchives.Enabled = btnFullyLoadArchives.Enabled;
         }
 
         private void btnUncookArchives_Click(object sender, EventArgs e)
         {
-            var uncookForm = new UncookForm(xcomEwArchiveManager!);
+            if (xcomEwArchiveManager == null)
+            {
+                return;
+            }
+
+            var uncookForm = new UncookForm(xcomEwArchiveManager);
 
             if (uncookForm.ShowDialog() == DialogResult.OK)
             {
@@ -259,9 +442,24 @@ namespace XCOM_Uncooker_GUI
                     var archives = outputLinker.Archives.Where(archive => !ArchivesToNeverUncook.Contains(archive.FileName));
                     int numArchivesWritten = 0, totalArchives = archives.Count();
 
+                    var availableTextures = new Dictionary<string, UObject>();
+
+                    foreach (var archive in archives)
+                    {
+                        foreach (var exportEntry in archive.ExportTable)
+                        {
+                            if (exportEntry.ClassNameString == "Texture2D")
+                            {
+                                availableTextures.Add(exportEntry.ObjectName, exportEntry.ExportObject);
+                            }
+                        }
+                    }
+
                     // TODO move MaxDegreeOfParallelism to an exposed setting
                     Parallel.ForEach(archives, new ParallelOptions() { MaxDegreeOfParallelism = 5 }, archive =>
                     {
+                        CopyWotcMaterialExpressionsForArchive(archive, availableTextures);
+
                         PackageOrganizer.TryMatchPackageToFolders(archive, out string folderPath);
                         folderPath = Path.Combine(uncookForm.OutputDirectory, folderPath);
 
@@ -282,7 +480,6 @@ namespace XCOM_Uncooker_GUI
         private void lstInputArchives_SelectedIndexChanged(object sender, EventArgs e)
         {
             btnFullyLoadArchives.Enabled = ShouldEnableFullyLoadArchivesButton();
-            btnUncookArchives.Enabled = btnFullyLoadArchives.Enabled;
 
             // Look up the corresponding archive in the input linker, and if loaded,
             // display its objects in the details panel
@@ -359,6 +556,129 @@ namespace XCOM_Uncooker_GUI
 
                 node.Nodes.Add(newNode);
             }
+        }
+
+        private void CopyWotcMaterialExpressionsForArchive(FArchive archive, IDictionary<string, UObject> availableTextures)
+        {
+            if (xcomWotcSdkArchiveManager == null)
+            {
+                return;
+            }
+
+            var matchingWotcArchive = xcomWotcSdkArchiveManager.InputLinker.Archives.Find(ar => ar.NormalizedName == archive.NormalizedName);
+
+            if (matchingWotcArchive == null)
+            {
+                Console.WriteLine("");
+                return;
+            }
+
+            // Cloning new objects may modify the archive's ExportedObjects; we only want to iterate the
+            // ones which are already part of the archive
+            int originalExportCount = archive.ExportedObjects.Count;
+
+            for (int i = 0; i < originalExportCount; i++)
+            {
+                var exportObj = archive.ExportedObjects[i];
+
+                if (exportObj == null)
+                {
+                    continue;
+                }
+
+                if (exportObj.TableEntry.ClassNameString != "Material")
+                {
+                    continue;
+                }
+
+                var matchingExportObj = matchingWotcArchive.ExportedObjects.FirstOrDefault(obj => obj?.FullObjectPath == exportObj.FullObjectPath);
+
+                if (matchingExportObj == null)
+                {
+                    continue;
+                }
+
+                // If we're able to find the same material from the WotC SDK, copy the material expressions over
+                // TODO update the Expressions array prop
+                // TODO remove the material fixup logic from within the archive library
+                foreach (string expressionPropName in WotcMaterialExpressionProperties)
+                {
+                    var wotcProp = matchingExportObj.GetSerializedProperty(expressionPropName);
+
+                    if (wotcProp == null)
+                    {
+                        continue;
+                    }
+
+                    // Remove the existing expression property if there is one
+                    var ewProp = exportObj.GetSerializedProperty(expressionPropName);
+
+                    if (ewProp != null)
+                    {
+                        exportObj.SerializedProperties.Remove(ewProp);
+                    }
+
+                    var clonedProp = wotcProp.CloneToOtherArchive(archive);
+                    exportObj.SerializedProperties.Add(clonedProp);
+                }
+            }
+
+            // Now that we've cloned a bunch of properties, the expressions they're referencing will have export table
+            // entries, but won't be present in ExportedObjects. We just need to go through and copy those objects into
+            // our archive also.
+            for (int i = originalExportCount; i < archive.ExportTable.Count; i++)
+            {
+                if (archive.ExportedObjects[i] != null)
+                {
+                    continue;
+                }
+
+                string objectPath = archive.ExportTable[i].FullObjectPath;
+                var wotcObject = matchingWotcArchive.GetExportedObjectByPath(objectPath, archive.ExportTable[i]);
+
+                if (wotcObject == null)
+                {
+                    Console.WriteLine("impossible??");
+                    continue;
+                }
+
+                var newObject = archive.AddExportObject(wotcObject);
+
+                if (newObject == null)
+                {
+                    throw new Exception($"Failed to copy export object {wotcObject.FullObjectPath} from WotC SDK");
+                }
+
+                // Texture sample expressions in the WotC SDK will be referencing textures based on their locations in
+                // that SDK, but some of them have been moved since EW was released. We need to check if the texture's in
+                // the right spot, and redirect it if not.
+                if (newObject.TableEntry.ClassNameString == "MaterialExpressionTextureSample")
+                {
+                    var textureProp = newObject.GetSerializedProperty("Texture") as USerializedObjectProperty;
+
+                    // Only interested in imports for now; presumably an export wouldn't have this problem
+                    if (textureProp != null && textureProp.ObjectIndex < 0)
+                    {
+                        var textureObject = archive.GetObjectByIndex(textureProp.ObjectIndex);
+
+                        if (textureObject == null)
+                        {
+                            var existingTableEntry = archive.GetImportTableEntry(textureProp.ObjectIndex);
+
+                            if (availableTextures.TryGetValue(existingTableEntry.ObjectName, out UObject newTextureObj))
+                            {
+                                int packageImportIndex = archive.GetOrCreateImport(archive.GetOrCreateName("Core"), archive.GetOrCreateName("Package"), archive.GetOrCreateName(newTextureObj.Archive.NormalizedName), 0);
+                                int textureImportIndex = archive.GetOrCreateImport(existingTableEntry.ClassPackage, existingTableEntry.ClassName, existingTableEntry.ObjectName, packageImportIndex);
+
+                                textureProp.ObjectIndex = textureImportIndex;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // TODO: manually break apart the ConstantScale expression into a multiply + constant
+            // TODO: try to clean up imports of packages that won't exist? going to leave annoying gaps in the import table, but the imports cause warnings in the UDK
         }
 
         private static ILoggerFactory CreateLoggerFactory()
@@ -479,11 +799,14 @@ namespace XCOM_Uncooker_GUI
                 {
                     // Loading our archives may have loaded some dependencies also, so we just go through and check all of them
                     // to see if they've been loaded or not
-                    foreach (var pathObj in inputArchivePaths)
+                    if (xcomEwArchiveManager != null)
                     {
-                        if (xcomEwArchiveManager.InputLinker.TryGetArchiveWithFileName(Path.GetFileNameWithoutExtension(pathObj.FileName), out var archive))
+                        foreach (var pathObj in inputArchivePaths)
                         {
-                            pathObj.Archive = archive;
+                            if (xcomEwArchiveManager.InputLinker.TryGetArchiveWithFileName(Path.GetFileNameWithoutExtension(pathObj.FileName), out var archive))
+                            {
+                                pathObj.Archive = archive;
+                            }
                         }
                     }
 
@@ -493,7 +816,7 @@ namespace XCOM_Uncooker_GUI
                     lstInputArchives_SelectedIndexChanged(null, null);
 
                     btnFullyLoadArchives.Enabled = ShouldEnableFullyLoadArchivesButton();
-                    btnUncookArchives.Enabled = btnFullyLoadArchives.Enabled;
+                    btnUncookArchives.Enabled = ShouldEnableUncookButton();
                 }
             });
         }
@@ -501,6 +824,11 @@ namespace XCOM_Uncooker_GUI
         private bool ShouldEnableFullyLoadArchivesButton()
         {
             return inputArchivePaths.Any(p => p.IsChecked);
+        }
+
+        private bool ShouldEnableUncookButton()
+        {
+            return xcomEwArchiveManager != null && xcomEwArchiveManager.InputLinker.Archives.Count > 0;
         }
     }
 }

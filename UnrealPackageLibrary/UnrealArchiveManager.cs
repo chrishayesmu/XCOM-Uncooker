@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using SharpGraph;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using UnrealArchiveLibrary.Graph;
+using UnrealArchiveLibrary.Graph.Extensions;
 using UnrealArchiveLibrary.IO;
 using UnrealArchiveLibrary.Unreal;
 using UnrealArchiveLibrary.Unreal.Intrinsic.Core;
@@ -86,12 +88,12 @@ namespace UnrealPackageLibrary
             return logicalArchives;
         }
 
-        public void LoadInputArchives(IEnumerable<string> inputPackagePaths, ProgressHandler? progressHandler = null)
+        public void LoadInputArchives(IEnumerable<string> inputPackagePaths, IEnumerable<string>? classWhitelist = null, ProgressHandler ? progressHandler = null)
         {
-            LoadInputArchives("", inputPackagePaths, progressHandler, DependencyLoadingMode.None);
+            LoadInputArchives("", inputPackagePaths, classWhitelist, progressHandler, DependencyLoadingMode.None);
         }
 
-        public void LoadInputArchives(string baseDirectory, IEnumerable<string> inputPackagePaths, ProgressHandler? progressHandler = null, DependencyLoadingMode dependencyMode = DependencyLoadingMode.All)
+        public void LoadInputArchives(string baseDirectory, IEnumerable<string> inputPackagePaths, IEnumerable<string>? classWhitelist = null, ProgressHandler? progressHandler = null, DependencyLoadingMode dependencyMode = DependencyLoadingMode.All)
         {
             _logger.LogDebug("LoadInputArchives: inputPackagePaths.Count = {numInputPackagePaths}, dependencyMode = {dependencyMode},  baseDirectory = {baseDirectory}", inputPackagePaths.Count(), dependencyMode, baseDirectory);
 
@@ -231,25 +233,46 @@ namespace UnrealPackageLibrary
 
             // Build a dependency tree so we can operate on it breadth-first
             var dependencyTree = BuildDependencyTree(headersLoadedArchives);
+            var dependencyTreeNew = BuildNewDependencyTree(headersLoadedArchives);
 
             // All dependencies are now loaded (or can't be found); deserialize them in dependency order
             numLoadedArchives = 0;
 
-            dependencyTree.TraverseBreadthFirstMultiple((archivesAtDepth, depth) =>
-            {
-                _logger.LogInformation("Processing {numArchives} at depth {depth}", archivesAtDepth.Count(), depth);
+            bool useNewTree = true;
 
-                Parallel.ForEach(archivesAtDepth, new ParallelOptions() { MaxDegreeOfParallelism = Settings.MaxParallelismForSerialization }, (archive) =>
+            if (useNewTree)
+            {
+                dependencyTreeNew.BFS((graph, previous, current) =>
                 {
+                    var archive = graph.GetComponent<DependencyTreeNodeComponent>(current).Archive;
+
                     // Make sure the archive's open, in case we're carrying over previously-loaded archives
                     if (archive.IsOpen)
                     {
-                        archive.SerializeBodyData();
+                        archive.SerializeBodyData(classWhitelist);
                     }
 
                     progressHandler?.Invoke(ProgressEvent.ArchiveBodyLoaded, Interlocked.Increment(ref numLoadedArchives), dependencyTree.NodeCount);
                 });
-            });
+            }
+            else
+            {
+                dependencyTree.TraverseBreadthFirstMultiple((archivesAtDepth, depth) =>
+                {
+                    _logger.LogInformation("Processing {numArchives} at depth {depth}", archivesAtDepth.Count(), depth);
+
+                    Parallel.ForEach(archivesAtDepth, new ParallelOptions() { MaxDegreeOfParallelism = Settings.MaxParallelismForSerialization }, (archive) =>
+                    {
+                        // Make sure the archive's open, in case we're carrying over previously-loaded archives
+                        if (archive.IsOpen)
+                        {
+                            archive.SerializeBodyData(classWhitelist);
+                        }
+
+                        progressHandler?.Invoke(ProgressEvent.ArchiveBodyLoaded, Interlocked.Increment(ref numLoadedArchives), dependencyTree.NodeCount);
+                    });
+                });
+            }
 
             // Close all our file streams
             foreach (var archive in headersLoadedArchives)
@@ -416,7 +439,8 @@ namespace UnrealPackageLibrary
 
                 // TODO: the archive should be managing this state internally
                 int exportCount = objectsByName.CountWhere(obj => obj is not UPackage || obj.ObjectName != outArchive.FileName);
-                outArchive.ExportedObjects = new UObject[exportCount];
+                outArchive.ExportedObjects = new List<UObject>(exportCount);
+                // outArchive.ExportedObjects = new List<UObject>(new UObject[exportCount]);
 
                 foreach (var subentry in objectsByName)
                 {
@@ -448,6 +472,55 @@ namespace UnrealPackageLibrary
             progressHandler?.Invoke(ProgressEvent.UncookComplete, uncookedLinker.Archives.Count, uncookedLinker.Archives.Count);
 
             return uncookedLinker;
+        }
+
+        private Graph BuildNewDependencyTree(IEnumerable<FArchive> archives)
+        {
+            Graph graph = new Graph();
+
+            // Start by adding any already-loaded archives as nodes; they may not get picked up automatically by the
+            // dependency logic below
+            foreach (var archive in InputLinker.Archives)
+            {
+                Node node = new Node(archive.NormalizedName);
+                graph.AddNode(node);
+                graph.AddComponent<DependencyTreeNodeComponent>(node).Archive = archive;
+            }
+
+            // TODO test all of this
+            // TODO there's some issues going on when archives are loaded across multiple passes
+            foreach (var archive in archives)
+            {
+                Node node = graph.GetOrAddNode(archive.NormalizedName);
+
+                foreach (var importEntry in archive.ImportTable)
+                {
+                    if (importEntry.IsPackage && importEntry.OuterIndex == 0 && importEntry.ObjectName != archive.NormalizedName)
+                    {
+                        if (InputLinker.TryGetArchiveWithNormalizedName(importEntry.ObjectName, out FArchive? depArchive))
+                        {
+                            var depNode = graph.GetOrAddNode(depArchive.NormalizedName);
+                            graph.AddComponent<DependencyTreeNodeComponent>(depNode).Archive = depArchive;
+                            
+                            graph.AddEdge(node, depNode);
+                        }
+
+                    }
+                    else if (archive.IsMap && importEntry.IsClass && importEntry.OuterIndex > 0)
+                    {
+                        // Maps have a very weird behavior where they can have a cooked copy of a class in their exports, but at the same
+                        // time, the class is still listed as an import. For our purposes, we need to load the original archive if we can
+                        if (importEntry.OuterTable.IsPackage && InputLinker.TryGetArchiveWithNormalizedName(importEntry.OuterTable.ObjectName, out FArchive? depArchive))
+                        {
+                            graph.AddEdge(archive.NormalizedName, depArchive!.NormalizedName);
+                        }
+                    }
+                }
+
+                graph.AddComponent<DependencyTreeNodeComponent>(node).Archive = archive;
+            }
+
+            return graph;
         }
 
         private DirectedAcyclicGraph<FArchive> BuildDependencyTree(IEnumerable<FArchive> archives)
@@ -551,7 +624,7 @@ namespace UnrealPackageLibrary
 
         private FArchive OpenArchiveForRead(string archivePath, string archiveName)
         {
-            var fileStream = File.Open(archivePath, FileMode.Open, FileAccess.Read);
+            var fileStream = File.Open(archivePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var archive = new FArchive(archiveName, InputLinker, _logger);
             archive.BeginSerialization(new UnrealDataReader(fileStream));
 

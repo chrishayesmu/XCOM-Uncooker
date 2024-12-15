@@ -104,29 +104,30 @@ namespace UnrealArchiveLibrary.Unreal
                     // Look for the matching property before serializing. They should be in the same order
                     UProperty? currentProperty = linkedProperties.FirstOrDefault(p => p.ObjectName == tag.Name);
 
-#if DEBUG
+                    // Some of the XCOM 2 "legacy" archives seem to have been created with an older version of the Engine UPK than we have available,
+                    // in which certain properties existed that are now deleted. Handle unrecognized properties the best we can in that case.
                     if (currentProperty == null)
                     {
-                        stream.Archive.Log.LogError("{FullObjectPath}: failed to find a property named {TagName} to match tag of type {TagType}", FullObjectPath, tag.Name, tag.Type);
-                        Debugger.Break();
-                        return;
+                        stream.Archive.Log.LogWarning("{FullObjectPath}: failed to find a property named {TagName} to match tag of type {TagType}", FullObjectPath, tag.Name, tag.Type);
+                        stream.SkipBytes(tag.Size);
                     }
-#endif
-
-                    // Having found our property and tag to match, go ahead and proceed with serialization
-                    var prop = currentProperty.CreateSerializedProperty(stream.Archive!, tag);
-
-#if DEBUG
-                    // Make sure our property matches the type from the property tag
-                    if (prop.TagType != tag.Type)
+                    else
                     {
-                        stream.Archive.Log.LogError("{FullObjectPath}: found a property named {TagName}, but the tag type {TagType} didn't match the property's tag type {PropTagType}. Property type is {CurrentPropertyType}", FullObjectPath, tag.Name, tag.Type, prop.TagType, currentProperty.GetType());
-                        return;
-                    }
-#endif
+                        // Having found our property and tag to match, go ahead and proceed with serialization
+                        var prop = currentProperty.CreateSerializedProperty(stream.Archive!, tag);
 
-                    prop.Serialize(stream);
-                    props.Add(prop);
+    #if DEBUG
+                        // Make sure our property matches the type from the property tag
+                        if (prop.TagType != tag.Type)
+                        {
+                            stream.Archive.Log.LogError("{FullObjectPath}: found a property named {TagName}, but the tag type {TagType} didn't match the property's tag type {PropTagType}. Property type is {CurrentPropertyType}", FullObjectPath, tag.Name, tag.Type, prop.TagType, currentProperty.GetType());
+                            return;
+                        }
+    #endif
+
+                        prop.Serialize(stream);
+                        props.Add(prop);
+                    }
 
                     // Move on to the next property tag
                     stream.Object(ref tag);

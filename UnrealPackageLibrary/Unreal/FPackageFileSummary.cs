@@ -183,7 +183,7 @@ namespace UnrealArchiveLibrary.Unreal
                 // the UDK spit out a lot less warning logs, which is nice
                 int lastNetIndex = 0;
 
-                for (int i = 0; i < archive.ExportedObjects.Length; i++)
+                for (int i = 0; i < archive.ExportedObjects.Count; i++)
                 {
                     // FIXME: there's a bug causing ExportedObjects to be bigger than ExportTable somewhere
                     if (archive.ExportedObjects[i] == null)
